@@ -1,0 +1,81 @@
+import { Plus } from 'lucide-react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { useModuleData } from '../../hooks/use-data'
+import { PageHeader } from '../_shared/page-header'
+import { StatusBadge } from '../_shared/status-badge'
+import { TerminalCard } from './components/terminal-card'
+
+interface Terminal {
+	_id: string
+	terminalCode: string
+	name: string
+	locationCode: string
+	status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE'
+	sessionCount: number
+}
+
+export default function TerminalsList() {
+	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+
+	const { DataGrid, windowSize } = useModuleData<'pos', Terminal>(
+		'pos',
+		'terminals',
+		'all',
+	)
+
+	const handleEdit = React.useCallback((row: Terminal) => {
+		setSelectedId(row._id)
+	}, [])
+
+	return (
+		<div className='space-y-4'>
+			<PageHeader
+				title='Terminals'
+				description='Manage POS terminals and their status.'
+				actions={
+					<Button size='sm' onClick={() => setSelectedId('new')}>
+						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+						New Terminal
+					</Button>
+				}
+			/>
+
+			<DataGrid
+				variant='compact'
+				height={Math.max(windowSize.height - 210, 360)}
+			>
+				<DataGrid.Header>
+					<DataGrid.Toolbar filter sort search export />
+				</DataGrid.Header>
+				<DataGrid.Columns>
+					<DataGrid.Column<Terminal>
+						accessorKey='terminalCode'
+						title='Terminal Code'
+						handleEdit={handleEdit}
+					/>
+					<DataGrid.Column<Terminal> accessorKey='name' title='Name' />
+					<DataGrid.Column<Terminal>
+						accessorKey='locationCode'
+						title='Location'
+					/>
+					<DataGrid.Column<Terminal>
+						accessorKey='status'
+						title='Status'
+						cell={({ row }) => <StatusBadge status={row.original.status} />}
+					/>
+					<DataGrid.Column<Terminal>
+						accessorKey='sessionCount'
+						title='Sessions'
+						cellVariant='number'
+					/>
+				</DataGrid.Columns>
+			</DataGrid>
+
+			<TerminalCard
+				selectedId={selectedId}
+				onClose={() => setSelectedId(null)}
+			/>
+		</div>
+	)
+}

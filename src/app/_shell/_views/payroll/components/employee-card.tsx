@@ -1,0 +1,552 @@
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { useCreateForm } from '@/components/ui/form'
+import { FormSection } from '../../_shared/form-section'
+import { RecordDialog } from '../../_shared/record-dialog'
+import { StatusBadge } from '../../_shared/status-badge'
+import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+
+interface EmployeeCardProps {
+	recordId: string | null
+	open: boolean
+	onOpenChange: (open: boolean) => void
+}
+
+interface EmployeeFormValues {
+	employeeNo: string
+	firstName: string
+	lastName: string
+	email: string
+	phone: string
+	department: string
+	jobTitle: string
+	employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACTOR' | 'TEMPORARY'
+	hireDate: string
+	terminationDate: string
+	baseSalary: number
+	payFrequency: 'WEEKLY' | 'BIWEEKLY' | 'SEMI_MONTHLY' | 'MONTHLY'
+	bankAccountId: string
+}
+
+const STATUS_TRANSITIONS: Record<string, { label: string; to: string }[]> = {
+	ACTIVE: [
+		{ label: 'Set On Leave', to: 'ON_LEAVE' },
+		{ label: 'Terminate', to: 'TERMINATED' },
+	],
+	ON_LEAVE: [
+		{ label: 'Reactivate', to: 'ACTIVE' },
+		{ label: 'Terminate', to: 'TERMINATED' },
+	],
+	TERMINATED: [],
+}
+
+export function EmployeeCard({
+	recordId,
+	open,
+	onOpenChange,
+}: EmployeeCardProps) {
+	const isNew = recordId === 'new'
+
+	const { data: record, isLoading: recordLoading } = useEntityRecord(
+		'payroll',
+		'employees',
+		recordId,
+		{ enabled: !isNew && !!recordId },
+	)
+
+	const { create, update, transitionStatus } = useEntityMutations(
+		'payroll',
+		'employees',
+	)
+
+	const [Form, form] = useCreateForm<EmployeeFormValues>(
+		() => ({
+			defaultValues: {
+				employeeNo: record?.employeeNo ?? '',
+				firstName: record?.firstName ?? '',
+				lastName: record?.lastName ?? '',
+				email: record?.email ?? '',
+				phone: record?.phone ?? '',
+				department: record?.department ?? '',
+				jobTitle: record?.jobTitle ?? '',
+				employmentType: record?.employmentType ?? 'FULL_TIME',
+				hireDate: record?.hireDate ?? '',
+				terminationDate: record?.terminationDate ?? '',
+				baseSalary: record?.baseSalary ?? 0,
+				payFrequency: record?.payFrequency ?? 'MONTHLY',
+				bankAccountId: record?.bankAccountId ?? '',
+			},
+			onSubmit: async (data) => {
+				if (isNew) {
+					await create.mutateAsync({
+						firstName: data.firstName,
+						lastName: data.lastName,
+						email: data.email || undefined,
+						phone: data.phone || undefined,
+						department: data.department || undefined,
+						jobTitle: data.jobTitle || undefined,
+						employmentType: data.employmentType,
+						hireDate: data.hireDate || undefined,
+						terminationDate: data.terminationDate || undefined,
+						baseSalary: data.baseSalary,
+						payFrequency: data.payFrequency,
+						bankAccountId: data.bankAccountId || undefined,
+					})
+				} else if (recordId) {
+					await update.mutateAsync({
+						id: recordId,
+						data: {
+							firstName: data.firstName,
+							lastName: data.lastName,
+							email: data.email || undefined,
+							phone: data.phone || undefined,
+							department: data.department || undefined,
+							jobTitle: data.jobTitle || undefined,
+							employmentType: data.employmentType,
+							hireDate: data.hireDate || undefined,
+							terminationDate: data.terminationDate || undefined,
+							baseSalary: data.baseSalary,
+							payFrequency: data.payFrequency,
+							bankAccountId: data.bankAccountId || undefined,
+						},
+					})
+				}
+				onOpenChange(false)
+			},
+		}),
+		[record, isNew, recordId],
+	)
+
+	React.useEffect(() => {
+		if (record && !isNew) {
+			form.reset({
+				employeeNo: record.employeeNo ?? '',
+				firstName: record.firstName ?? '',
+				lastName: record.lastName ?? '',
+				email: record.email ?? '',
+				phone: record.phone ?? '',
+				department: record.department ?? '',
+				jobTitle: record.jobTitle ?? '',
+				employmentType: record.employmentType ?? 'FULL_TIME',
+				hireDate: record.hireDate ?? '',
+				terminationDate: record.terminationDate ?? '',
+				baseSalary: record.baseSalary ?? 0,
+				payFrequency: record.payFrequency ?? 'MONTHLY',
+				bankAccountId: record.bankAccountId ?? '',
+			})
+		} else if (isNew) {
+			form.reset({
+				employeeNo: '',
+				firstName: '',
+				lastName: '',
+				email: '',
+				phone: '',
+				department: '',
+				jobTitle: '',
+				employmentType: 'FULL_TIME',
+				hireDate: '',
+				terminationDate: '',
+				baseSalary: 0,
+				payFrequency: 'MONTHLY',
+				bankAccountId: '',
+			})
+		}
+	}, [record, isNew, form])
+
+	const handleTransition = async (toStatus: string) => {
+		if (!recordId || isNew) return
+		await transitionStatus.mutateAsync({
+			id: recordId,
+			toStatus,
+		})
+	}
+
+	const currentStatus = record?.status ?? 'ACTIVE'
+	const transitions = STATUS_TRANSITIONS[currentStatus] ?? []
+
+	return (
+		<RecordDialog
+			open={open}
+			onOpenChange={onOpenChange}
+			title={isNew ? 'New Employee' : `Employee ${record?.employeeNo ?? ''}`}
+			description={
+				isNew
+					? 'Create a new employee record.'
+					: 'View and edit employee details.'
+			}
+			footer={
+				<>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={() => onOpenChange(false)}
+					>
+						Cancel
+					</Button>
+					<Button size='sm' onClick={() => form.submit()}>
+						{isNew ? 'Create' : 'Save'}
+					</Button>
+				</>
+			}
+		>
+			{recordLoading && !isNew ? (
+				<div className='flex items-center justify-center py-12 text-muted-foreground text-sm'>
+					Loading...
+				</div>
+			) : (
+				<Form>
+					{() => (
+						<div className='space-y-8 pt-1'>
+							<FormSection title='General'>
+								<div className='grid gap-4'>
+									{!isNew && (
+										<Form.Field
+											name='employeeNo'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Employee No.</Form.Label>
+													<Form.Control
+														render={
+															<Form.Input
+																{...field}
+																readOnly
+																className='bg-muted'
+															/>
+														}
+													/>
+												</Form.Item>
+											)}
+										/>
+									)}
+
+									<Form.Field
+										name='firstName'
+										rules={{ required: 'First name is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>First Name</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															placeholder='First name…'
+															autoComplete='off'
+														/>
+													}
+												/>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='lastName'
+										rules={{ required: 'Last name is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Last Name</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															placeholder='Last name…'
+															autoComplete='off'
+														/>
+													}
+												/>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='email'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Email</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															type='email'
+															placeholder='Email address…'
+															autoComplete='email'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='phone'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Phone</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															type='tel'
+															placeholder='Phone number…'
+															autoComplete='tel'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+								</div>
+							</FormSection>
+
+							<FormSection title='Employment'>
+								<div className='grid gap-4'>
+									<Form.Field
+										name='department'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Department</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															placeholder='Department…'
+															autoComplete='off'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='jobTitle'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Job Title</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															placeholder='Job title…'
+															autoComplete='off'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='employmentType'
+										rules={{ required: 'Employment type is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Employment Type</Form.Label>
+												<Form.Control
+													render={
+														<Form.Select
+															value={field.value}
+															onValueChange={field.onChange}
+														>
+															<Form.Select.Trigger>
+																<Form.Select.Value placeholder='Select type…' />
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																<Form.Select.Item value='FULL_TIME'>
+																	Full Time
+																</Form.Select.Item>
+																<Form.Select.Item value='PART_TIME'>
+																	Part Time
+																</Form.Select.Item>
+																<Form.Select.Item value='CONTRACTOR'>
+																	Contractor
+																</Form.Select.Item>
+																<Form.Select.Item value='TEMPORARY'>
+																	Temporary
+																</Form.Select.Item>
+															</Form.Select.Content>
+														</Form.Select>
+													}
+												/>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+
+									{!isNew && (
+										<div className='space-y-2'>
+											<p className='font-medium text-sm'>Status</p>
+											<StatusBadge status={currentStatus} />
+										</div>
+									)}
+
+									<Form.Field
+										name='hireDate'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Hire Date</Form.Label>
+												<Form.Control
+													render={
+														<Form.DatePicker
+															value={field.value}
+															onValueChange={(date) =>
+																field.onChange(date ? date.toISOString() : '')
+															}
+															placeholder='Select hire date…'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='terminationDate'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Termination Date</Form.Label>
+												<Form.Control
+													render={
+														<Form.DatePicker
+															value={field.value}
+															onValueChange={(date) =>
+																field.onChange(date ? date.toISOString() : '')
+															}
+															placeholder='Select termination date…'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+								</div>
+							</FormSection>
+
+							<FormSection title='Compensation'>
+								<div className='grid gap-4'>
+									<Form.Field
+										name='baseSalary'
+										rules={{ required: 'Base salary is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Base Salary</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															type='number'
+															placeholder='0.00…'
+															autoComplete='off'
+															onChange={(e) =>
+																field.onChange(
+																	Number.parseFloat(e.target.value) || 0,
+																)
+															}
+														/>
+													}
+												/>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='payFrequency'
+										rules={{ required: 'Pay frequency is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Pay Frequency</Form.Label>
+												<Form.Control
+													render={
+														<Form.Select
+															value={field.value}
+															onValueChange={field.onChange}
+														>
+															<Form.Select.Trigger>
+																<Form.Select.Value placeholder='Select frequency…' />
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																<Form.Select.Item value='WEEKLY'>
+																	Weekly
+																</Form.Select.Item>
+																<Form.Select.Item value='BIWEEKLY'>
+																	Biweekly
+																</Form.Select.Item>
+																<Form.Select.Item value='SEMI_MONTHLY'>
+																	Semi-Monthly
+																</Form.Select.Item>
+																<Form.Select.Item value='MONTHLY'>
+																	Monthly
+																</Form.Select.Item>
+															</Form.Select.Content>
+														</Form.Select>
+													}
+												/>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+
+									<Form.Field
+										name='bankAccountId'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Bank Account ID</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															placeholder='Bank account for salary disbursement…'
+															autoComplete='off'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+								</div>
+							</FormSection>
+
+							{!isNew && (
+								<FormSection title='Status'>
+									<div className='space-y-6'>
+										<div className='space-y-2'>
+											<p className='font-medium text-sm'>Current Status</p>
+											<StatusBadge status={currentStatus} />
+										</div>
+
+										{transitions.length > 0 && (
+											<div className='space-y-2'>
+												<p className='font-medium text-sm'>Transition to</p>
+												<div className='flex flex-wrap gap-2'>
+													{transitions.map((transition) => (
+														<Button
+															key={transition.to}
+															variant='outline'
+															onClick={() => handleTransition(transition.to)}
+															disabled={transitionStatus.isPending}
+														>
+															{transition.label}
+														</Button>
+													))}
+												</div>
+											</div>
+										)}
+
+										{transitions.length === 0 && (
+											<p className='text-muted-foreground text-sm'>
+												This employee record is terminated. No further
+												transitions are available.
+											</p>
+										)}
+									</div>
+								</FormSection>
+							)}
+						</div>
+					)}
+				</Form>
+			)}
+		</RecordDialog>
+	)
+}
