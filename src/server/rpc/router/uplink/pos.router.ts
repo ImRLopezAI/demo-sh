@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const posTransactionsRouter = createTenantScopedCrudRouter({
-	moduleName: 'pos/transactions',
+	moduleName: 'pos',
+	prefix: 'transactions',
 	primaryTable: 'posTransactions',
 	viewTables: { overview: 'posTransactions' },
 	statusField: 'status',
@@ -14,13 +15,15 @@ const posTransactionsRouter = createTenantScopedCrudRouter({
 })
 
 const posTransactionLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'pos/transaction-lines',
+	moduleName: 'pos',
+	prefix: 'transaction-lines',
 	primaryTable: 'posTransactionLines',
 	viewTables: { overview: 'posTransactionLines' },
 })
 
 const terminalsRouter = createTenantScopedCrudRouter({
-	moduleName: 'pos/terminals',
+	moduleName: 'pos',
+	prefix: 'terminals',
 	primaryTable: 'terminals',
 	viewTables: { overview: 'terminals' },
 	statusField: 'status',
@@ -32,7 +35,8 @@ const terminalsRouter = createTenantScopedCrudRouter({
 })
 
 const posSessionsRouter = createTenantScopedCrudRouter({
-	moduleName: 'pos/sessions',
+	moduleName: 'pos',
+	prefix: 'sessions',
 	primaryTable: 'posSessions',
 	viewTables: { overview: 'posSessions' },
 	statusField: 'status',

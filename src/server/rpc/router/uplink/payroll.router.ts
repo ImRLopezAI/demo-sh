@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const employeesRouter = createTenantScopedCrudRouter({
-	moduleName: 'payroll/employees',
+	moduleName: 'payroll',
+	prefix: 'employees',
 	primaryTable: 'employees',
 	viewTables: { overview: 'employees' },
 	statusField: 'status',
@@ -14,13 +15,15 @@ const employeesRouter = createTenantScopedCrudRouter({
 })
 
 const employeeLedgerRouter = createTenantScopedCrudRouter({
-	moduleName: 'payroll/employee-ledger',
+	moduleName: 'payroll',
+	prefix: 'employee-ledger',
 	primaryTable: 'employeeLedgerEntries',
 	viewTables: { overview: 'employeeLedgerEntries' },
 })
 
 const journalLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'payroll/journal-lines',
+	moduleName: 'payroll',
+	prefix: 'journal-lines',
 	primaryTable: 'genJournalLines',
 	viewTables: { overview: 'genJournalLines' },
 	statusField: 'status',
@@ -32,13 +35,15 @@ const journalLinesRouter = createTenantScopedCrudRouter({
 })
 
 const glEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'payroll/gl-entries',
+	moduleName: 'payroll',
+	prefix: 'gl-entries',
 	primaryTable: 'glEntries',
 	viewTables: { overview: 'glEntries' },
 })
 
 const bankLedgerEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'payroll/bank-ledger-entries',
+	moduleName: 'payroll',
+	prefix: 'bank-ledger-entries',
 	primaryTable: 'bankAccountLedgerEntries',
 	viewTables: { overview: 'bankAccountLedgerEntries' },
 	statusField: 'reconciliationStatus',

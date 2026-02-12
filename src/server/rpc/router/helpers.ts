@@ -34,6 +34,7 @@ interface GenericTable {
 
 export interface CrudRouterConfig {
 	moduleName: string
+	prefix?: string
 	primaryTable: TableNames
 	viewTables: ViewTableMap
 	statusField?: string
@@ -140,11 +141,14 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 		.merge(queryOptsSchema)
 		.default({ viewId: 'overview', limit: 25, offset: 0 })
 
+	
+	const NAME = config.prefix ?? config.moduleName
+
 	return createRPCRouter(
 		{
 			list: publicProcedure
 				.input(listInputSchema)
-				.route({ method: 'GET', summary: `List ${config.moduleName}` })
+				.route({ method: 'GET', summary: `List ${NAME}` })
 				.handler(({ input, context }) => {
 					const table = getTable(context, config.primaryTable)
 					const tenantId = context.auth.tenantId
@@ -180,7 +184,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 			listViewRecords: publicProcedure
 				.input(viewListInputSchema)
-				.route({ method: 'GET', summary: `List ${config.moduleName} view` })
+				.route({ method: 'GET', summary: `List ${NAME} view` })
 				.handler(({ input, context }) => {
 					const tableName = (config.viewTables[input.viewId] ??
 						config.primaryTable) as TableNames
@@ -220,7 +224,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 			getById: publicProcedure
 				.input(getByIdInputSchema)
-				.route({ method: 'GET', summary: `Get ${config.moduleName} by ID` })
+				.route({ method: 'GET', summary: `Get ${NAME} by ID` })
 				.handler(({ input, context }) => {
 					const table = getTable(context, config.primaryTable)
 					const hasQueryOpts = input.with || input.columns
@@ -242,7 +246,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 			create: publicProcedure
 				.input(createSchema)
-				.route({ method: 'POST', summary: `Create ${config.moduleName}` })
+				.route({ method: 'POST', summary: `Create ${NAME}` })
 				.handler(({ input, context }) => {
 					const table = getTable(context, config.primaryTable)
 					const payload = {
@@ -262,7 +266,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 						data: updateSchema,
 					}),
 				)
-				.route({ method: 'PATCH', summary: `Update ${config.moduleName}` })
+				.route({ method: 'PATCH', summary: `Update ${NAME}` })
 				.handler(({ input, context }) => {
 					const table = getTable(context, config.primaryTable)
 					const existing = table.get(input.id)
@@ -280,7 +284,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 			delete: publicProcedure
 				.input(deleteInputSchema)
-				.route({ method: 'DELETE', summary: `Delete ${config.moduleName}` })
+				.route({ method: 'DELETE', summary: `Delete ${NAME}` })
 				.handler(({ input, context }) => {
 					const table = getTable(context, config.primaryTable)
 					const existing = table.get(input.id)
@@ -296,12 +300,12 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(transitionSchema)
 				.route({
 					method: 'POST',
-					summary: `Transition ${config.moduleName} status`,
+					summary: `Transition ${NAME} status`,
 				})
 				.handler(({ input, context }) => {
 					if (!config.statusField) {
 						throw new Error(
-							`${config.moduleName} does not have workflow status configured`,
+							`${NAME} does not have workflow status configured`,
 						)
 					}
 
@@ -349,7 +353,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 			kpis: publicProcedure
 				.input(z.object({}).default({}))
-				.route({ method: 'GET', summary: `Get ${config.moduleName} KPIs` })
+				.route({ method: 'GET', summary: `Get ${NAME} KPIs` })
 				.handler(({ context }) => {
 					const table = getTable(context, config.primaryTable)
 					const tenantId = context.auth.tenantId

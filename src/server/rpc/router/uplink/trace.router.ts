@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const shipmentsRouter = createTenantScopedCrudRouter({
-	moduleName: 'trace/shipments',
+	moduleName: 'trace',
+	prefix: 'shipments',
 	primaryTable: 'shipments',
 	viewTables: { overview: 'shipments' },
 	statusField: 'status',
@@ -16,13 +17,15 @@ const shipmentsRouter = createTenantScopedCrudRouter({
 })
 
 const shipmentLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'trace/shipment-lines',
+	moduleName: 'trace',
+	prefix: 'shipment-lines',
 	primaryTable: 'shipmentLines',
 	viewTables: { overview: 'shipmentLines' },
 })
 
 const shipmentMethodsRouter = createTenantScopedCrudRouter({
-	moduleName: 'trace/shipment-methods',
+	moduleName: 'trace',
+	prefix: 'shipment-methods',
 	primaryTable: 'shipmentMethods',
 	viewTables: { overview: 'shipmentMethods' },
 })

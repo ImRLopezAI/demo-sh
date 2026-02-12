@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const purchaseHeadersRouter = createTenantScopedCrudRouter({
-	moduleName: 'replenishment/purchase-orders',
+	moduleName: 'replenishment',
+	prefix: 'purchase-orders',
 	primaryTable: 'purchaseHeaders',
 	viewTables: { overview: 'purchaseHeaders' },
 	statusField: 'status',
@@ -16,19 +17,22 @@ const purchaseHeadersRouter = createTenantScopedCrudRouter({
 })
 
 const purchaseLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'replenishment/purchase-lines',
+	moduleName: 'replenishment',
+	prefix: 'purchase-lines',
 	primaryTable: 'purchaseLines',
 	viewTables: { overview: 'purchaseLines' },
 })
 
 const vendorsRouter = createTenantScopedCrudRouter({
-	moduleName: 'replenishment/vendors',
+	moduleName: 'replenishment',
+	prefix: 'vendors',
 	primaryTable: 'vendors',
 	viewTables: { overview: 'vendors' },
 })
 
 const transferHeadersRouter = createTenantScopedCrudRouter({
-	moduleName: 'replenishment/transfers',
+	moduleName: 'replenishment',
+	prefix: 'transfers',
 	primaryTable: 'transferHeaders',
 	viewTables: { overview: 'transferHeaders' },
 	statusField: 'status',
@@ -41,7 +45,8 @@ const transferHeadersRouter = createTenantScopedCrudRouter({
 })
 
 const transferLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'replenishment/transfer-lines',
+	moduleName: 'replenishment',
+	prefix: 'transfer-lines',
 	primaryTable: 'transferLines',
 	viewTables: { overview: 'transferLines' },
 })

@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const operationTasksRouter = createTenantScopedCrudRouter({
-	moduleName: 'hub/operation-tasks',
+	moduleName: 'hub',
+	prefix: 'operation-tasks',
 	primaryTable: 'operationTasks',
 	viewTables: {
 		overview: 'operationTasks',
@@ -19,7 +20,8 @@ const operationTasksRouter = createTenantScopedCrudRouter({
 })
 
 const notificationsRouter = createTenantScopedCrudRouter({
-	moduleName: 'hub/notifications',
+	moduleName: 'hub',
+	prefix: 'notifications',
 	primaryTable: 'moduleNotifications',
 	viewTables: { overview: 'moduleNotifications' },
 	statusField: 'status',

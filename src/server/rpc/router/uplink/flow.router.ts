@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const bankAccountsRouter = createTenantScopedCrudRouter({
-	moduleName: 'flow/bank-accounts',
+	prefix: 'bank-accounts',
+	moduleName: 'flow',
 	primaryTable: 'bankAccounts',
 	viewTables: { overview: 'bankAccounts' },
 	statusField: 'status',
@@ -15,7 +16,8 @@ const bankAccountsRouter = createTenantScopedCrudRouter({
 })
 
 const bankLedgerEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'flow/bank-ledger-entries',
+	moduleName: 'flow',
+	prefix: 'bank-ledger-entries',
 	primaryTable: 'bankAccountLedgerEntries',
 	viewTables: { overview: 'bankAccountLedgerEntries' },
 	statusField: 'reconciliationStatus',
@@ -28,7 +30,8 @@ const bankLedgerEntriesRouter = createTenantScopedCrudRouter({
 })
 
 const journalLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'flow/journal-lines',
+	moduleName: 'flow',
+	prefix: 'journal-lines',
 	primaryTable: 'genJournalLines',
 	viewTables: { overview: 'genJournalLines' },
 	statusField: 'status',
@@ -40,7 +43,8 @@ const journalLinesRouter = createTenantScopedCrudRouter({
 })
 
 const glEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'flow/gl-entries',
+	moduleName: 'flow',
+	prefix: 'gl-entries',
 	primaryTable: 'glEntries',
 	viewTables: { overview: 'glEntries' },
 })

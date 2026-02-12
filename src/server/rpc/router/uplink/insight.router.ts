@@ -2,19 +2,22 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const itemLedgerEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'insight/item-ledger-entries',
+	moduleName: 'insight',
+	prefix: 'item-ledger-entries',
 	primaryTable: 'itemLedgerEntries',
 	viewTables: { overview: 'itemLedgerEntries' },
 })
 
 const locationsRouter = createTenantScopedCrudRouter({
-	moduleName: 'insight/locations',
+	moduleName: 'insight',
+	prefix: 'locations',
 	primaryTable: 'locations',
 	viewTables: { overview: 'locations' },
 })
 
 const valueEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'insight/value-entries',
+	moduleName: 'insight',
+	prefix: 'value-entries',
 	primaryTable: 'valueEntries',
 	viewTables: { overview: 'valueEntries' },
 })

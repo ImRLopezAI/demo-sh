@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const salesHeadersRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/sales-orders',
+	moduleName: 'market',
+	prefix: 'sales-orders',
 	primaryTable: 'salesHeaders',
 	viewTables: { overview: 'salesHeaders' },
 	statusField: 'status',
@@ -16,25 +17,29 @@ const salesHeadersRouter = createTenantScopedCrudRouter({
 })
 
 const salesLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/sales-lines',
+	moduleName: 'market',
+	prefix: 'sales-lines',
 	primaryTable: 'salesLines',
 	viewTables: { overview: 'salesLines' },
 })
 
 const itemsRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/items',
+	moduleName: 'market',
+	prefix: 'items',
 	primaryTable: 'items',
 	viewTables: { overview: 'items' },
 })
 
 const customersRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/customers',
+	moduleName: 'market',
+	prefix: 'customers',
 	primaryTable: 'customers',
 	viewTables: { overview: 'customers' },
 })
 
 const cartsRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/carts',
+	moduleName: 'market',
+	prefix: 'carts',
 	primaryTable: 'carts',
 	viewTables: { overview: 'carts' },
 	statusField: 'status',
@@ -44,7 +49,8 @@ const cartsRouter = createTenantScopedCrudRouter({
 })
 
 const cartLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'market/cart-lines',
+	moduleName: 'market',
+	prefix: 'cart-lines',
 	primaryTable: 'cartLines',
 	viewTables: { overview: 'cartLines' },
 })

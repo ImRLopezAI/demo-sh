@@ -2,7 +2,8 @@ import { createRPCRouter } from '@server/rpc/init'
 import { createTenantScopedCrudRouter } from '../helpers'
 
 const salesInvoiceHeadersRouter = createTenantScopedCrudRouter({
-	moduleName: 'ledger/invoices',
+	moduleName: 'ledger',
+	prefix: 'invoices',
 	primaryTable: 'salesInvoiceHeaders',
 	viewTables: { overview: 'salesInvoiceHeaders' },
 	statusField: 'status',
@@ -14,19 +15,22 @@ const salesInvoiceHeadersRouter = createTenantScopedCrudRouter({
 })
 
 const salesInvoiceLinesRouter = createTenantScopedCrudRouter({
-	moduleName: 'ledger/invoice-lines',
+	moduleName: 'ledger',
+	prefix: 'invoice-lines',
 	primaryTable: 'salesInvoiceLines',
 	viewTables: { overview: 'salesInvoiceLines' },
 })
 
 const custLedgerEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'ledger/customer-ledger',
+	moduleName: 'ledger',
+	prefix: 'customer-ledger',
 	primaryTable: 'custLedgerEntries',
 	viewTables: { overview: 'custLedgerEntries' },
 })
 
 const glEntriesRouter = createTenantScopedCrudRouter({
-	moduleName: 'ledger/gl-entries',
+	moduleName: 'ledger',
+	prefix: 'gl-entries',
 	primaryTable: 'glEntries',
 	viewTables: { overview: 'glEntries' },
 })

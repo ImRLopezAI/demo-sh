@@ -50,12 +50,7 @@ export function createRPCRouter<T extends AnyRouter>(
 			typeof procedure === 'object' &&
 			'route' in procedure
 		) {
-			// Apply default OpenAPI config if the procedure has a .route method
-			routesWithOpenApi[key] = procedure.route({
-				...defaultOpenApi,
-				// Allow individual route configs to override defaults
-				...((procedure as any)._routeConfig || {}),
-			})
+			routesWithOpenApi[key] = procedure.route(defaultOpenApi)
 		} else {
 			routesWithOpenApi[key] = procedure
 		}
