@@ -57,7 +57,8 @@ export default function PosDashboard() {
 		(transaction) => transaction.status === 'COMPLETED',
 	).length
 	const netSales = transactions.reduce(
-		(sum, transaction) => sum + (transaction.paidAmount ?? transaction.totalAmount ?? 0),
+		(sum, transaction) =>
+			sum + (transaction.paidAmount ?? transaction.totalAmount ?? 0),
 		0,
 	)
 	const avgTicket = average(
@@ -110,12 +111,19 @@ export default function PosDashboard() {
 	)
 
 	const monthlyTransactionVolume = React.useMemo(
-		() => buildMonthlySeries(transactions, (transaction) => transaction.transactionAt),
+		() =>
+			buildMonthlySeries(
+				transactions,
+				(transaction) => transaction.transactionAt,
+			),
 		[transactions],
 	)
 
 	const transactionStatusMix = React.useMemo(
-		() => buildCategorySeries(transactions.map((transaction) => transaction.status)),
+		() =>
+			buildCategorySeries(
+				transactions.map((transaction) => transaction.status),
+			),
 		[transactions],
 	)
 
@@ -191,7 +199,7 @@ export default function PosDashboard() {
 				</CardHeader>
 				<CardContent>
 					{isLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}
@@ -204,15 +212,17 @@ export default function PosDashboard() {
 							No transactions found.
 						</p>
 					) : (
-						<div className='space-y-1'>
+						<ul className='space-y-1'>
 							{recentTransactions.map((transaction) => (
-								<div
+								<li
 									key={transaction.id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
+									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
 								>
-									<div className='flex items-center gap-3'>
-										<span className='font-medium'>{transaction.receiptNo}</span>
-										<span className='text-muted-foreground text-xs'>
+									<div className='flex min-w-0 items-center gap-3'>
+										<span className='truncate font-medium'>
+											{transaction.receiptNo}
+										</span>
+										<span className='truncate text-muted-foreground text-xs'>
 											{transaction.customerId}
 										</span>
 									</div>
@@ -225,9 +235,9 @@ export default function PosDashboard() {
 										</span>
 										<StatusBadge status={transaction.status} />
 									</div>
-								</div>
+								</li>
 							))}
-						</div>
+						</ul>
 					)}
 				</CardContent>
 			</Card>

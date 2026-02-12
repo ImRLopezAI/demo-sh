@@ -56,10 +56,12 @@ interface Transfer {
 }
 
 export default function Dashboard() {
-	const { items: purchaseOrders, isLoading: purchaseOrdersLoading } = useModuleData<
-		'replenishment',
-		PurchaseOrder
-	>('replenishment', 'purchaseOrders', 'all')
+	const { items: purchaseOrders, isLoading: purchaseOrdersLoading } =
+		useModuleData<'replenishment', PurchaseOrder>(
+			'replenishment',
+			'purchaseOrders',
+			'all',
+		)
 
 	const { items: vendors, isLoading: vendorsLoading } = useModuleData<
 		'replenishment',
@@ -78,13 +80,15 @@ export default function Dashboard() {
 	const activeVendors = vendors.filter((vendor) => !vendor.blocked).length
 	const blockedVendors = vendors.length - activeVendors
 	const activeTransfers = transfers.filter(
-		(transfer) => transfer.status === 'RELEASED' || transfer.status === 'IN_TRANSIT',
+		(transfer) =>
+			transfer.status === 'RELEASED' || transfer.status === 'IN_TRANSIT',
 	).length
 	const averagePOValue = average(
 		purchaseOrders.map((order) => order.totalAmount ?? 0),
 	)
 	const urgentReceipts = purchaseOrders.filter((order) => {
-		if (order.status === 'COMPLETED' || order.status === 'CANCELED') return false
+		if (order.status === 'COMPLETED' || order.status === 'CANCELED')
+			return false
 		const expectedDate = new Date(order.expectedReceiptDate).getTime()
 		if (Number.isNaN(expectedDate)) return false
 		const now = Date.now()
@@ -135,8 +139,7 @@ export default function Dashboard() {
 			[...purchaseOrders]
 				.sort(
 					(a, b) =>
-						new Date(b.orderDate).getTime() -
-						new Date(a.orderDate).getTime(),
+						new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime(),
 				)
 				.slice(0, 8),
 		[purchaseOrders],
@@ -201,7 +204,7 @@ export default function Dashboard() {
 				</CardHeader>
 				<CardContent>
 					{isLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, index) => (
 								<div
 									key={`skeleton-${index}`}
@@ -214,19 +217,21 @@ export default function Dashboard() {
 							No purchase orders found.
 						</p>
 					) : (
-						<div className='space-y-1'>
+						<ul className='space-y-1'>
 							{recentPurchaseOrders.map((order) => (
-								<div
+								<li
 									key={order.id}
 									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
 								>
-									<div className='flex items-center gap-3'>
-										<span className='font-medium'>{order.documentNo}</span>
-										<span className='text-muted-foreground text-xs'>
+									<div className='flex min-w-0 items-center gap-3'>
+										<span className='truncate font-medium'>
+											{order.documentNo}
+										</span>
+										<span className='truncate text-muted-foreground text-xs'>
 											{order.vendorId}
 										</span>
 									</div>
-									<div className='flex items-center gap-3'>
+									<div className='flex shrink-0 items-center gap-3'>
 										<span className='text-muted-foreground text-xs tabular-nums'>
 											$
 											{order.totalAmount?.toLocaleString('en-US', {
@@ -235,9 +240,9 @@ export default function Dashboard() {
 										</span>
 										<StatusBadge status={order.status} />
 									</div>
-								</div>
+								</li>
 							))}
-						</div>
+						</ul>
 					)}
 				</CardContent>
 			</Card>

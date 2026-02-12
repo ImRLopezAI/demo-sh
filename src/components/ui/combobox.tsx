@@ -39,7 +39,13 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
 	return (
 		<ComboboxPrimitive.Clear
 			data-slot='combobox-clear'
-			render={<InputGroupButton variant='ghost' size='icon-xs' />}
+			render={
+				<InputGroupButton
+					variant='ghost'
+					size='icon-xs'
+					aria-label='Clear selection'
+				/>
+			}
 			className={cn(className)}
 			{...props}
 		>
@@ -70,6 +76,7 @@ function ComboboxInput({
 					<InputGroupButton
 						size='icon-xs'
 						variant='ghost'
+						aria-label='Toggle options'
 						render={<ComboboxTrigger />}
 						data-slot='input-group-button'
 						className='group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent'
@@ -110,7 +117,7 @@ function ComboboxContent({
 					data-slot='combobox-content'
 					data-chips={!!anchor}
 					className={cn(
-						'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark group/combobox-content relative max-h-(--available-height) max-h-72 w-(--anchor-width) min-w-32 min-w-[calc(var(--anchor-width)+--spacing(7))] max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[chips=true]:min-w-(--anchor-width) data-closed:animate-out data-open:animate-in *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-7 *:data-[slot=input-group]:border-none *:data-[slot=input-group]:bg-input/20 *:data-[slot=input-group]:shadow-none dark:bg-popover',
+						'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark group/combobox-content relative max-h-(--available-height) max-h-72 w-(--anchor-width) min-w-32 min-w-[calc(var(--anchor-width)+--spacing(7))] max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/15 duration-100 data-[chips=true]:min-w-(--anchor-width) data-closed:animate-out data-open:animate-in *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-7 *:data-[slot=input-group]:border-none *:data-[slot=input-group]:bg-input/20 *:data-[slot=input-group]:shadow-none dark:bg-popover',
 						className,
 					)}
 					{...props}
@@ -142,7 +149,7 @@ function ComboboxItem({
 		<ComboboxPrimitive.Item
 			data-slot='combobox-item'
 			className={cn(
-				"relative flex min-h-7 w-full cursor-default select-none items-center gap-2 rounded-md px-2 py-1 text-xs/relaxed outline-hidden data-[disabled]:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-3.5 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"relative flex min-h-7 w-full cursor-default select-none items-center gap-2 rounded px-2 py-1 text-xs/relaxed outline-hidden data-[disabled]:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-3.5 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				className,
 			)}
 			{...props}
@@ -251,7 +258,7 @@ function ComboboxChip({
 			{children}
 			{showRemove && (
 				<ComboboxPrimitive.ChipRemove
-					render={<Button variant='ghost' size='icon-xs' />}
+					render={<Button variant='ghost' size='icon-xs' aria-label='Remove' />}
 					className='-ml-1 opacity-50 hover:opacity-100'
 					data-slot='combobox-chip-remove'
 				>

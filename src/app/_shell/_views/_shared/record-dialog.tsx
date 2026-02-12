@@ -10,7 +10,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const recordDialogVariants = cva(
-	'flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 max-sm:rounded-none sm:rounded-lg md:h-[90dvh]',
+	'flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 max-sm:rounded-none sm:rounded-md md:h-[90dvh]',
 	{
 		variants: {
 			size: {

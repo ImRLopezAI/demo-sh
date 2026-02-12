@@ -207,9 +207,7 @@ export function DataGrid<TData>({
 
 	return (
 		<DirectionProvider direction={dir}>
-			<ScrollInterceptor
-				slots={scrollInterceptors}
-			>
+			<ScrollInterceptor slots={scrollInterceptors}>
 				<div
 					data-slot='grid-wrapper'
 					dir={dir}
@@ -250,9 +248,7 @@ export function DataGrid<TData>({
 						)}
 						style={{
 							...columnSizeVars,
-							...(enablePagination
-								? {}
-								: { maxHeight: `${resolvedHeight}px` }),
+							...(enablePagination ? {} : { maxHeight: `${resolvedHeight}px` }),
 							width: stretchColumns ? '100%' : 'var(--grid-width)',
 							minWidth: 'var(--grid-width)',
 						}}
@@ -302,7 +298,7 @@ export function DataGrid<TData>({
 								<div className='absolute inset-0 flex items-center justify-center'>
 									<div className='flex items-center gap-2 rounded-md border bg-card px-4 py-2 text-muted-foreground text-sm shadow-xs'>
 										<Spinner />
-										<span>Loading...</span>
+										<span>Loading…</span>
 									</div>
 								</div>
 							)}
@@ -372,7 +368,7 @@ export function DataGrid<TData>({
 								>
 									<div className='flex items-center gap-2 rounded-md bg-card px-4 py-2 text-muted-foreground text-sm shadow-xs'>
 										<Spinner />
-										<span>Loading...</span>
+										<span>Loading…</span>
 									</div>
 								</div>
 							)}

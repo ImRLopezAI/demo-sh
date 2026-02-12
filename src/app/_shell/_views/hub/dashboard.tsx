@@ -67,7 +67,9 @@ export default function Dashboard() {
 	const unreadNotifications = notifications.filter(
 		(notification) => notification.status === 'UNREAD',
 	).length
-	const criticalTasks = tasks.filter((task) => task.priority === 'CRITICAL').length
+	const criticalTasks = tasks.filter(
+		(task) => task.priority === 'CRITICAL',
+	).length
 	const errorNotifications = notifications.filter(
 		(notification) => notification.severity === 'ERROR',
 	).length
@@ -183,7 +185,7 @@ export default function Dashboard() {
 									aria-hidden='true'
 									className='mr-2 size-4 motion-safe:animate-spin'
 								/>
-								Loading...
+								Loading…
 							</div>
 						) : recentTasks.length === 0 ? (
 							<p className='py-4 text-center text-muted-foreground text-sm'>
@@ -227,7 +229,7 @@ export default function Dashboard() {
 									aria-hidden='true'
 									className='mr-2 size-4 motion-safe:animate-spin'
 								/>
-								Loading...
+								Loading…
 							</div>
 						) : recentNotifications.length === 0 ? (
 							<p className='py-4 text-center text-muted-foreground text-sm'>

@@ -41,7 +41,10 @@ export function buildMonthlySeries<T>(
 	})
 
 	const buckets = new Map(
-		bucketSeeds.map((seed) => [seed.key, { month: seed.month, count: 0, amount: 0 }]),
+		bucketSeeds.map((seed) => [
+			seed.key,
+			{ month: seed.month, count: 0, amount: 0 },
+		]),
 	)
 
 	for (const item of items) {
@@ -55,7 +58,10 @@ export function buildMonthlySeries<T>(
 		}
 	}
 
-	return bucketSeeds.map((seed) => buckets.get(seed.key) ?? { month: seed.month, count: 0, amount: 0 })
+	return bucketSeeds.map(
+		(seed) =>
+			buckets.get(seed.key) ?? { month: seed.month, count: 0, amount: 0 },
+	)
 }
 
 export type CategorySeriesPoint = {
@@ -70,7 +76,8 @@ export function buildCategorySeries(
 ): CategorySeriesPoint[] {
 	const counts = new Map<string, number>()
 	for (const value of values) {
-		const key = typeof value === 'string' && value.trim().length > 0 ? value : fallback
+		const key =
+			typeof value === 'string' && value.trim().length > 0 ? value : fallback
 		counts.set(key, (counts.get(key) ?? 0) + 1)
 	}
 
@@ -80,11 +87,7 @@ export function buildCategorySeries(
 		.slice(0, Math.max(1, limit))
 }
 
-export function formatPercent(
-	part: number,
-	total: number,
-	fractionDigits = 1,
-) {
+export function formatPercent(part: number, total: number, fractionDigits = 1) {
 	if (!Number.isFinite(part) || !Number.isFinite(total) || total <= 0) {
 		return '0%'
 	}
@@ -110,7 +113,11 @@ export function safeDivide(
 	denominator: number,
 	fallback = 0,
 ) {
-	if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+	if (
+		!Number.isFinite(numerator) ||
+		!Number.isFinite(denominator) ||
+		denominator === 0
+	) {
 		return fallback
 	}
 	return numerator / denominator

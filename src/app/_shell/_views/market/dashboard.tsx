@@ -67,7 +67,9 @@ export default function MarketDashboard() {
 		0,
 	)
 	const avgOrderValue = average(orders.map((order) => order.totalAmount ?? 0))
-	const activeCustomers = customers.filter((customer) => !customer.blocked).length
+	const activeCustomers = customers.filter(
+		(customer) => !customer.blocked,
+	).length
 	const blockedCustomers = customers.length - activeCustomers
 	const avgLinesPerOrder = average(orders.map((order) => order.lineCount ?? 0))
 	const topItem = [...itemRecords].sort(
@@ -110,7 +112,11 @@ export default function MarketDashboard() {
 	)
 
 	const orderStatusMix = React.useMemo(
-		() => buildCategorySeries(orders.map((order) => order.status), 6),
+		() =>
+			buildCategorySeries(
+				orders.map((order) => order.status),
+				6,
+			),
 		[orders],
 	)
 
@@ -182,7 +188,7 @@ export default function MarketDashboard() {
 				</CardHeader>
 				<CardContent>
 					{isLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}
@@ -193,15 +199,17 @@ export default function MarketDashboard() {
 					) : recentOrders.length === 0 ? (
 						<p className='text-muted-foreground text-sm'>No orders found.</p>
 					) : (
-						<div className='space-y-1'>
+						<ul className='space-y-1'>
 							{recentOrders.map((order) => (
-								<div
+								<li
 									key={order.id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
+									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
 								>
-									<div className='flex items-center gap-3'>
-										<span className='font-medium'>{order.documentNo}</span>
-										<span className='text-muted-foreground text-xs'>
+									<div className='flex min-w-0 items-center gap-3'>
+										<span className='truncate font-medium'>
+											{order.documentNo}
+										</span>
+										<span className='truncate text-muted-foreground text-xs'>
 											{order.customerId}
 										</span>
 									</div>
@@ -214,9 +222,9 @@ export default function MarketDashboard() {
 										</span>
 										<StatusBadge status={order.status} />
 									</div>
-								</div>
+								</li>
 							))}
-						</div>
+						</ul>
 					)}
 				</CardContent>
 			</Card>

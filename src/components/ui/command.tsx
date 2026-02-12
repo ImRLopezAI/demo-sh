@@ -19,7 +19,7 @@ function Command({
 		<CommandPrimitive
 			data-slot='command'
 			className={cn(
-				'flex size-full flex-col overflow-hidden rounded-xl bg-popover p-1 text-popover-foreground',
+				'flex size-full flex-col overflow-hidden rounded-md bg-popover p-1 text-popover-foreground',
 				className,
 			)}
 			{...props}
@@ -48,7 +48,7 @@ function CommandDialog({
 				<DialogDescription>{description}</DialogDescription>
 			</DialogHeader>
 			<DialogContent
-				className={cn('overflow-hidden rounded-xl! p-0 p-0', className)}
+				className={cn('overflow-hidden rounded-md! p-0 p-0', className)}
 				showCloseButton={showCloseButton}
 			>
 				{children}
@@ -66,6 +66,7 @@ function CommandInput({
 			<InputGroup className='h-8! bg-input/20 dark:bg-input/30'>
 				<CommandPrimitive.Input
 					data-slot='command-input'
+					aria-label='Search commands'
 					className={cn(
 						'w-full text-xs/relaxed outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
 						className,

@@ -40,7 +40,21 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 			},
 			{
 				name: 'viewport',
-				content: 'width=device-width, initial-scale=1',
+				content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+			},
+			{
+				name: 'color-scheme',
+				content: 'light dark',
+			},
+			{
+				name: 'theme-color',
+				content: '#f8f8fa',
+				media: '(prefers-color-scheme: light)',
+			},
+			{
+				name: 'theme-color',
+				content: '#1a1a22',
+				media: '(prefers-color-scheme: dark)',
 			},
 			{
 				title: 'Agentic - AI-Powered',
@@ -64,6 +78,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
+				<a
+					href='#main-content'
+					className='sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:font-medium focus:text-sm focus:shadow-lg focus:ring-2 focus:ring-ring'
+				>
+					Skip to main content
+				</a>
 				<Providers>{children}</Providers>
 				<React.Suspense>
 					<DevTools

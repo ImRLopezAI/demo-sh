@@ -257,29 +257,31 @@ export function PurchaseOrderCard({
 										<Form.Label>Vendor</Form.Label>
 										<Form.Control>
 											<Form.Combo
+												items={vendorsList?.items}
 												value={field.value}
-												onValueChange={field.onChange}
 											>
 												<Form.Combo.Input
 													showClear
 													placeholder='Search vendors\u2026'
+													autoComplete='off'
+													onChange={(e) => {
+														const selected = vendorsList?.items.find(
+															(v) =>
+																v.name.toLowerCase() ===
+																e.currentTarget.value.toLowerCase(),
+														)
+														field.onChange(selected?._id ?? '')
+													}}
 												/>
 												<Form.Combo.Content>
 													<Form.Combo.List>
-														{(vendorsList?.items ?? []).map(
-															(v: Record<string, unknown>) => (
-																<Form.Combo.Item
-																	key={v._id as string}
-																	value={v._id as string}
-																>
-																	{v.vendorNo as string} - {v.name as string}
-																</Form.Combo.Item>
-															),
+														{(v) => (
+															<Form.Combo.Item key={v._id} value={v._id}>
+																{v.vendorNo} - {v.name}
+															</Form.Combo.Item>
 														)}
-														<Form.Combo.Empty>
-															No vendors found
-														</Form.Combo.Empty>
 													</Form.Combo.List>
+													<Form.Combo.Empty>No vendors found</Form.Combo.Empty>
 												</Form.Combo.Content>
 											</Form.Combo>
 										</Form.Control>

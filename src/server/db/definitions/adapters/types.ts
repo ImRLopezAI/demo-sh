@@ -72,6 +72,44 @@ export interface StorageAdapter<TAsync extends boolean = false> {
 
 	/** Close/cleanup adapter resources */
 	close?(): TAsync extends true ? Promise<void> : void
+
+	/**
+	 * Optional query pushdown.
+	 * Adapters can implement this to filter/sort at the storage level
+	 * rather than loading all data into memory.
+	 */
+	query?<T extends object>(
+		tableName: string,
+		options: AdapterQueryOptions,
+	): TAsync extends true
+		? Promise<WithSystemFields<T>[]>
+		: WithSystemFields<T>[]
+}
+
+/**
+ * Serializable filter descriptors for adapter query pushdown.
+ */
+export type AdapterFilter =
+	| { type: 'eq'; field: string; value: unknown }
+	| { type: 'ne'; field: string; value: unknown }
+	| { type: 'gt'; field: string; value: number | string }
+	| { type: 'gte'; field: string; value: number | string }
+	| { type: 'lt'; field: string; value: number | string }
+	| { type: 'lte'; field: string; value: number | string }
+	| { type: 'in'; field: string; values: unknown[] }
+	| { type: 'isNull'; field: string }
+	| { type: 'isNotNull'; field: string }
+	| { type: 'and'; filters: AdapterFilter[] }
+	| { type: 'or'; filters: AdapterFilter[] }
+
+/**
+ * Query options for adapter pushdown.
+ */
+export interface AdapterQueryOptions {
+	filter?: AdapterFilter
+	orderBy?: { field: string; direction: 'asc' | 'desc' }
+	limit?: number
+	offset?: number
 }
 
 /** Sync storage adapter type */

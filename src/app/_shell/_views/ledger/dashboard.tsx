@@ -75,7 +75,9 @@ export default function Dashboard() {
 		(sum, entry) => sum + (entry.remainingAmount ?? 0),
 		0,
 	)
-	const avgInvoiceAmount = average(invoices.map((invoice) => invoice.totalAmount ?? 0))
+	const avgInvoiceAmount = average(
+		invoices.map((invoice) => invoice.totalAmount ?? 0),
+	)
 	const creditMemoCount = customerEntries.filter(
 		(entry) => entry.documentType === 'CREDIT_MEMO',
 	).length
@@ -117,12 +119,7 @@ export default function Dashboard() {
 				icon: BookOpen,
 			},
 		],
-		[
-			invoicedAmount,
-			openReceivables,
-			postedInvoices,
-			totalInvoices,
-		],
+		[invoicedAmount, openReceivables, postedInvoices, totalInvoices],
 	)
 
 	const monthlyInvoiceVolume = React.useMemo(
@@ -208,7 +205,7 @@ export default function Dashboard() {
 				</CardHeader>
 				<CardContent className='pt-4'>
 					{isLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}
@@ -219,15 +216,17 @@ export default function Dashboard() {
 					) : recentInvoices.length === 0 ? (
 						<p className='text-muted-foreground text-sm'>No invoices found.</p>
 					) : (
-						<div className='space-y-1'>
+						<ul className='space-y-1'>
 							{recentInvoices.map((invoice) => (
-								<div
+								<li
 									key={invoice.id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
+									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
 								>
-									<div className='flex items-center gap-3'>
-										<span className='font-medium'>{invoice.invoiceNo}</span>
-										<span className='text-muted-foreground text-xs'>
+									<div className='flex min-w-0 items-center gap-3'>
+										<span className='truncate font-medium'>
+											{invoice.invoiceNo}
+										</span>
+										<span className='truncate text-muted-foreground text-xs'>
 											{invoice.customerId}
 										</span>
 									</div>
@@ -240,9 +239,9 @@ export default function Dashboard() {
 										</span>
 										<StatusBadge status={invoice.status} />
 									</div>
-								</div>
+								</li>
 							))}
-						</div>
+						</ul>
 					)}
 				</CardContent>
 			</Card>

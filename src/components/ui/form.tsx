@@ -269,15 +269,15 @@ function FormLabel({
 	className,
 	...props
 }: React.ComponentProps<typeof FieldLabel>) {
-	const { error, name, formItemId } = useFormField()
+	const { error, formItemId } = useFormField()
 
 	return (
 		<FieldLabel
 			data-slot='form-label'
 			data-error={!!error}
 			className={cn('data-[error=true]:text-destructive', className)}
-			htmlFor={name}
-			id={formItemId}
+			htmlFor={formItemId}
+			id={`${formItemId}-label`}
 			{...props}
 		/>
 	)
@@ -471,8 +471,8 @@ function FormSubmit<TFieldValues extends FieldValues = FieldValues>({
 			{form.formState.isSubmitting
 				? props.loadingState || (
 						<>
-							<Loader2 className='mr-2 h-4 w-4 animate-spin' />
-							Guardando...
+							<Loader2 className='mr-2 h-4 w-4 motion-safe:animate-spin' />
+							Saving\u2026
 						</>
 					)
 				: children}

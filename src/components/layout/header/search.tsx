@@ -32,7 +32,8 @@ function getSearchEntries(
 	const entries: SearchEntry[] = []
 
 	for (const group of items) {
-		const modules = group.type === 'dynamic' ? group.dynamicItems() : group.items
+		const modules =
+			group.type === 'dynamic' ? group.dynamicItems() : group.items
 
 		for (const module of modules) {
 			for (const child of module.items ?? []) {
@@ -84,17 +85,20 @@ export default function Search() {
 	}, [])
 
 	return (
-		<div className='lg:flex-1 lg:max-w-sm'>
+		<div className='lg:max-w-sm lg:flex-1'>
 			<div className='relative hidden max-w-sm flex-1 lg:block'>
 				<SearchIcon className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
 				<Button
 					variant='outline'
-					className='h-9 w-full justify-start rounded-md border-border/70 bg-card/90 pl-9 pr-14 font-normal text-muted-foreground text-xs shadow-xs transition-colors hover:bg-card hover:text-foreground'
+					className='h-9 w-full justify-start rounded-md border-border/70 bg-card/90 pr-14 pl-9 font-normal text-muted-foreground text-xs shadow-xs transition-colors hover:bg-card hover:text-foreground'
 					onClick={() => setOpen(true)}
 				>
 					Search modules or pages...
 				</Button>
-				<div className='absolute top-1/2 right-1 hidden -translate-y-1/2 items-center gap-1 rounded-sm border border-border/70 bg-muted/60 px-1.5 py-1 font-medium font-mono text-[10px] sm:flex'>
+				<div
+					aria-hidden='true'
+					className='absolute top-1/2 right-1 hidden -translate-y-1/2 items-center gap-1 rounded-sm border border-border/70 bg-muted/60 px-1.5 py-1 font-medium font-mono text-[10px] sm:flex'
+				>
 					<CommandIcon className='size-3' />
 					<span>K</span>
 				</div>
@@ -103,6 +107,7 @@ export default function Search() {
 				<Button
 					size='icon'
 					variant='ghost'
+					aria-label='Search'
 					className='rounded-md border border-transparent hover:border-border/70 hover:bg-muted/60'
 					onClick={() => setOpen(true)}
 				>

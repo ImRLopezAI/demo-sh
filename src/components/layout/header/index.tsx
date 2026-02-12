@@ -1,5 +1,6 @@
 'use client'
 
+import { Link } from '@tanstack/react-router'
 import { AnimatedThemeToggler } from '@ui/animated-theme-toggler'
 import { MobileNav } from '@/components/layout/header/mobile-nav'
 import Search from '@/components/layout/header/search'
@@ -8,10 +9,13 @@ import { Separator } from '@/components/ui/separator'
 
 export function SiteHeader() {
 	return (
-		<header className='sticky top-0 z-50 flex h-[var(--header-height)] shrink-0 items-center border-border/75 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/70'>
+		<header className='sticky top-0 z-50 flex h-[var(--header-height)] shrink-0 items-center border-border border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/70'>
 			<div className='mx-auto flex w-full max-w-[1680px] items-center gap-2 px-4 lg:gap-3 lg:px-6'>
-				<div className='flex items-center gap-2.5'>
-					<div className='flex size-9 items-center justify-center rounded-lg border border-primary/35 bg-linear-to-br from-primary to-primary/80 text-primary-foreground shadow-xs'>
+				<Link
+					to='/'
+					className='flex items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50'
+				>
+					<div className='flex size-9 items-center justify-center rounded-md border border-primary/35 bg-linear-to-br from-primary to-primary/80 text-primary-foreground shadow-xs'>
 						<span className='font-bold text-xs tracking-wider'>U</span>
 					</div>
 					<div className='hidden flex-col leading-none sm:flex'>
@@ -20,11 +24,8 @@ export function SiteHeader() {
 							Operations Suite
 						</span>
 					</div>
-				</div>
-				<Separator
-					orientation='vertical'
-					className='mx-2 hidden lg:block'
-				/>
+				</Link>
+				<Separator orientation='vertical' className='mx-2 hidden lg:block' />
 				<MobileNav />
 				<TopNav />
 				<div className='ml-auto flex items-center gap-2'>

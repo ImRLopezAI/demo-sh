@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './app/__root'
 import { Route as ShellRouteRouteImport } from './app/_shell/route'
+import { Route as IndexRouteImport } from './app/index'
 import { Route as ApiSplatRouteImport } from './app/api/$'
 import { Route as ShellSplatRouteImport } from './app/_shell/$'
 
 const ShellRouteRoute = ShellRouteRouteImport.update({
   id: '/_shell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -29,17 +35,18 @@ const ShellSplatRoute = ShellSplatRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof ShellRouteRouteWithChildren
+  '/': typeof IndexRoute
   '/$': typeof ShellSplatRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof ShellRouteRouteWithChildren
+  '/': typeof IndexRoute
   '/$': typeof ShellSplatRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_shell': typeof ShellRouteRouteWithChildren
   '/_shell/$': typeof ShellSplatRoute
   '/api/$': typeof ApiSplatRoute
@@ -49,10 +56,11 @@ export interface FileRouteTypes {
   fullPaths: '/' | '/$' | '/api/$'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/$' | '/api/$'
-  id: '__root__' | '/_shell' | '/_shell/$' | '/api/$'
+  id: '__root__' | '/' | '/_shell' | '/_shell/$' | '/api/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   ShellRouteRoute: typeof ShellRouteRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
 }
@@ -64,6 +72,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof ShellRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -96,6 +111,7 @@ const ShellRouteRouteWithChildren = ShellRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   ShellRouteRoute: ShellRouteRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,
 }

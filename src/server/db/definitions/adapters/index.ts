@@ -14,6 +14,8 @@ export {
 	type TransactionState,
 } from './transaction'
 export {
+	type AdapterFilter,
+	type AdapterQueryOptions,
 	type AnyStorageAdapter,
 	type AsyncStorageAdapter,
 	type Cursor,

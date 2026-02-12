@@ -555,7 +555,7 @@ export const db = defineSchema(
 				documentNo: one('purchaseHeaders'),
 				lineNo: z.number().default(0),
 				itemId: one('items'),
-				itemDescription: z
+				description: z
 					.string()
 					.optional()
 					.meta({
@@ -567,10 +567,6 @@ export const db = defineSchema(
 							field: 'description',
 						}),
 					}),
-				description: z
-					.string()
-					.optional()
-					.meta({ field: 'commerce.productName' }),
 				quantity: z.number().default(0).meta({ min: 1, max: 50 }),
 				unitCost: z.number().default(0).meta({ min: 5, max: 300 }),
 				lineAmount: z.number().default(0).meta({ min: 10, max: 5000 }),
@@ -623,7 +619,7 @@ export const db = defineSchema(
 				transferNo: one('transferHeaders'),
 				lineNo: z.number().default(0),
 				itemId: one('items'),
-				itemDescription: z
+				description: z
 					.string()
 					.optional()
 					.meta({
@@ -635,10 +631,6 @@ export const db = defineSchema(
 							field: 'description',
 						}),
 					}),
-				description: z
-					.string()
-					.optional()
-					.meta({ field: 'commerce.productName' }),
 				quantity: z.number().default(0).meta({ min: 1, max: 50 }),
 				quantityShipped: z.number().default(0),
 				quantityReceived: z.number().default(0),

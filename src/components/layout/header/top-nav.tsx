@@ -35,28 +35,25 @@ export function TopNav() {
 							<NavigationMenuContent>
 								<div
 									className={cn(
-										'grid gap-3 rounded-lg border border-border/75 bg-card p-4 shadow-md',
-										groupItems.length === 1 && 'w-[300px] grid-cols-1',
-										groupItems.length === 2 && 'w-[560px] grid-cols-2',
-										groupItems.length >= 3 && 'w-[760px] grid-cols-3',
+										'grid gap-px p-1',
+										groupItems.length === 1 && 'w-[260px] grid-cols-1',
+										groupItems.length === 2 && 'w-[480px] grid-cols-2',
+										groupItems.length >= 3 && 'w-[700px] grid-cols-3',
 									)}
 								>
 									{groupItems.map((module) => (
-										<div
-											key={module.title}
-											className='rounded-md border border-border/70 bg-background/80 p-3'
-										>
-											<div className='mb-2 flex items-center gap-2 border-border/70 border-b pb-2'>
+										<div key={module.title} className='px-1 py-1'>
+											<div className='mb-1 flex items-center gap-2 px-2 py-1'>
 												{module.icon && (
-													<div className='flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary'>
-														<module.icon className='size-3.5' />
+													<div className='flex size-5 items-center justify-center rounded bg-primary/10 text-primary'>
+														<module.icon className='size-3' />
 													</div>
 												)}
-												<span className='font-semibold text-sm tracking-tight'>
+												<span className='font-medium text-[11px] text-muted-foreground uppercase tracking-wider'>
 													{module.title}
 												</span>
 											</div>
-											<ul className='space-y-1'>
+											<ul className='space-y-0.5'>
 												{module.items?.map((child) => (
 													<li key={child.href ?? child.title}>
 														<NavigationMenuLink
@@ -64,11 +61,18 @@ export function TopNav() {
 															active={isActiveRoute(pathname, child.href)}
 															closeOnClick
 															className={cn(
-																'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-muted/70',
+																'flex items-center gap-2 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted/50',
 																isActiveRoute(pathname, child.href) &&
-																	'bg-primary/14 font-medium text-foreground',
+																	'bg-primary/12 font-medium text-foreground',
 															)}
 															onClick={(event) => {
+																if (
+																	event.metaKey ||
+																	event.ctrlKey ||
+																	event.shiftKey ||
+																	event.button !== 0
+																)
+																	return
 																event.preventDefault()
 																if (child.href) navigate(child.href)
 															}}

@@ -57,15 +57,20 @@ export default function PayrollDashboard() {
 		(sum, employee) => sum + (employee.outstandingAmount ?? 0),
 		0,
 	)
-	const avgSalary = average(employees.map((employee) => employee.baseSalary ?? 0))
+	const avgSalary = average(
+		employees.map((employee) => employee.baseSalary ?? 0),
+	)
 	const contractorCount = employees.filter(
 		(employee) => employee.employmentType === 'CONTRACTOR',
 	).length
-	const departmentCounts = employees.reduce<Record<string, number>>((acc, employee) => {
-		const department = employee.department?.trim() || 'Unassigned'
-		acc[department] = (acc[department] ?? 0) + 1
-		return acc
-	}, {})
+	const departmentCounts = employees.reduce<Record<string, number>>(
+		(acc, employee) => {
+			const department = employee.department?.trim() || 'Unassigned'
+			acc[department] = (acc[department] ?? 0) + 1
+			return acc
+		},
+		{},
+	)
 	const topDepartment = Object.entries(departmentCounts).sort(
 		(a, b) => b[1] - a[1],
 	)[0]
@@ -100,12 +105,7 @@ export default function PayrollDashboard() {
 				icon: DollarSign,
 			},
 		],
-		[
-			activeEmployees,
-			onLeave,
-			totalEmployees,
-			totalOutstanding,
-		],
+		[activeEmployees, onLeave, totalEmployees, totalOutstanding],
 	)
 
 	const monthlyHiringTrend = React.useMemo(
@@ -191,7 +191,7 @@ export default function PayrollDashboard() {
 				</CardHeader>
 				<CardContent className='pt-4'>
 					{employeesLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}

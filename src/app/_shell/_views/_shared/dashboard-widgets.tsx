@@ -16,12 +16,12 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 import {
+	type ChartConfig,
 	ChartContainer,
 	ChartLegend,
 	ChartLegendContent,
 	ChartTooltip,
 	ChartTooltipContent,
-	type ChartConfig,
 } from '@/components/ui/chart'
 import { cn } from '@/lib/utils'
 import type { CategorySeriesPoint, MonthlySeriesPoint } from './dashboard-utils'
@@ -58,7 +58,10 @@ export function DashboardTrendChart({
 	const chartConfig = {
 		[metricKey]: {
 			label: metricLabel,
-			color: metricKey === 'amount' ? 'var(--color-chart-2)' : 'var(--color-chart-1)',
+			color:
+				metricKey === 'amount'
+					? 'var(--color-chart-2)'
+					: 'var(--color-chart-1)',
 		},
 	} as ChartConfig
 
@@ -70,7 +73,10 @@ export function DashboardTrendChart({
 			</CardHeader>
 			<CardContent className='pt-4'>
 				<ChartContainer config={chartConfig} className='h-[260px] w-full'>
-					<BarChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+					<BarChart
+						data={data}
+						margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
+					>
 						<CartesianGrid vertical={false} strokeDasharray='3 3' />
 						<XAxis
 							dataKey='month'
@@ -182,22 +188,32 @@ export function DashboardStatsPanel({
 				{description && <CardDescription>{description}</CardDescription>}
 			</CardHeader>
 			<CardContent className='pt-4'>
-				<div className='grid gap-3'>
-					{items.map((item) => (
-						<div
-							key={item.label}
-							className='rounded-lg border border-border/70 bg-background/45 p-3'
-						>
-							<p className='text-muted-foreground text-xs'>{item.label}</p>
-							<p className='mt-1 font-semibold text-lg tracking-tight'>{item.value}</p>
-							{item.description && (
-								<p className='mt-1 text-muted-foreground text-xs'>
-									{item.description}
-								</p>
-							)}
-						</div>
-					))}
-				</div>
+				{items.length === 0 ? (
+					<p className='py-8 text-center text-muted-foreground text-sm'>
+						No data available.
+					</p>
+				) : (
+					<dl className='grid gap-3'>
+						{items.map((item) => (
+							<div
+								key={item.label}
+								className='rounded-md border border-border bg-background/45 p-3'
+							>
+								<dt className='truncate text-muted-foreground text-xs'>
+									{item.label}
+								</dt>
+								<dd className='mt-1 truncate font-semibold text-lg tabular-nums tracking-tight'>
+									{item.value}
+								</dd>
+								{item.description && (
+									<dd className='mt-1 truncate text-muted-foreground text-xs'>
+										{item.description}
+									</dd>
+								)}
+							</div>
+						))}
+					</dl>
+				)}
 			</CardContent>
 		</Card>
 	)

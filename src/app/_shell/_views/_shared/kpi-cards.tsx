@@ -35,11 +35,7 @@ export function KpiCards({
 				</p>
 			)}
 			{cards.map((card) => (
-				<Card
-					key={card.title}
-					size='sm'
-					className='relative'
-				>
+				<Card key={card.title} size='sm' className='relative'>
 					<CardHeader>
 						<div className='flex items-center justify-between'>
 							<CardDescription>{card.title}</CardDescription>
@@ -50,9 +46,7 @@ export function KpiCards({
 								/>
 							)}
 						</div>
-						<CardTitle className='text-lg tabular-nums'>
-							{card.value}
-						</CardTitle>
+						<CardTitle className='text-lg tabular-nums'>{card.value}</CardTitle>
 					</CardHeader>
 					{card.description && (
 						<CardContent>

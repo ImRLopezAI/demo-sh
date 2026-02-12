@@ -1,26 +1,19 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 
-export const dataGridContainerVariants = cva('w-full', {
+export const dataGridContainerVariants = cva('w-full overflow-hidden', {
 	variants: {
 		variant: {
-			default:
-				'overflow-hidden rounded-md border border-border/75 bg-card/85 shadow-xs',
-			minimal: 'overflow-hidden rounded-sm border border-border/40',
-			striped:
-				'overflow-hidden rounded-md border border-border/75 bg-card/85 shadow-xs',
-			bordered:
-				'overflow-hidden rounded-md border-2 border-border/75 bg-card/90 shadow-xs',
-			compact:
-				'overflow-hidden rounded-md border border-border/75 bg-card/85 shadow-xs',
-			card:
-				'overflow-hidden rounded-md border border-border/70 bg-card/90 shadow-xs',
-			dense: 'overflow-hidden rounded-sm border border-border/70 bg-card/90',
-			relaxed:
-				'overflow-hidden rounded-lg border border-border/75 bg-card/90 shadow-sm',
-			flat: 'overflow-hidden rounded-sm border border-border/40 bg-transparent',
-			lined:
-				'overflow-hidden rounded-md border border-border/75 bg-card/88 shadow-xs',
-			simple: 'overflow-hidden rounded-sm border border-border/65 bg-card/85',
+			default: 'rounded-md border border-border bg-card shadow-2xs',
+			minimal: 'rounded border border-border/30',
+			striped: 'rounded-md border border-border bg-card shadow-2xs',
+			bordered: 'rounded-md border-2 border-border bg-card shadow-xs',
+			compact: 'rounded border border-border bg-card/90 shadow-2xs',
+			card: 'rounded-md border border-border bg-card shadow-xs',
+			dense: 'rounded border border-border/80 bg-card/90',
+			relaxed: 'rounded-md border border-border bg-card shadow-sm',
+			flat: 'rounded border border-border/25 bg-transparent',
+			lined: 'rounded-md border-0 bg-transparent',
+			simple: 'rounded border border-border/50 bg-card/80',
 		},
 	},
 	defaultVariants: {
@@ -31,17 +24,17 @@ export const dataGridContainerVariants = cva('w-full', {
 export const dataGridHeaderVariants = cva('border-border', {
 	variants: {
 		variant: {
-			default: 'border-b border-border/75 bg-muted/45',
-			minimal: 'border-border/50 border-b',
-			striped: 'border-b border-border/75 bg-muted/40',
-			bordered: 'border-b border-border/75 bg-muted/50',
-			compact: 'border-b border-border/75 bg-muted/50',
-			card: 'border-b border-border/70 bg-background/30',
-			dense: 'border-b border-border/70 bg-muted/55',
-			relaxed: 'border-b border-border/75 bg-muted/35',
-			flat: 'border-border/40 border-b',
-			lined: 'border-border/80 border-b-2 bg-background/40',
-			simple: 'border-b border-border/65 bg-muted/35',
+			default: 'border-b bg-muted/40',
+			minimal: 'border-border/30 border-b',
+			striped: 'border-b bg-muted/35',
+			bordered: 'border-b-2 bg-muted/45',
+			compact: 'border-b bg-muted/45',
+			card: 'border-b bg-muted/25',
+			dense: 'border-b bg-muted/50',
+			relaxed: 'border-b bg-muted/30',
+			flat: 'border-border/25 border-b',
+			lined: 'border-border border-b-2',
+			simple: 'border-border/50 border-b bg-muted/20',
 		},
 	},
 	defaultVariants: {
@@ -50,21 +43,21 @@ export const dataGridHeaderVariants = cva('border-border', {
 })
 
 export const dataGridRowVariants = cva(
-	'transition-colors hover:bg-muted/45 data-[state=selected]:bg-primary/12',
+	'transition-colors data-[state=selected]:bg-primary/12',
 	{
 		variants: {
 			variant: {
-				default: 'border-border/65 border-b',
-				minimal: 'border-border/35 border-b hover:bg-muted/30',
-				striped: 'border-border/65 border-b odd:bg-muted/20 hover:bg-muted/50',
-				bordered: 'border-border/75 border-b',
-				compact: 'border-border/65 border-b',
-				card: 'border-border/65 border-b hover:bg-muted/45',
-				dense: 'border-border/50 border-b',
-				relaxed: 'border-border/65 border-b',
-				flat: 'border-border/30 border-b hover:bg-muted/25',
-				lined: 'border-border/75 border-b last:border-b-0',
-				simple: 'border-border/60 border-b hover:bg-muted/30',
+				default: 'border-border/60 border-b hover:bg-muted/40',
+				minimal: 'border-border/25 border-b hover:bg-muted/25',
+				striped: 'border-border/50 border-b odd:bg-muted/15 hover:bg-muted/40',
+				bordered: 'border-border border-b hover:bg-muted/40',
+				compact: 'border-border/60 border-b hover:bg-muted/35',
+				card: 'border-border/50 border-b hover:bg-muted/30',
+				dense: 'border-border/50 border-b hover:bg-muted/35',
+				relaxed: 'border-border/50 border-b hover:bg-muted/30',
+				flat: 'border-border/20 border-b hover:bg-muted/20',
+				lined: 'border-border border-b last:border-b-0 hover:bg-muted/30',
+				simple: 'border-border/40 border-b hover:bg-muted/25',
 			},
 		},
 		defaultVariants: {
@@ -74,21 +67,21 @@ export const dataGridRowVariants = cva(
 )
 
 export const dataGridHeaderCellVariants = cva(
-	'relative flex h-8 items-center text-left font-medium text-secondary-foreground/85 text-sm rtl:text-right',
+	'relative flex h-8 items-center text-left font-medium text-secondary-foreground/80 text-sm rtl:text-right',
 	{
 		variants: {
 			variant: {
-				default: 'bg-muted/40 px-3',
-				minimal: 'bg-transparent px-2',
-				striped: 'bg-transparent px-3',
-				bordered: 'bg-muted/40 px-3',
-				compact: 'h-7 bg-muted/40 px-2.5',
-				card: 'bg-background/10 px-3',
-				dense: 'h-6 bg-muted/40 px-2 text-xs',
-				relaxed: 'bg-muted/30 px-5',
-				flat: 'bg-transparent px-3',
-				lined: 'bg-transparent px-3 font-medium',
-				simple: 'bg-transparent px-3',
+				default: 'px-3',
+				minimal: 'px-2 text-secondary-foreground/60',
+				striped: 'px-3',
+				bordered: 'px-3',
+				compact: 'h-7 px-2.5',
+				card: 'px-3',
+				dense: 'h-6 px-2 text-xs',
+				relaxed: 'px-5',
+				flat: 'px-3 text-secondary-foreground/60',
+				lined: 'px-3 font-semibold text-secondary-foreground/90',
+				simple: 'px-3',
 			},
 		},
 		defaultVariants: {
@@ -102,14 +95,14 @@ export const dataGridCellVariants = cva('align-middle', {
 		variant: {
 			default: 'px-3 py-1.5',
 			minimal: 'px-2 py-1.5',
-			striped: 'px-3 py-1',
-			bordered: 'px-3 py-1',
+			striped: 'px-3 py-1.5',
+			bordered: 'px-3 py-1.5',
 			compact: 'px-2.5 py-1',
-			card: 'px-3 py-1',
-			dense: 'px-2 py-1.5 text-xs',
+			card: 'px-3 py-2',
+			dense: 'px-2 py-0.5 text-xs',
 			relaxed: 'px-5 py-3',
 			flat: 'px-3 py-1.5',
-			lined: 'px-3 py-1.5',
+			lined: 'px-3 py-2',
 			simple: 'px-3 py-1.5',
 		},
 	},

@@ -209,7 +209,7 @@ export default function Dashboard() {
 					</CardHeader>
 					<CardContent className='pt-4'>
 						{isLoading ? (
-							<div className='space-y-2'>
+							<div className='space-y-2' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}
@@ -259,7 +259,7 @@ export default function Dashboard() {
 					</CardHeader>
 					<CardContent className='pt-4'>
 						{isLoading ? (
-							<div className='space-y-2'>
+							<div className='space-y-2' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}

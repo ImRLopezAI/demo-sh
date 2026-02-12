@@ -10,7 +10,7 @@ export function PageHeader({
 	actions?: React.ReactNode
 }) {
 	return (
-		<header className='relative overflow-hidden rounded-lg border border-border/75 bg-card/92 px-4 py-3 shadow-xs sm:px-5 sm:py-4'>
+		<header className='relative overflow-hidden rounded-md border border-border bg-card/92 px-4 py-3 shadow-xs sm:px-5 sm:py-4'>
 			<div className='relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
 				<div className='space-y-1'>
 					<h1 className='text-balance font-semibold text-2xl tracking-tight sm:text-3xl'>

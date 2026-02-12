@@ -24,7 +24,7 @@ function Menubar({ className, ...props }: MenubarPrimitive.Props) {
 		<MenubarPrimitive
 			data-slot='menubar'
 			className={cn(
-				'flex h-8 items-center gap-0.5 rounded-lg border bg-background p-[3px]',
+				'flex h-8 items-center gap-0.5 rounded-md border bg-background p-[3px]',
 				className,
 			)}
 			{...props}
@@ -56,7 +56,7 @@ function MenubarTrigger({
 		<DropdownMenuTrigger
 			data-slot='menubar-trigger'
 			className={cn(
-				'flex select-none items-center rounded-sm px-1.5 py-[2px] font-medium text-sm outline-hidden hover:bg-muted aria-expanded:bg-muted',
+				'flex select-none items-center rounded-sm px-1.5 py-[2px] font-medium text-sm outline-hidden hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 aria-expanded:bg-muted',
 				className,
 			)}
 			{...props}
@@ -78,7 +78,7 @@ function MenubarContent({
 			alignOffset={alignOffset}
 			sideOffset={sideOffset}
 			className={cn(
-				'data-open:fade-in-0 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=inline-end]:slide-in-from-left-2 dark min-w-36 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-open:animate-in',
+				'data-open:fade-in-0 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=inline-end]:slide-in-from-left-2 dark min-w-36 rounded-md bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/15 duration-100 data-open:animate-in',
 				className,
 			)}
 			{...props}
@@ -98,7 +98,7 @@ function MenubarItem({
 			data-inset={inset}
 			data-variant={variant}
 			className={cn(
-				"group/menubar-item gap-1.5 rounded-md px-1.5 py-1 text-sm focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-disabled:opacity-50 data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive!",
+				"group/menubar-item gap-1.5 rounded-md px-1.5 py-1 text-sm focus-visible:bg-accent focus-visible:text-accent-foreground not-data-[variant=destructive]:focus-visible:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-disabled:opacity-50 data-[variant=destructive]:focus-visible:bg-destructive/10 data-[variant=destructive]:focus-visible:text-destructive dark:data-[variant=destructive]:focus-visible:bg-destructive/20 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive!",
 				className,
 			)}
 			{...props}
@@ -120,7 +120,7 @@ function MenubarCheckboxItem({
 			data-slot='menubar-checkbox-item'
 			data-inset={inset}
 			className={cn(
-				'relative flex cursor-default select-none items-center gap-1.5 rounded-md py-1 pr-1.5 pl-7 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-7 data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+				'relative flex cursor-default select-none items-center gap-1.5 rounded-md py-1 pr-1.5 pl-7 text-sm outline-hidden focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:**:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-7 data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
 				className,
 			)}
 			checked={checked}
@@ -155,7 +155,7 @@ function MenubarRadioItem({
 			data-slot='menubar-radio-item'
 			data-inset={inset}
 			className={cn(
-				"relative flex cursor-default select-none items-center gap-1.5 rounded-md py-1 pr-1.5 pl-7 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-7 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"relative flex cursor-default select-none items-center gap-1.5 rounded-md py-1 pr-1.5 pl-7 text-sm outline-hidden focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:**:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-7 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				className,
 			)}
 			{...props}
@@ -237,7 +237,7 @@ function MenubarSubTrigger({
 			data-slot='menubar-sub-trigger'
 			data-inset={inset}
 			className={cn(
-				"gap-1.5 rounded-md px-1.5 py-1 text-sm focus:bg-accent focus:text-accent-foreground data-open:bg-accent data-inset:pl-7 data-open:text-accent-foreground [&_svg:not([class*='size-'])]:size-4",
+				"gap-1.5 rounded-md px-1.5 py-1 text-sm focus-visible:bg-accent focus-visible:text-accent-foreground data-open:bg-accent data-inset:pl-7 data-open:text-accent-foreground [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}
@@ -253,7 +253,7 @@ function MenubarSubContent({
 		<DropdownMenuSubContent
 			data-slot='menubar-sub-content'
 			className={cn(
-				'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 min-w-32 rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in',
+				'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 min-w-32 rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/15 duration-100 data-closed:animate-out data-open:animate-in',
 				className,
 			)}
 			{...props}

@@ -55,8 +55,8 @@ export default function TraceDashboard() {
 	const expressShipments = shipments.filter(
 		(shipment) => shipment.priority === 'EXPRESS',
 	).length
-	const shipmentsWithTracking = shipments.filter(
-		(shipment) => Boolean(shipment.trackingNo),
+	const shipmentsWithTracking = shipments.filter((shipment) =>
+		Boolean(shipment.trackingNo),
 	).length
 	const onTimeDelivered = shipments.filter((shipment) => {
 		if (shipment.status !== 'DELIVERED') return false
@@ -67,8 +67,12 @@ export default function TraceDashboard() {
 	}).length
 	const leadTimes = shipments
 		.map((shipment) => {
-			const dispatch = new Date(shipment.actualDispatchDate || shipment.plannedDispatchDate).getTime()
-			const delivery = new Date(shipment.actualDeliveryDate || shipment.plannedDeliveryDate).getTime()
+			const dispatch = new Date(
+				shipment.actualDispatchDate || shipment.plannedDispatchDate,
+			).getTime()
+			const delivery = new Date(
+				shipment.actualDeliveryDate || shipment.plannedDeliveryDate,
+			).getTime()
 			if (Number.isNaN(dispatch) || Number.isNaN(delivery)) return null
 			return Math.max(0, (delivery - dispatch) / (1000 * 60 * 60 * 24))
 		})
@@ -106,7 +110,8 @@ export default function TraceDashboard() {
 	)
 
 	const monthlyShipmentVolume = React.useMemo(
-		() => buildMonthlySeries(shipments, (shipment) => shipment.plannedDispatchDate),
+		() =>
+			buildMonthlySeries(shipments, (shipment) => shipment.plannedDispatchDate),
 		[shipments],
 	)
 
@@ -185,7 +190,7 @@ export default function TraceDashboard() {
 				</CardHeader>
 				<CardContent>
 					{isLoading ? (
-						<div className='space-y-2'>
+						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}
@@ -196,27 +201,29 @@ export default function TraceDashboard() {
 					) : recentShipments.length === 0 ? (
 						<p className='text-muted-foreground text-sm'>No shipments found.</p>
 					) : (
-						<div className='space-y-1'>
+						<ul className='space-y-1'>
 							{recentShipments.map((shipment) => (
-								<div
+								<li
 									key={shipment.id}
 									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
 								>
-									<div className='flex items-center gap-3'>
-										<span className='font-medium'>{shipment.shipmentNo}</span>
-										<span className='text-muted-foreground text-xs'>
+									<div className='flex min-w-0 items-center gap-3'>
+										<span className='truncate font-medium'>
+											{shipment.shipmentNo}
+										</span>
+										<span className='truncate text-muted-foreground text-xs'>
 											{shipment.courierName}
 										</span>
 									</div>
-									<div className='flex items-center gap-3'>
+									<div className='flex shrink-0 items-center gap-3'>
 										<span className='text-muted-foreground text-xs tabular-nums'>
 											{shipment.trackingNo}
 										</span>
 										<StatusBadge status={shipment.status} />
 									</div>
-								</div>
+								</li>
 							))}
-						</div>
+						</ul>
 					)}
 				</CardContent>
 			</Card>

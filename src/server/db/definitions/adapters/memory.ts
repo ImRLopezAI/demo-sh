@@ -1,5 +1,5 @@
 import type { WithSystemFields } from '../table'
-import type { SyncStorageAdapter } from './types'
+import type { AdapterFilter, AdapterQueryOptions, SyncStorageAdapter } from './types'
 
 /**
  * Internal in-memory storage adapter.
@@ -87,8 +87,69 @@ export class MemoryAdapter implements SyncStorageAdapter {
 		return count
 	}
 
+	query<T extends object>(
+		tableName: string,
+		options: AdapterQueryOptions,
+	): WithSystemFields<T>[] {
+		let results = this.getAll<T>(tableName)
+
+		if (options.filter) {
+			results = results.filter((doc) =>
+				matchesFilter(doc as Record<string, unknown>, options.filter!),
+			)
+		}
+
+		if (options.orderBy) {
+			const { field, direction } = options.orderBy
+			results.sort((a, b) => {
+				const aVal = (a as Record<string, unknown>)[field] as string | number
+				const bVal = (b as Record<string, unknown>)[field] as string | number
+				if (aVal < bVal) return direction === 'asc' ? -1 : 1
+				if (aVal > bVal) return direction === 'asc' ? 1 : -1
+				return 0
+			})
+		}
+
+		if (options.offset) {
+			results = results.slice(options.offset)
+		}
+
+		if (options.limit) {
+			results = results.slice(0, options.limit)
+		}
+
+		return results
+	}
+
 	close(): void {
 		this.tables.clear()
+	}
+}
+
+function matchesFilter(item: Record<string, unknown>, filter: AdapterFilter): boolean {
+	switch (filter.type) {
+		case 'eq':
+			return item[filter.field] === filter.value
+		case 'ne':
+			return item[filter.field] !== filter.value
+		case 'gt':
+			return (item[filter.field] as number | string) > filter.value
+		case 'gte':
+			return (item[filter.field] as number | string) >= filter.value
+		case 'lt':
+			return (item[filter.field] as number | string) < filter.value
+		case 'lte':
+			return (item[filter.field] as number | string) <= filter.value
+		case 'in':
+			return filter.values.includes(item[filter.field])
+		case 'isNull':
+			return item[filter.field] == null
+		case 'isNotNull':
+			return item[filter.field] != null
+		case 'and':
+			return filter.filters.every((f) => matchesFilter(item, f))
+		case 'or':
+			return filter.filters.some((f) => matchesFilter(item, f))
 	}
 }
 

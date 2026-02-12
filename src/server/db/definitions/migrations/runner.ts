@@ -1,5 +1,7 @@
+import type { SyncStorageAdapter } from '../adapters/types'
 import type { TypedDatabaseSchema } from '../types/schema.types'
 import type { AnyTableBuilder } from '../types/table.types'
+import { AdapterVersionStorage } from './adapter-version-storage'
 import type {
 	Migration,
 	MigrationRecord,
@@ -355,6 +357,20 @@ export function createMigrationRunner<
 	versionStorage?: VersionStorage,
 ): MigrationRunner<Tables> {
 	return new MigrationRunner(db, migrations, versionStorage)
+}
+
+/**
+ * Create a migration runner with adapter-backed version storage.
+ * Migration state persists alongside the data in the adapter.
+ */
+export function createPersistentMigrationRunner<
+	Tables extends Record<string, AnyTableBuilder>,
+>(
+	db: TypedDatabaseSchema<Tables>,
+	migrations: Migration[],
+	adapter: SyncStorageAdapter,
+): MigrationRunner<Tables> {
+	return new MigrationRunner(db, migrations, new AdapterVersionStorage(adapter))
 }
 
 /**

@@ -96,8 +96,12 @@ export default function Dashboard() {
 	const positiveMovements = ledgerEntries.filter(
 		(entry) => (entry.quantity ?? 0) > 0,
 	).length
-	const avgCostPerUnit = average(valueEntries.map((entry) => entry.costPerUnit ?? 0))
-	const warehouses = locations.filter((location) => location.type === 'WAREHOUSE').length
+	const avgCostPerUnit = average(
+		valueEntries.map((entry) => entry.costPerUnit ?? 0),
+	)
+	const warehouses = locations.filter(
+		(location) => location.type === 'WAREHOUSE',
+	).length
 
 	const kpis = React.useMemo<KpiCardDef[]>(
 		() => [
@@ -211,7 +215,7 @@ export default function Dashboard() {
 					</CardHeader>
 					<CardContent className='pt-4'>
 						{isLoading ? (
-							<div className='space-y-2'>
+							<div className='space-y-2' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}
@@ -234,7 +238,7 @@ export default function Dashboard() {
 											<p className='truncate font-medium text-sm'>
 												#{entry.entryNo} &middot; {entry.itemId}
 											</p>
-											<p className='text-muted-foreground text-xs'>
+											<p className='truncate text-muted-foreground text-xs'>
 												{entry.locationCode} &middot; Qty: {entry.quantity}
 											</p>
 										</div>
@@ -253,7 +257,7 @@ export default function Dashboard() {
 					</CardHeader>
 					<CardContent className='pt-4'>
 						{isLoading ? (
-							<div className='space-y-2'>
+							<div className='space-y-2' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}
@@ -276,7 +280,7 @@ export default function Dashboard() {
 											<p className='truncate font-medium text-sm'>
 												{location.name}
 											</p>
-											<p className='text-muted-foreground text-xs'>
+											<p className='truncate text-muted-foreground text-xs'>
 												{location.code}
 											</p>
 										</div>

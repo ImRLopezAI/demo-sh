@@ -30,7 +30,7 @@ export function MobileNav() {
 					<Button
 						variant='ghost'
 						size='icon'
-						className='rounded-md border border-transparent lg:hidden hover:border-border/70 hover:bg-muted/60'
+						className='rounded-md border border-transparent hover:border-border/70 hover:bg-muted/60 lg:hidden'
 					/>
 				}
 			>
@@ -77,14 +77,15 @@ export function MobileNav() {
 											<ul className='ml-6 space-y-0.5 border-l py-1 pl-2'>
 												{module.items?.map((child) => (
 													<li key={child.href}>
-														<button
-															type='button'
+														<a
+															href={child.href}
 															className={cn(
-																'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-muted',
+																'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50',
 																pathname === child.href &&
 																	'bg-muted font-medium',
 															)}
-															onClick={() => {
+															onClick={(e) => {
+																e.preventDefault()
 																if (child.href) navigate(child.href)
 																setOpen(false)
 															}}
@@ -101,7 +102,7 @@ export function MobileNav() {
 																	{child.badge}
 																</Badge>
 															)}
-														</button>
+														</a>
 													</li>
 												))}
 											</ul>

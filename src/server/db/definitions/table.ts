@@ -34,6 +34,8 @@ export interface TableDocument {
 	_createdAt: number
 	/** Timestamp when document was last updated */
 	_updatedAt: number
+	/** Document version for optimistic concurrency control */
+	_version: number
 	_meta?: Record<string, unknown>
 }
 
@@ -309,6 +311,7 @@ export class ReactiveTable<T extends object> {
 			_id: id,
 			_createdAt: now,
 			_updatedAt: now,
+			_version: 1,
 		}
 
 		this.adapter.set(this.name, id, doc)
@@ -341,6 +344,7 @@ export class ReactiveTable<T extends object> {
 				_id: id,
 				_createdAt: now,
 				_updatedAt: now,
+				_version: 1,
 			}
 			this.adapter.set(this.name, id, doc)
 			this.addToIndexes(id, doc)
@@ -356,12 +360,20 @@ export class ReactiveTable<T extends object> {
 	 * Update an existing document.
 	 * @param id - Document ID to update
 	 * @param updates - Partial document with fields to update
+	 * @param expectedVersion - Optional expected version for optimistic concurrency control
 	 * @returns Updated document or undefined if not found
 	 * @throws Error if unique constraint is violated
+	 * @throws Error if expectedVersion doesn't match (optimistic concurrency conflict)
 	 */
-	update(id: string, updates: Partial<T>): WithSystemFields<T> | undefined {
+	update(id: string, updates: Partial<T>, expectedVersion?: number): WithSystemFields<T> | undefined {
 		const existing = this.adapter.get<T>(this.name, id)
 		if (!existing) return undefined
+
+		if (expectedVersion !== undefined && existing._version !== expectedVersion) {
+			throw new Error(
+				`Optimistic concurrency conflict: expected version ${expectedVersion} but found ${existing._version} for document ${id}`,
+			)
+		}
 
 		const merged = { ...existing, ...updates }
 		this.checkUniqueConstraints(merged, id)
@@ -375,6 +387,7 @@ export class ReactiveTable<T extends object> {
 			_id: id,
 			_createdAt: existing._createdAt,
 			_updatedAt: Date.now(),
+			_version: (existing._version ?? 0) + 1,
 		}
 		this.adapter.set(this.name, id, updated)
 		this.addToIndexes(id, updated)
@@ -1076,6 +1089,7 @@ export class AsyncReactiveTable<T extends object> {
 			_id: id,
 			_createdAt: now,
 			_updatedAt: now,
+			_version: 1,
 		}
 
 		// Optimistic update
@@ -1119,13 +1133,21 @@ export class AsyncReactiveTable<T extends object> {
 
 	/**
 	 * Update an existing document (optimistic).
+	 * @param expectedVersion - Optional expected version for optimistic concurrency control
 	 */
 	async update(
 		id: string,
 		updates: Partial<T>,
+		expectedVersion?: number,
 	): Promise<WithSystemFields<T> | undefined> {
 		const existing = this.getSync(id)
 		if (!existing) return undefined
+
+		if (expectedVersion !== undefined && existing._version !== expectedVersion) {
+			throw new Error(
+				`Optimistic concurrency conflict: expected version ${expectedVersion} but found ${existing._version} for document ${id}`,
+			)
+		}
 
 		const merged = { ...existing, ...updates }
 		this.checkUniqueConstraints(merged, id)
@@ -1139,6 +1161,7 @@ export class AsyncReactiveTable<T extends object> {
 			_id: id,
 			_createdAt: existing._createdAt,
 			_updatedAt: Date.now(),
+			_version: (existing._version ?? 0) + 1,
 		}
 
 		// Optimistic update
