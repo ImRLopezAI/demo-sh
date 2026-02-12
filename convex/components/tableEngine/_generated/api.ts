@@ -19,6 +19,7 @@ import type * as lib_queryHelpers from "../lib/queryHelpers.js";
 import type * as lib_relations from "../lib/relations.js";
 import type * as lib_types from "../lib/types.js";
 import type * as lib_zod from "../lib/zod.js";
+import type * as noSeries from "../noSeries.js";
 
 import type {
   ApiFromModules,
@@ -39,6 +40,7 @@ const fullApi: ApiFromModules<{
   "lib/relations": typeof lib_relations;
   "lib/types": typeof lib_types;
   "lib/zod": typeof lib_zod;
+  noSeries: typeof noSeries;
 }> = anyApi as any;
 
 /**

@@ -10,10 +10,13 @@
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"clean": "git clean -xdf .cache .turbo node_modules dist .nitro .output .tanstack ./src/routeTree.gen.ts",
-		"lint": "biome check --write --unsafe ."
+		"lint": "biome check --write --unsafe .",
+		"db:dev": "convex dev",
+		"db:deploy": "convex deploy"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.1.0",
+		"@convex-dev/aggregate": "^0.2.1",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/modifiers": "^9.0.0",
 		"@dnd-kit/sortable": "^10.0.0",
@@ -41,6 +44,9 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
+		"convex": "^1.31.7",
+		"convex-helpers": "^0.1.112",
+		"convex-test": "^0.0.41",
 		"date-fns": "^4.1.0",
 		"embla-carousel-react": "^8.6.0",
 		"hono": "^4.11.7",

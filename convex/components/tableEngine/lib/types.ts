@@ -1,5 +1,8 @@
+import type { RunQueryCtx, RunMutationCtx } from "@convex-dev/aggregate"
+import type { components } from "../_generated/api"
 import type {
 	DocumentByName,
+	FunctionReference,
 	GenericDataModel,
 	IndexNames,
 	IndexRange,
@@ -9,6 +12,12 @@ import type {
 	TableNamesInDataModel,
 } from "convex/server"
 import type { PropertyValidators } from "convex/values"
+
+// ---------------------------------------------------------------------------
+// Re-export aggregate context types for consumers
+// ---------------------------------------------------------------------------
+
+export type { RunQueryCtx, RunMutationCtx }
 
 // ---------------------------------------------------------------------------
 // Convex args validator alias — used by Zod integration
@@ -99,13 +108,56 @@ export interface TableRegistration<
 }
 
 // ---------------------------------------------------------------------------
+// Component API — typed references to component functions
+// ---------------------------------------------------------------------------
+
+export interface NoSeriesApi {
+	initSeries: FunctionReference<
+		"mutation",
+		"internal",
+		{ code: string; incrementBy?: number; pattern: string },
+		null
+	>
+	getNextCode: FunctionReference<
+		"mutation",
+		"internal",
+		{ code: string; incrementBy?: number; pattern?: string },
+		string
+	>
+	peekNextCode: FunctionReference<
+		"query",
+		"internal",
+		{ code: string },
+		string
+	>
+	resetSeries: FunctionReference<
+		"mutation",
+		"internal",
+		{ code: string; startAt?: number },
+		null
+	>
+}
+
+/** Aggregate component API — matches @convex-dev/aggregate's ComponentApi */
+export type AggregateComponentApi = (typeof components)["aggregate"]
+
+export interface TableEngineComponentApi {
+	/** @convex-dev/aggregate sub-component */
+	aggregate: AggregateComponentApi
+	/** Component functions exposed under convex/ */
+	convex: {
+		noSeries: NoSeriesApi
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Engine config — passed to createEngine()
 // ---------------------------------------------------------------------------
 
 export interface EngineConfig<DataModel extends GenericDataModel> {
 	tables: Record<string, TableRegistration<DataModel>>
 	/** ComponentApi reference — `components.tableEngine` from _generated/api */
-	component: Record<string, unknown>
+	component: TableEngineComponentApi
 }
 
 // ---------------------------------------------------------------------------
@@ -191,4 +243,3 @@ export type EnrichedDocument<
 	DataModel extends GenericDataModel,
 	TableName extends TableNamesInDataModel<DataModel>,
 > = DocumentByName<DataModel, TableName> & Record<string, unknown>
-

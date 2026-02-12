@@ -1,12 +1,7 @@
-import {
-	getOneFrom,
-	getManyFrom,
-} from "convex-helpers/server/relationships"
+import { getOneFrom, getManyFrom } from "convex-helpers/server/relationships"
 import type {
-	DocumentByName,
 	GenericDataModel,
 	GenericDatabaseReader,
-	TableNamesInDataModel,
 } from "convex/server"
 import type { GenericId } from "convex/values"
 import type { RelationConfig } from "./types"
@@ -20,20 +15,21 @@ const MANY_RELATION_WARN_THRESHOLD = 1000
  * - 'many' → getManyFrom(db, table, index, doc._id)
  *
  * Supports nested resolution via `withConfig` objects.
+ *
+ * Note: We use GenericDataModel for the getOneFrom/getManyFrom calls because
+ * the table/index names come from runtime config strings. The generic
+ * GenericDatabaseReader<GenericDataModel> accepts any string table name.
  */
-export async function resolveRelations<
-	DataModel extends GenericDataModel,
->(
+export async function resolveRelations<DataModel extends GenericDataModel>(
 	db: GenericDatabaseReader<DataModel>,
 	doc: { _id: GenericId<string> },
 	relations: Record<string, RelationConfig<DataModel>>,
 	withConfig: Record<string, boolean | { with?: Record<string, boolean> }>,
-	allRelations: Record<
-		string,
-		Record<string, RelationConfig<DataModel>>
-	>,
+	allRelations: Record<string, Record<string, RelationConfig<DataModel>>>,
 ): Promise<Record<string, unknown>> {
 	const resolved: Record<string, unknown> = {}
+	// Widen db to GenericDataModel for dynamic runtime lookups via convex-helpers
+	const genericDb = db as GenericDatabaseReader<GenericDataModel>
 
 	const entries = Object.entries(withConfig).filter(
 		([, shouldLoad]) => shouldLoad,
@@ -46,19 +42,14 @@ export async function resolveRelations<
 
 			if (rel.type === "one") {
 				const related = await getOneFrom(
-					db,
-					rel.table as never,
-					rel.field as never,
-					doc._id as never,
+					genericDb,
+					rel.table as string,
+					rel.field,
+					doc._id,
 				)
 
-				if (
-					related &&
-					typeof shouldLoad === "object" &&
-					shouldLoad.with
-				) {
-					const nestedRelations =
-						allRelations[rel.table as string]
+				if (related && typeof shouldLoad === "object" && shouldLoad.with) {
+					const nestedRelations = allRelations[rel.table as string]
 					if (nestedRelations) {
 						const nested = await resolveRelations(
 							db,
@@ -80,10 +71,10 @@ export async function resolveRelations<
 			} else {
 				// 'many' — index-based server-side lookup
 				const items = await getManyFrom(
-					db,
-					rel.table as never,
-					rel.field as never,
-					doc._id as never,
+					genericDb,
+					rel.table as string,
+					rel.field,
+					doc._id,
 				)
 
 				if (items.length > MANY_RELATION_WARN_THRESHOLD) {
@@ -92,12 +83,8 @@ export async function resolveRelations<
 					)
 				}
 
-				if (
-					typeof shouldLoad === "object" &&
-					shouldLoad.with
-				) {
-					const nestedRelations =
-						allRelations[rel.table as string]
+				if (typeof shouldLoad === "object" && shouldLoad.with) {
+					const nestedRelations = allRelations[rel.table as string]
 					resolved[relationName] = nestedRelations
 						? await Promise.all(
 								items.map(

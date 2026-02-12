@@ -26,9 +26,11 @@ export type {
 	FindManyOptions,
 	FlowFieldConfig,
 	FlowFieldType,
+	NoSeriesApi,
 	NoSeriesConfig,
 	PaginateOptions,
 	RelationConfig,
+	TableEngineComponentApi,
 	TableRegistration,
 } from "./types"
 

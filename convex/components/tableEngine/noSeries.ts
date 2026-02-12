@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server"
+import { internalMutation, internalQuery } from "./_generated/server"
 import { v } from "convex/values"
 
 /** Parse a pattern like "ITEM0000001" into { prefix, digits, start } */
@@ -27,7 +27,7 @@ function formatCode(
 	return `${prefix}${String(value).padStart(digits, "0")}`
 }
 
-export const initSeries = mutation({
+export const initSeries = internalMutation({
 	args: {
 		code: v.string(),
 		pattern: v.string(),
@@ -63,7 +63,7 @@ export const initSeries = mutation({
 	},
 })
 
-export const getNextCode = mutation({
+export const getNextCode = internalMutation({
 	args: {
 		code: v.string(),
 		pattern: v.optional(v.string()),
@@ -101,7 +101,7 @@ export const getNextCode = mutation({
 	},
 })
 
-export const peekNextCode = query({
+export const peekNextCode = internalQuery({
 	args: { code: v.string() },
 	returns: v.string(),
 	handler: async (ctx, args) => {
@@ -119,7 +119,7 @@ export const peekNextCode = query({
 	},
 })
 
-export const resetSeries = mutation({
+export const resetSeries = internalMutation({
 	args: {
 		code: v.string(),
 		startAt: v.optional(v.number()),

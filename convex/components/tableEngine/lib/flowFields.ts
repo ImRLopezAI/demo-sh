@@ -1,12 +1,11 @@
-import { TableAggregate } from "@convex-dev/aggregate"
+import { TableAggregate, type RunQueryCtx } from "@convex-dev/aggregate"
 import type {
 	GenericDataModel,
 	GenericDatabaseReader,
-	GenericQueryCtx,
 	TableNamesInDataModel,
 } from "convex/server"
 import type { GenericId } from "convex/values"
-import type { FlowFieldConfig } from "./types"
+import type { AggregateComponentApi, FlowFieldConfig } from "./types"
 
 /**
  * Create a TableAggregate instance for a FlowField.
@@ -26,7 +25,7 @@ export function createFlowFieldAggregate<
 	DataModel extends GenericDataModel,
 	TableName extends TableNamesInDataModel<DataModel>,
 >(
-	component: unknown,
+	component: AggregateComponentApi,
 	config: FlowFieldConfig,
 	fieldName: string,
 ): TableAggregate<{
@@ -42,19 +41,23 @@ export function createFlowFieldAggregate<
 	const needsSumValue =
 		config.type === "sum" || config.type === "average"
 
-	return new TableAggregate(component as never, {
-		// Prefix with fieldName to isolate each FlowField's data
-		namespace: (doc: Record<string, unknown>) =>
-			`${fieldName}::${doc[config.key] as string}`,
+	return new TableAggregate<{
+		Key: number
+		DataModel: DataModel
+		TableName: TableName
+		Namespace: string
+	}>(component, {
+		namespace: (doc) =>
+			`${fieldName}::${String((doc as Record<string, unknown>)[config.key])}`,
 		sortKey: useFieldAsSortKey && config.field
-			? (doc: Record<string, unknown>) =>
-					(doc[config.field!] as number) ?? 0
-			: (doc: Record<string, unknown>) =>
-					doc._creationTime as number,
+			? (doc) =>
+					Number((doc as Record<string, unknown>)[config.field!]) || 0
+			: (doc) =>
+					Number((doc as Record<string, unknown>)._creationTime),
 		sumValue:
 			needsSumValue && config.field
-				? (doc: Record<string, unknown>) =>
-						(doc[config.field!] as number) ?? 0
+				? (doc) =>
+						Number((doc as Record<string, unknown>)[config.field!]) || 0
 				: undefined,
 	})
 }
@@ -79,9 +82,9 @@ export interface FlowFieldEntry {
  * - exist → boolean
  * - lookup → unknown (the looked-up field value)
  */
-export async function resolveFlowFields(
-	ctx: Pick<GenericQueryCtx<GenericDataModel>, "runQuery"> & {
-		db: GenericDatabaseReader<GenericDataModel>
+export async function resolveFlowFields<DataModel extends GenericDataModel>(
+	ctx: RunQueryCtx & {
+		db: GenericDatabaseReader<DataModel>
 	},
 	doc: { _id: GenericId<string> } & Record<string, unknown>,
 	flowFields: Record<string, FlowFieldEntry>,
@@ -90,25 +93,25 @@ export async function resolveFlowFields(
 	const results = await Promise.all(
 		entries.map(async ([fieldName, { aggregate, config }]) => {
 			// Build namespaced key: fieldName::parentId
-			const ns = `${fieldName}::${doc._id as string}`
+			const ns = `${fieldName}::${String(doc._id)}`
 
 			switch (config.type) {
 				case "count":
-					return aggregate!.count(ctx as never, {
+					return aggregate!.count(ctx, {
 						namespace: ns,
 					})
 
 				case "sum":
-					return aggregate!.sum(ctx as never, {
+					return aggregate!.sum(ctx, {
 						namespace: ns,
 					})
 
 				case "average": {
 					const [sum, count] = await Promise.all([
-						aggregate!.sum(ctx as never, {
+						aggregate!.sum(ctx, {
 							namespace: ns,
 						}),
-						aggregate!.count(ctx as never, {
+						aggregate!.count(ctx, {
 							namespace: ns,
 						}),
 					])
@@ -116,14 +119,14 @@ export async function resolveFlowFields(
 				}
 
 				case "min": {
-					const minItem = await aggregate!.min(ctx as never, {
+					const minItem = await aggregate!.min(ctx, {
 						namespace: ns,
 					})
 					return minItem?.key ?? null
 				}
 
 				case "max": {
-					const maxItem = await aggregate!.max(ctx as never, {
+					const maxItem = await aggregate!.max(ctx, {
 						namespace: ns,
 					})
 					return maxItem?.key ?? null
@@ -131,7 +134,7 @@ export async function resolveFlowFields(
 
 				case "exist":
 					return (
-						(await aggregate!.count(ctx as never, {
+						(await aggregate!.count(ctx, {
 							namespace: ns,
 						})) > 0
 					)
@@ -141,7 +144,7 @@ export async function resolveFlowFields(
 						| GenericId<string>
 						| undefined
 					if (!fkValue) return null
-					const related = await ctx.db.get(fkValue as never)
+					const related = await (ctx.db as GenericDatabaseReader<GenericDataModel>).get(fkValue)
 					return related && config.field
 						? (related as Record<string, unknown>)[config.field]
 						: null

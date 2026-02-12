@@ -96,14 +96,7 @@ export function createEngine<DataModel extends GenericDataModel>(
 	> = {}
 
 	// Component API reference (components.tableEngine)
-	const componentApi = config.component as {
-		aggregate: unknown
-		noSeries: {
-			initSeries: unknown
-			getNextCode: unknown
-			peekNextCode: unknown
-		}
-	}
+	const { component: componentApi } = config
 
 	// -----------------------------------------------------------------------
 	// 1. Register FlowField aggregates + triggers on SOURCE tables
@@ -150,7 +143,8 @@ export function createEngine<DataModel extends GenericDataModel>(
 	// -----------------------------------------------------------------------
 	for (const reg of Object.values(config.tables)) {
 		if (reg.noSeries) {
-			const { code, field } = reg.noSeries
+			const noSeriesConfig = reg.noSeries
+			const { code, field } = noSeriesConfig
 			triggers.register(
 				reg.tableName as TableNamesInDataModel<DataModel>,
 				async (ctx, change) => {
@@ -160,8 +154,9 @@ export function createEngine<DataModel extends GenericDataModel>(
 					) {
 						const nextCode = await getNextCode(
 							ctx,
-							componentApi,
+							componentApi.convex.noSeries,
 							code,
+							noSeriesConfig,
 						)
 						await ctx.db.patch(
 							change.id as GenericId<TableNamesInDataModel<DataModel>>,
@@ -300,6 +295,6 @@ export function createEngine<DataModel extends GenericDataModel>(
 		 * Initialize all registered NoSeries (call once in a setup mutation).
 		 */
 		initSeries: (ctx: Pick<GenericMutationCtx<DataModel>, "runMutation" | "runQuery">) =>
-			initAllSeries(ctx, componentApi, config.tables),
+			initAllSeries(ctx, componentApi.convex.noSeries, config.tables),
 	}
 }

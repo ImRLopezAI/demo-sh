@@ -3,7 +3,7 @@ import type {
 	GenericQueryCtx,
 	GenericDataModel,
 } from "convex/server"
-import type { NoSeriesConfig } from "./types"
+import type { NoSeriesApi, NoSeriesConfig } from "./types"
 
 type RunCtx = Pick<
 	GenericMutationCtx<GenericDataModel>,
@@ -17,10 +17,10 @@ type ReadCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">
  */
 export async function initNoSeries(
 	ctx: RunCtx,
-	componentApi: { noSeries: { initSeries: unknown } },
+	api: NoSeriesApi,
 	config: NoSeriesConfig,
 ): Promise<void> {
-	await ctx.runMutation(componentApi.noSeries.initSeries as never, {
+	await ctx.runMutation(api.initSeries, {
 		code: config.code,
 		pattern: config.pattern,
 		incrementBy: config.incrementBy ?? 1,
@@ -32,13 +32,13 @@ export async function initNoSeries(
  */
 export async function initAllSeries(
 	ctx: RunCtx,
-	componentApi: { noSeries: { initSeries: unknown } },
+	api: NoSeriesApi,
 	registrations: Record<string, { noSeries?: NoSeriesConfig }>,
 ): Promise<void> {
 	const promises: Promise<void>[] = []
 	for (const reg of Object.values(registrations)) {
 		if (reg.noSeries) {
-			promises.push(initNoSeries(ctx, componentApi, reg.noSeries))
+			promises.push(initNoSeries(ctx, api, reg.noSeries))
 		}
 	}
 	await Promise.all(promises)
@@ -46,16 +46,19 @@ export async function initAllSeries(
 
 /**
  * Get the next formatted code, atomically incrementing the counter.
+ * If the series doesn't exist and config is provided, it will be auto-created.
  */
 export async function getNextCode(
 	ctx: RunCtx,
-	componentApi: { noSeries: { getNextCode: unknown } },
+	api: NoSeriesApi,
 	code: string,
+	config?: NoSeriesConfig,
 ): Promise<string> {
-	return (await ctx.runMutation(
-		componentApi.noSeries.getNextCode as never,
-		{ code },
-	)) as string
+	return await ctx.runMutation(api.getNextCode, {
+		code,
+		pattern: config?.pattern,
+		incrementBy: config?.incrementBy,
+	})
 }
 
 /**
@@ -63,11 +66,8 @@ export async function getNextCode(
  */
 export async function peekNextCode(
 	ctx: ReadCtx,
-	componentApi: { noSeries: { peekNextCode: unknown } },
+	api: NoSeriesApi,
 	code: string,
 ): Promise<string> {
-	return (await ctx.runQuery(
-		componentApi.noSeries.peekNextCode as never,
-		{ code },
-	)) as string
+	return await ctx.runQuery(api.peekNextCode, { code })
 }

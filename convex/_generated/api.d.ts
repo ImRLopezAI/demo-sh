@@ -10,7 +10,6 @@
 
 import type * as engine from "../engine.js";
 import type * as functions from "../functions.js";
-import type * as items from "../items.js";
 import type * as utils from "../utils.js";
 
 import type {
@@ -22,7 +21,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   engine: typeof engine;
   functions: typeof functions;
-  items: typeof items;
   utils: typeof utils;
 }>;
 
@@ -59,7 +57,7 @@ export declare const components: {
         getNextCode: FunctionReference<
           "mutation",
           "internal",
-          { code: string },
+          { code: string; incrementBy?: number; pattern?: string },
           string
         >;
         initSeries: FunctionReference<
