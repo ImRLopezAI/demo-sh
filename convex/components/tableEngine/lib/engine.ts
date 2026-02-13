@@ -1,13 +1,3 @@
-import { Triggers } from "convex-helpers/server/triggers"
-import {
-	customMutation,
-	customQuery,
-	customCtx,
-} from "convex-helpers/server/customFunctions"
-import {
-	zCustomMutation,
-	zCustomQuery,
-} from "convex-helpers/server/zod4"
 import type {
 	DocumentByName,
 	GenericDataModel,
@@ -17,25 +7,31 @@ import type {
 	PaginationResult,
 	QueryBuilder,
 	TableNamesInDataModel,
-} from "convex/server"
-import type { GenericId } from "convex/values"
+} from 'convex/server'
+import type { GenericId } from 'convex/values'
+import {
+	customCtx,
+	customMutation,
+	customQuery,
+} from 'convex-helpers/server/customFunctions'
+import { Triggers } from 'convex-helpers/server/triggers'
+import { zCustomMutation, zCustomQuery } from 'convex-helpers/server/zod4'
 import {
 	createFlowFieldAggregate,
-	resolveFlowFields,
 	type FlowFieldEntry,
-} from "./flowFields"
-import { resolveRelations } from "./relations"
-import { findMany, findFirst, paginate, type Resolvers } from "./queryHelpers"
-import { initAllSeries, getNextCode } from "./noSeries"
-import { hasZodInArgs } from "./zod"
+	resolveFlowFields,
+} from './flowFields'
+import { getNextCode, initAllSeries } from './noSeries'
+import { findFirst, findMany, paginate, type Resolvers } from './queryHelpers'
+import { resolveRelations } from './relations'
 import type {
 	EngineConfig,
 	FindFirstOptions,
 	FindManyOptions,
-	FlowFieldConfig,
 	PaginateOptions,
 	RelationConfig,
-} from "./types"
+} from './types'
+import { hasZodInArgs } from './zod'
 
 // ---------------------------------------------------------------------------
 // Engine query context — added to ctx by customQuery
@@ -54,8 +50,7 @@ export interface EngineQueryCtx<DataModel extends GenericDataModel> {
 		tableName: TableName,
 		options?: FindFirstOptions<DataModel, TableName>,
 	): Promise<
-		| (DocumentByName<DataModel, TableName> & Record<string, unknown>)
-		| null
+		(DocumentByName<DataModel, TableName> & Record<string, unknown>) | null
 	>
 
 	paginate<TableName extends TableNamesInDataModel<DataModel>>(
@@ -101,22 +96,19 @@ export function createEngine<DataModel extends GenericDataModel>(
 	// -----------------------------------------------------------------------
 	// 1. Register FlowField aggregates + triggers on SOURCE tables
 	// -----------------------------------------------------------------------
-	for (const reg of Object.values(config.tables)) {
+	for (const [tblName, reg] of Object.entries(config.tables)) {
 		if (reg.flowFields) {
-			for (const [fieldName, flowConfig] of Object.entries(
-				reg.flowFields,
-			)) {
+			for (const [fieldName, flowConfig] of Object.entries(reg.flowFields)) {
 				const agg = createFlowFieldAggregate(
-					componentApi.aggregate,
+					config.aggregate,
 					flowConfig,
 					fieldName,
 				)
 
 				// Store for query-time resolution under the PARENT table
-				const tblName = reg.tableName as string
 				if (!aggregates[tblName]) aggregates[tblName] = {}
 				aggregates[tblName][fieldName] = {
-					aggregate: agg as FlowFieldEntry["aggregate"],
+					aggregate: agg as FlowFieldEntry['aggregate'],
 					config: flowConfig,
 					fieldName,
 				}
@@ -134,22 +126,22 @@ export function createEngine<DataModel extends GenericDataModel>(
 
 		// 2. Collect relation configs
 		if (reg.relations) {
-			allRelations[reg.tableName as string] = reg.relations
+			allRelations[tblName] = reg.relations
 		}
 	}
 
 	// -----------------------------------------------------------------------
 	// 3. Register NoSeries triggers (auto-assign codes on insert)
 	// -----------------------------------------------------------------------
-	for (const reg of Object.values(config.tables)) {
+	for (const [tblName, reg] of Object.entries(config.tables)) {
 		if (reg.noSeries) {
 			const noSeriesConfig = reg.noSeries
 			const { code, field } = noSeriesConfig
 			triggers.register(
-				reg.tableName as TableNamesInDataModel<DataModel>,
+				tblName as TableNamesInDataModel<DataModel>,
 				async (ctx, change) => {
 					if (
-						change.operation === "insert" &&
+						change.operation === 'insert' &&
 						!(change.newDoc as Record<string, unknown>)[field]
 					) {
 						const nextCode = await getNextCode(
@@ -179,7 +171,7 @@ export function createEngine<DataModel extends GenericDataModel>(
 			flowFields: aggregates[tbl]
 				? (doc) =>
 						resolveFlowFields(
-							ctx as Parameters<typeof resolveFlowFields>[0],
+							ctx as unknown as Parameters<typeof resolveFlowFields>[0],
 							doc,
 							aggregates[tbl],
 						)
@@ -200,48 +192,24 @@ export function createEngine<DataModel extends GenericDataModel>(
 	// -----------------------------------------------------------------------
 	// Build query context customization (shared by both Convex and Zod paths)
 	// -----------------------------------------------------------------------
-	const triggerCustomization = customCtx(triggers.wrapDB)
+	const triggerCustomization = customCtx((ctx: GenericMutationCtx<DataModel>) =>
+		triggers.wrapDB(ctx),
+	)
 
 	const queryCustomization = customCtx(
-		(
-			ctx: GenericQueryCtx<DataModel>,
-		): EngineQueryCtx<DataModel> => ({
-			findMany: <
-				TN extends TableNamesInDataModel<DataModel>,
-			>(
+		(ctx: GenericQueryCtx<DataModel>): EngineQueryCtx<DataModel> => ({
+			findMany: <TN extends TableNamesInDataModel<DataModel>>(
 				tbl: TN,
 				options?: FindManyOptions<DataModel, TN>,
-			) =>
-				findMany(
-					ctx,
-					tbl,
-					options,
-					makeResolvers(ctx, tbl as string),
-				),
-			findFirst: <
-				TN extends TableNamesInDataModel<DataModel>,
-			>(
+			) => findMany(ctx, tbl, options, makeResolvers(ctx, tbl as string)),
+			findFirst: <TN extends TableNamesInDataModel<DataModel>>(
 				tbl: TN,
 				options?: FindFirstOptions<DataModel, TN>,
-			) =>
-				findFirst(
-					ctx,
-					tbl,
-					options,
-					makeResolvers(ctx, tbl as string),
-				),
-			paginate: <
-				TN extends TableNamesInDataModel<DataModel>,
-			>(
+			) => findFirst(ctx, tbl, options, makeResolvers(ctx, tbl as string)),
+			paginate: <TN extends TableNamesInDataModel<DataModel>>(
 				tbl: TN,
 				options: PaginateOptions<DataModel, TN>,
-			) =>
-				paginate(
-					ctx,
-					tbl,
-					options,
-					makeResolvers(ctx, tbl as string),
-				),
+			) => paginate(ctx, tbl, options, makeResolvers(ctx, tbl as string)),
 		}),
 	)
 
@@ -250,6 +218,9 @@ export function createEngine<DataModel extends GenericDataModel>(
 	// -----------------------------------------------------------------------
 	return {
 		triggers,
+
+		/** Expose the engine configuration for external consumers (e.g. seeder) */
+		config,
 
 		/**
 		 * Create custom mutation/query builders with engine context.
@@ -262,7 +233,7 @@ export function createEngine<DataModel extends GenericDataModel>(
 		 * @param rawMutation - `mutation` from _generated/server
 		 * @param rawQuery    - `query` from _generated/server
 		 */
-		functions: <Visibility extends "public" | "internal">(
+		functions: <Visibility extends 'public' | 'internal'>(
 			rawMutation: MutationBuilder<DataModel, Visibility>,
 			rawQuery: QueryBuilder<DataModel, Visibility>,
 		) => {
@@ -294,7 +265,8 @@ export function createEngine<DataModel extends GenericDataModel>(
 		/**
 		 * Initialize all registered NoSeries (call once in a setup mutation).
 		 */
-		initSeries: (ctx: Pick<GenericMutationCtx<DataModel>, "runMutation" | "runQuery">) =>
-			initAllSeries(ctx, componentApi.convex.noSeries, config.tables),
+		initSeries: (
+			ctx: Pick<GenericMutationCtx<DataModel>, 'runMutation' | 'runQuery'>,
+		) => initAllSeries(ctx, componentApi.convex.noSeries, config.tables),
 	}
 }

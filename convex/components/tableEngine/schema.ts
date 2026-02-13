@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server"
-import { v } from "convex/values"
+import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
 
 export default defineSchema({
 	noSeries: defineTable({
@@ -8,5 +8,5 @@ export default defineSchema({
 		lastUsed: v.number(),
 		incrementBy: v.number(),
 		active: v.boolean(),
-	}).index("by_code", ["code"]),
+	}).index('by_code', ['code']),
 })

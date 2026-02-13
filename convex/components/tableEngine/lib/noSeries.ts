@@ -1,16 +1,16 @@
 import type {
+	GenericDataModel,
 	GenericMutationCtx,
 	GenericQueryCtx,
-	GenericDataModel,
-} from "convex/server"
-import type { NoSeriesApi, NoSeriesConfig } from "./types"
+} from 'convex/server'
+import type { NoSeriesApi, NoSeriesConfig } from './types'
 
 type RunCtx = Pick<
 	GenericMutationCtx<GenericDataModel>,
-	"runMutation" | "runQuery"
+	'runMutation' | 'runQuery'
 >
 
-type ReadCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">
+type ReadCtx = Pick<GenericQueryCtx<GenericDataModel>, 'runQuery'>
 
 /**
  * Initialize a single NoSeries via the component API.

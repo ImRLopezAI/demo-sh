@@ -1,11 +1,11 @@
-import { TableAggregate, type RunQueryCtx } from "@convex-dev/aggregate"
+import { type RunQueryCtx, TableAggregate } from '@convex-dev/aggregate'
 import type {
-	GenericDataModel,
 	GenericDatabaseReader,
+	GenericDataModel,
 	TableNamesInDataModel,
-} from "convex/server"
-import type { GenericId } from "convex/values"
-import type { AggregateComponentApi, FlowFieldConfig } from "./types"
+} from 'convex/server'
+import type { GenericId } from 'convex/values'
+import type { AggregateComponentApi, FlowFieldConfig } from './types'
 
 /**
  * Create a TableAggregate instance for a FlowField.
@@ -35,11 +35,10 @@ export function createFlowFieldAggregate<
 	Namespace: string
 }> | null {
 	// lookup doesn't use aggregation
-	if (config.type === "lookup") return null
+	if (config.type === 'lookup') return null
 
-	const useFieldAsSortKey = config.type === "min" || config.type === "max"
-	const needsSumValue =
-		config.type === "sum" || config.type === "average"
+	const useFieldAsSortKey = config.type === 'min' || config.type === 'max'
+	const needsSumValue = config.type === 'sum' || config.type === 'average'
 
 	return new TableAggregate<{
 		Key: number
@@ -49,15 +48,13 @@ export function createFlowFieldAggregate<
 	}>(component, {
 		namespace: (doc) =>
 			`${fieldName}::${String((doc as Record<string, unknown>)[config.key])}`,
-		sortKey: useFieldAsSortKey && config.field
-			? (doc) =>
-					Number((doc as Record<string, unknown>)[config.field!]) || 0
-			: (doc) =>
-					Number((doc as Record<string, unknown>)._creationTime),
+		sortKey:
+			useFieldAsSortKey && config.field
+				? (doc) => Number((doc as Record<string, unknown>)[config.field!]) || 0
+				: (doc) => Number((doc as Record<string, unknown>)._creationTime),
 		sumValue:
 			needsSumValue && config.field
-				? (doc) =>
-						Number((doc as Record<string, unknown>)[config.field!]) || 0
+				? (doc) => Number((doc as Record<string, unknown>)[config.field!]) || 0
 				: undefined,
 	})
 }
@@ -96,55 +93,55 @@ export async function resolveFlowFields<DataModel extends GenericDataModel>(
 			const ns = `${fieldName}::${String(doc._id)}`
 
 			switch (config.type) {
-				case "count":
-					return aggregate!.count(ctx, {
+				case 'count':
+					return aggregate?.count(ctx, {
 						namespace: ns,
 					})
 
-				case "sum":
-					return aggregate!.sum(ctx, {
+				case 'sum':
+					return aggregate?.sum(ctx, {
 						namespace: ns,
 					})
 
-				case "average": {
+				case 'average': {
 					const [sum, count] = await Promise.all([
-						aggregate!.sum(ctx, {
+						aggregate?.sum(ctx, {
 							namespace: ns,
 						}),
-						aggregate!.count(ctx, {
+						aggregate?.count(ctx, {
 							namespace: ns,
 						}),
 					])
 					return count > 0 ? sum / count : 0
 				}
 
-				case "min": {
-					const minItem = await aggregate!.min(ctx, {
+				case 'min': {
+					const minItem = await aggregate?.min(ctx, {
 						namespace: ns,
 					})
 					return minItem?.key ?? null
 				}
 
-				case "max": {
-					const maxItem = await aggregate!.max(ctx, {
+				case 'max': {
+					const maxItem = await aggregate?.max(ctx, {
 						namespace: ns,
 					})
 					return maxItem?.key ?? null
 				}
 
-				case "exist":
+				case 'exist':
 					return (
-						(await aggregate!.count(ctx, {
+						(await aggregate?.count(ctx, {
 							namespace: ns,
 						})) > 0
 					)
 
-				case "lookup": {
-					const fkValue = doc[config.key] as
-						| GenericId<string>
-						| undefined
+				case 'lookup': {
+					const fkValue = doc[config.key] as GenericId<string> | undefined
 					if (!fkValue) return null
-					const related = await (ctx.db as GenericDatabaseReader<GenericDataModel>).get(fkValue)
+					const related = await (
+						ctx.db as unknown as GenericDatabaseReader<GenericDataModel>
+					).get(fkValue)
 					return related && config.field
 						? (related as Record<string, unknown>)[config.field]
 						: null

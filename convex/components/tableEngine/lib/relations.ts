@@ -1,10 +1,7 @@
-import { getOneFrom, getManyFrom } from "convex-helpers/server/relationships"
-import type {
-	GenericDataModel,
-	GenericDatabaseReader,
-} from "convex/server"
-import type { GenericId } from "convex/values"
-import type { RelationConfig } from "./types"
+import type { GenericDatabaseReader, GenericDataModel } from 'convex/server'
+import type { GenericId } from 'convex/values'
+import { getManyFrom, getOneFrom } from 'convex-helpers/server/relationships'
+import type { RelationConfig } from './types'
 
 const MANY_RELATION_WARN_THRESHOLD = 1000
 
@@ -29,7 +26,7 @@ export async function resolveRelations<DataModel extends GenericDataModel>(
 ): Promise<Record<string, unknown>> {
 	const resolved: Record<string, unknown> = {}
 	// Widen db to GenericDataModel for dynamic runtime lookups via convex-helpers
-	const genericDb = db as GenericDatabaseReader<GenericDataModel>
+	const genericDb = db as unknown as GenericDatabaseReader<GenericDataModel>
 
 	const entries = Object.entries(withConfig).filter(
 		([, shouldLoad]) => shouldLoad,
@@ -40,7 +37,7 @@ export async function resolveRelations<DataModel extends GenericDataModel>(
 			const rel = relations[relationName]
 			if (!rel) return
 
-			if (rel.type === "one") {
+			if (rel.type === 'one') {
 				const related = await getOneFrom(
 					genericDb,
 					rel.table as string,
@@ -48,7 +45,7 @@ export async function resolveRelations<DataModel extends GenericDataModel>(
 					doc._id,
 				)
 
-				if (related && typeof shouldLoad === "object" && shouldLoad.with) {
+				if (related && typeof shouldLoad === 'object' && shouldLoad.with) {
 					const nestedRelations = allRelations[rel.table as string]
 					if (nestedRelations) {
 						const nested = await resolveRelations(
@@ -83,26 +80,20 @@ export async function resolveRelations<DataModel extends GenericDataModel>(
 					)
 				}
 
-				if (typeof shouldLoad === "object" && shouldLoad.with) {
+				if (typeof shouldLoad === 'object' && shouldLoad.with) {
 					const nestedRelations = allRelations[rel.table as string]
 					resolved[relationName] = nestedRelations
 						? await Promise.all(
-								items.map(
-									async (
-										item: Record<string, unknown> & {
-											_id: GenericId<string>
-										},
-									) => ({
-										...item,
-										...(await resolveRelations(
-											db,
-											item,
-											nestedRelations,
-											shouldLoad.with!,
-											allRelations,
-										)),
-									}),
-								),
+								items.map(async (item) => ({
+									...item,
+									...(await resolveRelations(
+										db,
+										item as { _id: GenericId<string> },
+										nestedRelations,
+										shouldLoad.with!,
+										allRelations,
+									)),
+								})),
 							)
 						: items
 				} else {

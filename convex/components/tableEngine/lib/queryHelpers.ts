@@ -1,19 +1,19 @@
-import { filter } from "convex-helpers/server/filter"
 import type {
 	DocumentByName,
-	GenericDataModel,
 	GenericDatabaseReader,
+	GenericDataModel,
 	NamedTableInfo,
 	PaginationResult,
 	QueryInitializer,
 	TableNamesInDataModel,
-} from "convex/server"
-import type { GenericId } from "convex/values"
+} from 'convex/server'
+import type { GenericId } from 'convex/values'
+import { filter } from 'convex-helpers/server/filter'
 import type {
 	FindFirstOptions,
 	FindManyOptions,
 	PaginateOptions,
-} from "./types"
+} from './types'
 
 const MAX_LIMIT = 1000
 const DEFAULT_LIMIT = 100
@@ -24,10 +24,7 @@ export interface Resolvers {
 	) => Promise<Record<string, unknown>>
 	relations?: (
 		doc: { _id: GenericId<string> },
-		withConfig: Record<
-			string,
-			boolean | { with?: Record<string, boolean> }
-		>,
+		withConfig: Record<string, boolean | { with?: Record<string, boolean> }>,
 	) => Promise<Record<string, unknown>>
 }
 
@@ -38,12 +35,10 @@ async function enrichDoc<
 >(
 	doc: DocumentByName<DataModel, TableName>,
 	resolvers: Resolvers | undefined,
-	withConfig?: Record<
-		string,
-		boolean | { with?: Record<string, boolean> }
-	>,
+	withConfig?: Record<string, boolean | { with?: Record<string, boolean> }>,
 ): Promise<DocumentByName<DataModel, TableName> & Record<string, unknown>> {
-	if (!resolvers) return doc as DocumentByName<DataModel, TableName> & Record<string, unknown>
+	if (!resolvers)
+		return doc as DocumentByName<DataModel, TableName> & Record<string, unknown>
 	let enriched: Record<string, unknown> = { ...doc }
 	if (resolvers.flowFields) {
 		const flowValues = await resolvers.flowFields(
@@ -58,7 +53,8 @@ async function enrichDoc<
 		)
 		enriched = { ...enriched, ...related }
 	}
-	return enriched as DocumentByName<DataModel, TableName> & Record<string, unknown>
+	return enriched as DocumentByName<DataModel, TableName> &
+		Record<string, unknown>
 }
 
 /**
@@ -88,7 +84,7 @@ export async function findMany<
 		) as unknown as QueryInitializer<NamedTableInfo<DataModel, TableName>>
 	}
 
-	const ordered = query.order(options?.orderBy ?? "asc")
+	const ordered = query.order(options?.orderBy ?? 'asc')
 
 	const filtered = options?.where
 		? filter(ordered, options.where as never)
@@ -98,7 +94,9 @@ export async function findMany<
 	const docs = await filtered.take(limit)
 
 	return Promise.all(
-		docs.map((doc) => enrichDoc<DataModel, TableName>(doc, resolvers, options?.with)),
+		docs.map((doc) =>
+			enrichDoc<DataModel, TableName>(doc, resolvers, options?.with),
+		),
 	)
 }
 
@@ -126,7 +124,7 @@ export async function findFirst<
 		) as unknown as QueryInitializer<NamedTableInfo<DataModel, TableName>>
 	}
 
-	const ordered = query.order("asc")
+	const ordered = query.order('asc')
 
 	const filtered = options?.where
 		? filter(ordered, options.where as never)
@@ -164,7 +162,7 @@ export async function paginate<
 		) as unknown as QueryInitializer<NamedTableInfo<DataModel, TableName>>
 	}
 
-	const ordered = query.order(options.orderBy ?? "asc")
+	const ordered = query.order(options.orderBy ?? 'asc')
 
 	const filtered = options.where
 		? filter(ordered, options.where as never)

@@ -1,11 +1,11 @@
-import type { z } from "zod/v4"
-import { zodToConvex } from "convex-helpers/server/zod4"
 import type {
-	PropertyValidators,
 	GenericValidator,
+	PropertyValidators,
 	Validator,
-} from "convex/values"
-import type { ConvexArgsValidator } from "./types"
+} from 'convex/values'
+import { zodToConvex } from 'convex-helpers/server/zod4'
+import type { z } from 'zod/v4'
+import type { ConvexArgsValidator } from './types'
 
 // ---------------------------------------------------------------------------
 // Runtime Zod detection
@@ -14,9 +14,9 @@ import type { ConvexArgsValidator } from "./types"
 export function isZodSchema(value: unknown): value is z.ZodType {
 	return (
 		value != null &&
-		typeof value === "object" &&
-		"_zod" in value &&
-		"parse" in value
+		typeof value === 'object' &&
+		'_zod' in value &&
+		'parse' in value
 	)
 }
 
@@ -52,8 +52,8 @@ export type ToConvexArgsValidator<T extends ValidatorInput> =
 					? Validator<
 							Output,
 							Shape[K] extends z.ZodOptional<z.ZodType>
-								? "optional"
-								: "required",
+								? 'optional'
+								: 'required',
 							string
 						>
 					: never
@@ -64,7 +64,7 @@ export type ToConvexArgsValidator<T extends ValidatorInput> =
 
 export type ToConvexReturnsValidator<T extends ReturnsValidatorInput> =
 	T extends z.ZodType<infer Output>
-		? Validator<Output, "required", string>
+		? Validator<Output, 'required', string>
 		: T extends GenericValidator
 			? T
 			: GenericValidator
@@ -74,7 +74,7 @@ export type ToConvexReturnsValidator<T extends ReturnsValidatorInput> =
 // ---------------------------------------------------------------------------
 
 export function hasZodInArgs(args: unknown): boolean {
-	if (!args || typeof args !== "object") return false
+	if (!args || typeof args !== 'object') return false
 	if (isZodSchema(args)) return true
 	return Object.values(args as Record<string, unknown>).some((v) =>
 		isZodSchema(v),

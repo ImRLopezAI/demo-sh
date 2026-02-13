@@ -1,5 +1,5 @@
-import { mutation, query } from "./_generated/server"
-import { v } from "convex/values"
+import { v } from 'convex/values'
+import { mutation, query } from './_generated/server'
 
 /** Parse a pattern like "ITEM0000001" into { prefix, digits, start } */
 function parsePattern(pattern: string): {
@@ -19,12 +19,8 @@ function parsePattern(pattern: string): {
 }
 
 /** Format a number into a code using pattern info */
-function formatCode(
-	prefix: string,
-	digits: number,
-	value: number,
-): string {
-	return `${prefix}${String(value).padStart(digits, "0")}`
+function formatCode(prefix: string, digits: number, value: number): string {
+	return `${prefix}${String(value).padStart(digits, '0')}`
 }
 
 export const initSeries = mutation({
@@ -36,8 +32,8 @@ export const initSeries = mutation({
 	returns: v.null(),
 	handler: async (ctx, args) => {
 		const existing = await ctx.db
-			.query("noSeries")
-			.withIndex("by_code", (q) => q.eq("code", args.code))
+			.query('noSeries')
+			.withIndex('by_code', (q) => q.eq('code', args.code))
 			.unique()
 
 		const { start } = parsePattern(args.pattern)
@@ -51,7 +47,7 @@ export const initSeries = mutation({
 				active: true,
 			})
 		} else {
-			await ctx.db.insert("noSeries", {
+			await ctx.db.insert('noSeries', {
 				code: args.code,
 				pattern: args.pattern,
 				lastUsed,
@@ -72,14 +68,14 @@ export const getNextCode = mutation({
 	returns: v.string(),
 	handler: async (ctx, args) => {
 		let series = await ctx.db
-			.query("noSeries")
-			.withIndex("by_code", (q) => q.eq("code", args.code))
+			.query('noSeries')
+			.withIndex('by_code', (q) => q.eq('code', args.code))
 			.unique()
 
 		if (!series && args.pattern) {
 			const { start } = parsePattern(args.pattern)
 			const lastUsed = start - (args.incrementBy ?? 1)
-			const id = await ctx.db.insert("noSeries", {
+			const id = await ctx.db.insert('noSeries', {
 				code: args.code,
 				pattern: args.pattern,
 				lastUsed,
@@ -106,8 +102,8 @@ export const peekNextCode = query({
 	returns: v.string(),
 	handler: async (ctx, args) => {
 		const series = await ctx.db
-			.query("noSeries")
-			.withIndex("by_code", (q) => q.eq("code", args.code))
+			.query('noSeries')
+			.withIndex('by_code', (q) => q.eq('code', args.code))
 			.unique()
 
 		if (!series) throw new Error(`NoSeries not found: ${args.code}`)
@@ -127,8 +123,8 @@ export const resetSeries = mutation({
 	returns: v.null(),
 	handler: async (ctx, args) => {
 		const series = await ctx.db
-			.query("noSeries")
-			.withIndex("by_code", (q) => q.eq("code", args.code))
+			.query('noSeries')
+			.withIndex('by_code', (q) => q.eq('code', args.code))
 			.unique()
 
 		if (!series) throw new Error(`NoSeries not found: ${args.code}`)

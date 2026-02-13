@@ -1,5 +1,4 @@
-import type { RunQueryCtx, RunMutationCtx } from "@convex-dev/aggregate"
-import type { components } from "../_generated/api"
+import type { RunMutationCtx, RunQueryCtx } from '@convex-dev/aggregate'
 import type {
 	DocumentByName,
 	FunctionReference,
@@ -9,9 +8,11 @@ import type {
 	IndexRangeBuilder,
 	NamedIndex,
 	NamedTableInfo,
+	PaginationOptions,
 	TableNamesInDataModel,
-} from "convex/server"
-import type { PropertyValidators } from "convex/values"
+} from 'convex/server'
+import type { PropertyValidators } from 'convex/values'
+import type { components } from '../_generated/api'
 
 // ---------------------------------------------------------------------------
 // Re-export aggregate context types for consumers
@@ -30,13 +31,13 @@ export type ConvexArgsValidator = PropertyValidators
 // ---------------------------------------------------------------------------
 
 export type FlowFieldType =
-	| "sum"
-	| "count"
-	| "average"
-	| "min"
-	| "max"
-	| "lookup"
-	| "exist"
+	| 'sum'
+	| 'count'
+	| 'average'
+	| 'min'
+	| 'max'
+	| 'lookup'
+	| 'exist'
 
 export interface FlowFieldConfig {
 	/** Aggregate type */
@@ -76,7 +77,7 @@ export interface RelationConfig<
 	/** Index name used for the lookup (e.g. "by_itemId") */
 	field: string
 	/** 'one' → getOneFrom, 'many' → getManyFrom */
-	type: "one" | "many"
+	type: 'one' | 'many'
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +102,6 @@ export interface NoSeriesConfig {
 export interface TableRegistration<
 	DataModel extends GenericDataModel = GenericDataModel,
 > {
-	tableName: TableNamesInDataModel<DataModel>
 	flowFields?: Record<string, FlowFieldConfig>
 	noSeries?: NoSeriesConfig
 	relations?: Record<string, RelationConfig<DataModel>>
@@ -113,37 +113,30 @@ export interface TableRegistration<
 
 export interface NoSeriesApi {
 	initSeries: FunctionReference<
-		"mutation",
-		"internal",
+		'mutation',
+		'internal',
 		{ code: string; incrementBy?: number; pattern: string },
 		null
 	>
 	getNextCode: FunctionReference<
-		"mutation",
-		"internal",
+		'mutation',
+		'internal',
 		{ code: string; incrementBy?: number; pattern?: string },
 		string
 	>
-	peekNextCode: FunctionReference<
-		"query",
-		"internal",
-		{ code: string },
-		string
-	>
+	peekNextCode: FunctionReference<'query', 'internal', { code: string }, string>
 	resetSeries: FunctionReference<
-		"mutation",
-		"internal",
+		'mutation',
+		'internal',
 		{ code: string; startAt?: number },
 		null
 	>
 }
 
 /** Aggregate component API — matches @convex-dev/aggregate's ComponentApi */
-export type AggregateComponentApi = (typeof components)["aggregate"]
+export type AggregateComponentApi = (typeof components)['aggregate']
 
 export interface TableEngineComponentApi {
-	/** @convex-dev/aggregate sub-component */
-	aggregate: AggregateComponentApi
 	/** Component functions exposed under convex/ */
 	convex: {
 		noSeries: NoSeriesApi
@@ -155,9 +148,11 @@ export interface TableEngineComponentApi {
 // ---------------------------------------------------------------------------
 
 export interface EngineConfig<DataModel extends GenericDataModel> {
-	tables: Record<string, TableRegistration<DataModel>>
+	tables: Record<keyof DataModel, TableRegistration<DataModel>>
 	/** ComponentApi reference — `components.tableEngine` from _generated/api */
 	component: TableEngineComponentApi
+	/** Aggregate component — `components.aggregate` from app-level _generated/api */
+	aggregate: AggregateComponentApi
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +180,7 @@ export interface FindManyOptions<
 		>,
 	) => IndexRange
 	/** Sort direction (default 'asc') */
-	orderBy?: "asc" | "desc"
+	orderBy?: 'asc' | 'desc'
 	/** Max rows to return (default 100, hard cap 1000) */
 	limit?: number
 	/** Eager-load relations */
@@ -229,8 +224,8 @@ export interface PaginateOptions<
 			>
 		>,
 	) => IndexRange
-	orderBy?: "asc" | "desc"
-	paginationOpts: { numItems: number; cursor: string | null }
+	orderBy?: 'asc' | 'desc'
+	paginationOpts: PaginationOptions
 	with?: Record<string, boolean | { with?: Record<string, boolean> }>
 }
 
