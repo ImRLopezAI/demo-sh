@@ -6,33 +6,12 @@ import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 import { ShipmentCard } from './components/shipment-card'
 
-interface Shipment {
-	_id: string
-	shipmentNo: string
-	status: 'PLANNED' | 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED' | 'EXCEPTION'
-	sourceDocumentType: string
-	sourceDocumentNo: string
-	shipmentMethodCode: string
-	priority: 'LOW' | 'NORMAL' | 'HIGH' | 'EXPRESS'
-	plannedDispatchDate: string
-	plannedDeliveryDate: string
-	actualDispatchDate: string
-	actualDeliveryDate: string
-	courierName: string
-	trackingNo: string
-	lineCount: number
-}
-
 export default function ShipmentsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'trace', Shipment>(
-		'trace',
-		'shipments',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('trace', 'shipments')
 
-	const handleEdit = React.useCallback((row: Shipment) => {
+	const handleEdit = React.useCallback((row) => {
 		setSelectedId(row._id)
 	}, [])
 

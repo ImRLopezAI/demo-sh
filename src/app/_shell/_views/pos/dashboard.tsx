@@ -18,39 +18,15 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface PosTransaction {
-	id: string
-	receiptNo: string
-	posSessionId: string
-	status: 'OPEN' | 'COMPLETED' | 'VOIDED' | 'REFUNDED'
-	customerId: string
-	totalAmount: number
-	taxAmount: number
-	discountAmount: number
-	paidAmount: number
-	paymentMethod: 'CASH' | 'CARD' | 'MOBILE' | 'MIXED'
-	transactionAt: string
-	lineCount: number
-}
-
-interface Terminal {
-	id: string
-	terminalCode: string
-	name: string
-	locationCode: string
-	status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE'
-	sessionCount: number
-}
-
 export default function PosDashboard() {
-	const { items: transactions, isLoading: transactionsLoading } = useModuleData<
+	const { items: transactions, isLoading: transactionsLoading } = useModuleData(
 		'pos',
-		PosTransaction
-	>('pos', 'transactions', 'all')
-	const { items: terminals, isLoading: terminalsLoading } = useModuleData<
+		'posTransactions',
+	)
+	const { items: terminals, isLoading: terminalsLoading } = useModuleData(
 		'pos',
-		Terminal
-	>('pos', 'terminals', 'all')
+		'terminals',
+	)
 
 	const totalTransactions = transactions.length
 	const completedTransactions = transactions.filter(
@@ -132,8 +108,8 @@ export default function PosDashboard() {
 			[...transactions]
 				.sort(
 					(a, b) =>
-						new Date(b.transactionAt).getTime() -
-						new Date(a.transactionAt).getTime(),
+						new Date(b.transactionAt ?? '').getTime() -
+						new Date(a.transactionAt ?? '').getTime(),
 				)
 				.slice(0, 10),
 		[transactions],
@@ -215,7 +191,7 @@ export default function PosDashboard() {
 						<ul className='space-y-1'>
 							{recentTransactions.map((transaction) => (
 								<li
-									key={transaction.id}
+									key={transaction._id}
 									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
 								>
 									<div className='flex min-w-0 items-center gap-3'>

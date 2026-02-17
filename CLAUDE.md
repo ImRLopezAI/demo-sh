@@ -3,6 +3,7 @@ This repo is a Bun + Vite + TanStack React Start app with Convex/Redis.
 Follow the commands and style rules below when working here.
 
 # UI/UX Guidelines
+For ui use the skill `frontend-design` `vercel-react-best-practices`, `web-design-guidelines` and `vercel-composition-patterns`. 
 
 WHEN USING PENCIL MCP TO CREATES VIEWS, COMPONENTS, OR ANYTHING RELATED TO THE UI, CREATE UNIQUE DESIGNS AND DISTINCTIVE LAYOUTS. DO NOT COPY THE SAME DESIGN PATTERNS AND LAYOUTS ACROSS MODULES. EACH MODULE SHOULD HAVE A UNIQUE LOOK AND FEEL REFLECTING ITS FUNCTIONALITY AND PURPOSE. 
 
@@ -10,7 +11,6 @@ AFTER CREATE A VIEW ANALYZE AND COMPARE IT WITH THE OTHER VIEWS IN THE SAME MODU
 
 AVOID AI-Generated Generic Layouts and Designs that Look Similar Across Modules. INSTEAD, STRIVE FOR CREATIVITY AND UNIQUENESS IN EACH MODULE'S UI TO ENHANCE USER EXPERIENCE AND MAKE IT EASIER FOR USERS TO NAVIGATE AND IDENTIFY DIFFERENT SECTIONS OF THE APPLICATION.
 
-For ui use the skill `frontend-design` `vercel-react-best-practices`, `web-design-guidelines` and `vercel-composition-patterns`. 
 
 ## Quick Commands
 

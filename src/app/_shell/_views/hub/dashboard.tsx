@@ -31,35 +31,14 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface OperationTask {
-	id: string
-	taskNo: string
-	moduleId: string
-	title: string
-	description?: string | null
-	status: 'OPEN' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE'
-	priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-	assigneeUserId?: string | null
-	dueDate?: string | null
-}
-
-interface ModuleNotification {
-	id: string
-	moduleId: string
-	title: string
-	body?: string | null
-	status: 'UNREAD' | 'READ' | 'ARCHIVED'
-	severity: 'INFO' | 'WARNING' | 'ERROR'
-}
-
 export default function Dashboard() {
-	const { items: tasks, isLoading: tasksLoading } = useModuleData<
+	const { items: tasks, isLoading: tasksLoading } = useModuleData(
 		'hub',
-		OperationTask
-	>('hub', 'operationTasks', 'all')
+		'operationTasks',
+	)
 
 	const { items: notifications, isLoading: notificationsLoading } =
-		useModuleData<'hub', ModuleNotification>('hub', 'notifications', 'all')
+		useModuleData('hub', 'moduleNotifications')
 
 	const totalTasks = tasks.length
 	const completedTasks = tasks.filter((task) => task.status === 'DONE').length
@@ -74,7 +53,7 @@ export default function Dashboard() {
 		(notification) => notification.severity === 'ERROR',
 	).length
 	const tasksByModule = tasks.reduce<Record<string, number>>((acc, task) => {
-		const moduleId = task.moduleId?.trim() || 'unknown'
+		const moduleId = String(task.moduleId ?? '').trim() || 'unknown'
 		acc[moduleId] = (acc[moduleId] ?? 0) + 1
 		return acc
 	}, {})
@@ -195,7 +174,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{recentTasks.map((task) => (
 									<li
-										key={task.id}
+										key={task._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>
@@ -239,7 +218,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{recentNotifications.map((notification) => (
 									<li
-										key={notification.id}
+										key={notification._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>

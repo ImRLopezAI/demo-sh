@@ -25,11 +25,7 @@ interface Employee {
 export default function EmployeesList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'payroll', Employee>(
-		'payroll',
-		'employees',
-		'overview',
-	)
+	const { DataGrid, windowSize } = useModuleData('payroll', 'employees')
 
 	const handleEdit = React.useCallback(
 		(row: Employee) => setSelectedId(row._id),

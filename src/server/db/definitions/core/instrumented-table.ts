@@ -1,13 +1,11 @@
 import type { PaginatedResult } from '../adapters'
 import { decodeCursor, encodeCursor } from '../adapters'
+import type { FlowFieldCache } from '../fields/flow-field-cache'
 import type { NoSeriesV2Manager } from '../no-series'
 import type { ObservabilityHooks } from '../observability/types'
 import type { PluginHookManager } from '../plugins/hook-manager'
 import type { ReactiveTable, TableSnapshot, WithSystemFields } from '../table'
-import type {
-	QueryHelpers,
-	WithConfig,
-} from '../types'
+import type { QueryHelpers, WithConfig } from '../types'
 import {
 	applyColumnSelection,
 	applyOrdering,
@@ -16,7 +14,6 @@ import {
 } from './query-helpers'
 import type { AutoIncrementConfig, ReverseRelation } from './schema-helpers'
 import { applyAutoIncrementToItem } from './schema-helpers'
-import type { FlowFieldCache } from '../fields/flow-field-cache'
 
 // ============================================================================
 // Configuration for creating an instrumented table
@@ -43,7 +40,9 @@ export interface InstrumentedTableConfig {
 	reverseRelations?: ReverseRelation[]
 	tableInstances: Map<string, ReactiveTable<object>>
 	/** Get a fully instrumented table by name (for recursive cascade deletes) */
-	getInstrumentedTable?: (tableName: string) => { delete: (id: string) => boolean } | undefined
+	getInstrumentedTable?: (
+		tableName: string,
+	) => { delete: (id: string) => boolean } | undefined
 	resolveRelations?: <T extends object>(
 		doc: T,
 		tableName: string,
@@ -78,7 +77,8 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 		resolveRelations,
 	} = config
 
-	const hasNoSeries = noSeriesConfigs && noSeriesConfigs.length > 0 && noSeriesManager
+	const hasNoSeries =
+		noSeriesConfigs && noSeriesConfigs.length > 0 && noSeriesManager
 	const hasAutoIncrement = tableAutoIncrementConfigs.has(tableName)
 
 	const wrapDoc = <D extends object>(doc: D): D =>
@@ -89,15 +89,30 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 
 	const applyAutoIncrement = (item: Record<string, unknown>) =>
 		hasAutoIncrement
-			? applyAutoIncrementToItem(tableName, item, tableAutoIncrementConfigs, autoIncrementState)
+			? applyAutoIncrementToItem(
+					tableName,
+					item,
+					tableAutoIncrementConfigs,
+					autoIncrementState,
+				)
 			: item
 
 	const applyNoSeries = (item: Record<string, unknown>) =>
-		hasNoSeries
-			? noSeriesManager!.applyToInsert(noSeriesConfigs!, item)
-			: item
+		hasNoSeries ? noSeriesManager?.applyToInsert(noSeriesConfigs!, item) : item
 
-	const trackMutation = (operation: 'insert' | 'update' | 'delete' | 'clear' | 'insertMany' | 'updateMany' | 'deleteMany', documentId: string | undefined, startTime: number, success: boolean) => {
+	const trackMutation = (
+		operation:
+			| 'insert'
+			| 'update'
+			| 'delete'
+			| 'clear'
+			| 'insertMany'
+			| 'updateMany'
+			| 'deleteMany',
+		documentId: string | undefined,
+		startTime: number,
+		success: boolean,
+	) => {
 		if (observabilityState.enabled && observabilityState.hooks.onMutation) {
 			observabilityState.hooks.onMutation({
 				tableName,
@@ -183,7 +198,10 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 			const startTime = Date.now()
 			try {
 				let processedItem = item as Record<string, unknown>
-				const hookResult = pluginManager.executeBeforeInsert(tableName, processedItem)
+				const hookResult = pluginManager.executeBeforeInsert(
+					tableName,
+					processedItem,
+				)
 				processedItem = hookResult.value
 				processedItem = applyAutoIncrement(processedItem)
 				processedItem = applyNoSeries(processedItem)
@@ -204,7 +222,11 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 		update: (id: string, updates: Partial<object>) => {
 			const startTime = Date.now()
 			try {
-				const hookResult = pluginManager.executeBeforeUpdate(tableName, id, updates)
+				const hookResult = pluginManager.executeBeforeUpdate(
+					tableName,
+					id,
+					updates,
+				)
 				const processedUpdates = hookResult.value
 
 				const result = table.update(id, processedUpdates)
@@ -280,7 +302,10 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 				return hasFlowFields ? results.map((doc) => wrapDoc(doc)) : results
 			},
 
-			updateMany: (predicate: (item: object) => boolean, updates: Partial<object>) => {
+			updateMany: (
+				predicate: (item: object) => boolean,
+				updates: Partial<object>,
+			) => {
 				const results = table.updateMany(predicate, updates)
 				return hasFlowFields ? results.map((doc) => wrapDoc(doc)) : results
 			},
@@ -379,7 +404,10 @@ export function createInstrumentedTable(config: InstrumentedTableConfig) {
 				}
 			}
 
-			const pageItems = results.slice(startIndex, startIndex + pageSize) as WithSystemFields<object>[]
+			const pageItems = results.slice(
+				startIndex,
+				startIndex + pageSize,
+			) as WithSystemFields<object>[]
 			const hasMore = startIndex + pageSize < results.length
 			const hasPrev = startIndex > 0
 

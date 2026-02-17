@@ -35,8 +35,7 @@
 			"@convex/*": ["./convex/_generated/*"],
 			"@components/*": ["./src/components/*"],
 			"@hooks/*": ["./src/hooks/*"],
-			"@ui/*": ["./src/components/ui/*"],
-			
+			"@ui/*": ["./src/components/ui/*"]
 		}
 	}
 }

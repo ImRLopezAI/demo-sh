@@ -23,13 +23,9 @@ interface PosTransaction {
 export default function TransactionsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'pos', PosTransaction>(
-		'pos',
-		'transactions',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('pos', 'posTransactions')
 
-	const handleEdit = React.useCallback((row: PosTransaction) => {
+	const handleEdit = React.useCallback((row) => {
 		setSelectedId(row._id)
 	}, [])
 

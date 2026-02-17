@@ -1,25 +1,8 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 
-interface GlEntry {
-	_id: string
-	entryNo: number
-	postingDate?: string | null
-	accountNo: string
-	accountName?: string | null
-	documentType?: string | null
-	documentNo?: string | null
-	description?: string | null
-	debitAmount: number
-	creditAmount: number
-}
-
 export default function GlEntriesList() {
-	const { DataGrid, windowSize } = useModuleData<'payroll', GlEntry>(
-		'payroll',
-		'glEntries',
-		'overview',
-	)
+	const { DataGrid, windowSize } = useModuleData('payroll', 'glEntries')
 
 	return (
 		<div className='space-y-6'>

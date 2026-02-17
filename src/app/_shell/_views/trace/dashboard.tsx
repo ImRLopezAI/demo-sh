@@ -18,29 +18,8 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface Shipment {
-	id: string
-	shipmentNo: string
-	status: 'PLANNED' | 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED' | 'EXCEPTION'
-	sourceDocumentType: string
-	sourceDocumentNo: string
-	shipmentMethodCode: string
-	priority: 'LOW' | 'NORMAL' | 'HIGH' | 'EXPRESS'
-	plannedDispatchDate: string
-	plannedDeliveryDate: string
-	actualDispatchDate: string
-	actualDeliveryDate: string
-	courierName: string
-	trackingNo: string
-	lineCount: number
-}
-
 export default function TraceDashboard() {
-	const { items: shipments, isLoading } = useModuleData<'trace', Shipment>(
-		'trace',
-		'shipments',
-		'all',
-	)
+	const { items: shipments, isLoading } = useModuleData('trace', 'shipments')
 
 	const totalShipments = shipments.length
 	const inTransit = shipments.filter(
@@ -60,18 +39,18 @@ export default function TraceDashboard() {
 	).length
 	const onTimeDelivered = shipments.filter((shipment) => {
 		if (shipment.status !== 'DELIVERED') return false
-		const planned = new Date(shipment.plannedDeliveryDate).getTime()
-		const actual = new Date(shipment.actualDeliveryDate).getTime()
+		const planned = new Date(shipment.plannedDeliveryDate ?? '').getTime()
+		const actual = new Date(shipment.actualDeliveryDate ?? '').getTime()
 		if (Number.isNaN(planned) || Number.isNaN(actual)) return false
 		return actual <= planned
 	}).length
 	const leadTimes = shipments
 		.map((shipment) => {
 			const dispatch = new Date(
-				shipment.actualDispatchDate || shipment.plannedDispatchDate,
+				shipment.actualDispatchDate || shipment.plannedDispatchDate || '',
 			).getTime()
 			const delivery = new Date(
-				shipment.actualDeliveryDate || shipment.plannedDeliveryDate,
+				shipment.actualDeliveryDate || shipment.plannedDeliveryDate || '',
 			).getTime()
 			if (Number.isNaN(dispatch) || Number.isNaN(delivery)) return null
 			return Math.max(0, (delivery - dispatch) / (1000 * 60 * 60 * 24))
@@ -125,8 +104,8 @@ export default function TraceDashboard() {
 			[...shipments]
 				.sort(
 					(a, b) =>
-						new Date(b.plannedDispatchDate).getTime() -
-						new Date(a.plannedDispatchDate).getTime(),
+						new Date(b.plannedDispatchDate ?? '').getTime() -
+						new Date(a.plannedDispatchDate ?? '').getTime(),
 				)
 				.slice(0, 10),
 		[shipments],
@@ -204,7 +183,7 @@ export default function TraceDashboard() {
 						<ul className='space-y-1'>
 							{recentShipments.map((shipment) => (
 								<li
-									key={shipment.id}
+									key={shipment._id}
 									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
 								>
 									<div className='flex min-w-0 items-center gap-3'>

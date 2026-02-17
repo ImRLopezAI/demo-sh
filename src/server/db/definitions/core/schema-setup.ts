@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import type { AsyncStorageAdapter, SyncStorageAdapter } from '../adapters'
+import {
+	extractFieldsAndRelations,
+	type FlowFieldExtractionResult,
+} from '../fields/flow-field-wiring'
+import { NoSeriesV2Manager } from '../no-series'
 import type { ObservabilityHooks } from '../observability/types'
 import { PluginHookManager } from '../plugins/hook-manager'
 import {
@@ -8,33 +14,24 @@ import {
 	type RelationsSchema,
 	type TableRelations,
 } from '../relations'
-import { NoSeriesV2Manager } from '../no-series'
 import type {
 	AnyTableBuilder,
 	ComputedFn,
 	SchemaContext,
+	SchemaOptions,
 	TypedOneHelper,
 	TypedTableConfig,
 	ZodShape,
 } from '../types'
 import {
-	createTypedOneHelper,
-	createTableDefinition,
-} from './table-builder'
-import {
+	type AutoIncrementConfig,
 	extractAutoIncrementConfigs,
 	extractNoSeriesConfigs,
-	resolveTableOrder,
-	type AutoIncrementConfig,
-	type ParentChildRelation,
 	type ForeignKeyInfo,
+	type ParentChildRelation,
+	resolveTableOrder,
 } from './schema-helpers'
-import {
-	extractFieldsAndRelations,
-	type FlowFieldExtractionResult,
-} from '../fields/flow-field-wiring'
-import type { SchemaOptions } from '../types'
-import type { SyncStorageAdapter, AsyncStorageAdapter } from '../adapters'
+import { createTableDefinition, createTypedOneHelper } from './table-builder'
 
 // ============================================================================
 // Relation map builder (shared between sync and async)
@@ -171,12 +168,15 @@ export function prepareSchema<
 
 	// Extract flow fields, computed fns, relation metadata, and reverse relations
 	const fieldExtraction = extractFieldsAndRelations(
-		tables as Record<string, {
-			_definition: {
-				schemaInput: unknown
-				computedFn?: ComputedFn<object, Record<string, unknown>>
+		tables as Record<
+			string,
+			{
+				_definition: {
+					schemaInput: unknown
+					computedFn?: ComputedFn<object, Record<string, unknown>>
+				}
 			}
-		}>,
+		>,
 		typedOneHelper,
 	)
 

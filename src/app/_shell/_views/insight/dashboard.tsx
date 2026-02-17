@@ -24,62 +24,21 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface ItemLedgerEntry {
-	id: string
-	entryNo: number
-	entryType:
-		| 'SALE'
-		| 'PURCHASE'
-		| 'POSITIVE_ADJUSTMENT'
-		| 'NEGATIVE_ADJUSTMENT'
-		| 'TRANSFER'
-	itemId: string
-	locationCode: string
-	postingDate: string
-	quantity: number
-	remainingQty: number
-	open: boolean
-}
-
-interface ValueEntry {
-	id: string
-	entryNo: number
-	itemId: string
-	postingDate: string
-	entryType:
-		| 'DIRECT_COST'
-		| 'REVALUATION'
-		| 'ROUNDING'
-		| 'INDIRECT_COST'
-		| 'VARIANCE'
-	costAmountActual: number
-	salesAmountActual: number
-	costPerUnit: number
-}
-
-interface Location {
-	id: string
-	code: string
-	name: string
-	type: 'WAREHOUSE' | 'STORE' | 'DISTRIBUTION_CENTER'
-	active: boolean
-}
-
 export default function Dashboard() {
-	const { items: ledgerEntries, isLoading: ledgerLoading } = useModuleData<
+	const { items: ledgerEntries, isLoading: ledgerLoading } = useModuleData(
 		'insight',
-		ItemLedgerEntry
-	>('insight', 'itemLedgerEntries', 'all')
+		'itemLedgerEntries',
+	)
 
-	const { items: valueEntries, isLoading: valueLoading } = useModuleData<
+	const { items: valueEntries, isLoading: valueLoading } = useModuleData(
 		'insight',
-		ValueEntry
-	>('insight', 'valueEntries', 'all')
+		'valueEntries',
+	)
 
-	const { items: locations, isLoading: locationsLoading } = useModuleData<
+	const { items: locations, isLoading: locationsLoading } = useModuleData(
 		'insight',
-		Location
-	>('insight', 'locations', 'all')
+		'locations',
+	)
 
 	const totalLocations = locations.length
 	const activeLocations = locations.filter((location) => location.active).length
@@ -231,7 +190,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{recentEntries.map((entry) => (
 									<li
-										key={entry.id}
+										key={entry._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>
@@ -273,7 +232,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{locations.slice(0, 8).map((location) => (
 									<li
-										key={location.id}
+										key={location._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>

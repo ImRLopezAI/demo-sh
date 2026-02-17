@@ -1,11 +1,8 @@
 'use client'
+export { api as cvx } from '@convex/api'
 export {
-	useInfiniteQuery,
+	useAction,
 	useMutation,
 	useQueries,
-	useQuery,
-	useQueryClient,
-	useSuspenseQueries,
-	useSuspenseQuery,
-} from '@tanstack/react-query'
-export { $rpc } from './rpc'
+} from 'convex/react'
+export { usePaginatedQuery, useQuery } from 'convex-helpers/react'

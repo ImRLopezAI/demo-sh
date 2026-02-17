@@ -41,13 +41,9 @@ export default function PayrollJournal() {
 	const windowSize = useWindowSize({ defaultHeight: 900, defaultWidth: 1280 })
 
 	const { items, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useModuleData<'payroll', GenJournalLine>(
-			'payroll',
-			'journalLines',
-			'overview',
-		)
+		useModuleData('payroll', 'genJournalLines')
 
-	const { transitionStatus } = useEntityMutations('payroll', 'journalLines')
+	const { transitionStatus } = useEntityMutations('payroll', 'genJournalLines')
 
 	const handlePostAll = async () => {
 		const openLines = items.filter((line) => line.status === 'OPEN')

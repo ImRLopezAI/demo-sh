@@ -3,26 +3,10 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { LocationCard } from './components/location-card'
 
-interface Location {
-	_id: string
-	code: string
-	name: string
-	type: 'WAREHOUSE' | 'STORE' | 'DISTRIBUTION_CENTER'
-	address: string
-	city: string
-	country: string
-	active: boolean
-	itemCount: number
-}
-
 export default function LocationsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'insight', Location>(
-		'insight',
-		'locations',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('insight', 'locations')
 
 	return (
 		<div className='space-y-4'>

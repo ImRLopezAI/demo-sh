@@ -1,19 +1,8 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 
-interface ShipmentMethod {
-	_id: string
-	code: string
-	description: string
-	active: boolean
-}
-
 export default function ShipmentMethodsList() {
-	const { DataGrid, windowSize } = useModuleData<'trace', ShipmentMethod>(
-		'trace',
-		'shipmentMethods',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('trace', 'shipmentMethods')
 
 	return (
 		<div className='space-y-6'>

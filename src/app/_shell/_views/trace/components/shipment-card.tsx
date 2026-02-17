@@ -23,16 +23,6 @@ interface ShipmentHeader {
 	trackingNo: string
 }
 
-interface ShipmentLine {
-	_id: string
-	shipmentNo: string
-	lineNo: number
-	itemId: string
-	description: string
-	quantity: number
-	quantityShipped: number
-}
-
 const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'EXPRESS'] as const
 
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -67,10 +57,10 @@ export function ShipmentCard({
 		limit: 100,
 	})
 
-	const { items: allLines, isLoading: linesLoading } = useModuleData<
+	const { items: allLines, isLoading: linesLoading } = useModuleData(
 		'trace',
-		ShipmentLine
-	>('trace', 'shipmentLines', 'overview')
+		'shipmentLines',
+	)
 
 	const resolvedRecord = isNew
 		? {
@@ -263,7 +253,7 @@ export function ShipmentCard({
 													/>
 													<Form.Combo.Content>
 														<Form.Combo.List>
-															{(methodsList?.items ?? []).map(
+															{(methodsList ?? []).map(
 																(m: Record<string, unknown>) => (
 																	<Form.Combo.Item
 																		key={m._id as string}

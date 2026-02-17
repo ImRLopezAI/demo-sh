@@ -1,29 +1,8 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 
-interface ValueEntry {
-	_id: string
-	entryNo: number
-	itemId: string
-	itemDescription: string
-	postingDate: string
-	entryType:
-		| 'DIRECT_COST'
-		| 'REVALUATION'
-		| 'ROUNDING'
-		| 'INDIRECT_COST'
-		| 'VARIANCE'
-	costAmountActual: number
-	salesAmountActual: number
-	costPerUnit: number
-}
-
 export default function ValueEntriesList() {
-	const { DataGrid, windowSize } = useModuleData<'insight', ValueEntry>(
-		'insight',
-		'valueEntries',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('insight', 'valueEntries')
 
 	return (
 		<div className='space-y-4'>

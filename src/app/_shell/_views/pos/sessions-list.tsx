@@ -22,13 +22,9 @@ interface PosSession {
 export default function SessionsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'pos', PosSession>(
-		'pos',
-		'sessions',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('pos', 'posSessions')
 
-	const handleEdit = React.useCallback((row: PosSession) => {
+	const handleEdit = React.useCallback((row) => {
 		setSelectedId(row._id)
 	}, [])
 

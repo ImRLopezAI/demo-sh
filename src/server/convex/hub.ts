@@ -7,7 +7,7 @@ import {
 } from './utils/enums'
 import { zodTable } from './utils/helper'
 
-export const operationTasks = zodTable('operationTasks', (zid) => ({
+export const operationTasks = zodTable('operationTasks', (_zid) => ({
 	taskNo: z.string(),
 	moduleId: z.string(),
 	title: z.string(),
@@ -20,7 +20,7 @@ export const operationTasks = zodTable('operationTasks', (zid) => ({
 	statusUpdatedAt: z.number().optional(),
 }))
 
-export const moduleNotifications = zodTable('moduleNotifications', (zid) => ({
+export const moduleNotifications = zodTable('moduleNotifications', (_zid) => ({
 	moduleId: z.string(),
 	title: z.string(),
 	body: z.string().optional(),

@@ -3,6 +3,13 @@
  * @module migrations
  */
 
+// Adapter-backed version storage
+export {
+	AdapterVersionStorage,
+	createAdapterVersionStorage,
+} from './adapter-version-storage'
+// Migration generator
+export { generateMigration } from './migration-generator'
 // Migration runner
 export {
 	createMigrationRunner,
@@ -10,23 +17,16 @@ export {
 	defineMigration,
 	MigrationRunner,
 } from './runner'
-// Migration generator
-export { generateMigration } from './migration-generator'
 // Schema diffing
 export {
 	diffSchemas,
-	snapshotSchema,
 	type FieldSnapshot,
 	type SchemaDiff,
 	type SchemaDiffType,
 	type SchemaSnapshot,
+	snapshotSchema,
 	type TableSnapshot as SchemaTableSnapshot,
 } from './schema-diff'
-// Adapter-backed version storage
-export {
-	AdapterVersionStorage,
-	createAdapterVersionStorage,
-} from './adapter-version-storage'
 // Types
 export type {
 	Migration,

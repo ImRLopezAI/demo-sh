@@ -13,10 +13,9 @@ interface Cart {
 }
 
 export default function CartsList() {
-	const { DataGrid, windowSize } = useModuleData<'market', Cart>(
+	const { DataGrid, windowSize } = useModuleData(
 		'market',
-		'carts',
-		'all',
+		'carts'
 	)
 
 	return (

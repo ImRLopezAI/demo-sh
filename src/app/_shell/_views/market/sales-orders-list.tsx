@@ -6,30 +6,17 @@ import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
-interface SalesOrder {
-	_id: string
-	documentNo: string
-	documentType: string
-	status: string
-	customerId: string
-	customerName: string
-	orderDate: string
-	currency: string
-	lineCount: number
-	totalAmount: number
-}
 
 export default function SalesOrdersList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'market', SalesOrder>(
+	const { DataGrid, windowSize } = useModuleData(
 		'market',
-		'salesOrders',
-		'all',
+		'salesHeaders'
 	)
 
 	const handleEdit = React.useCallback(
-		(row: SalesOrder) => setSelectedId(row._id),
+		(row) => setSelectedId(row._id),
 		[],
 	)
 	const handleNew = () => setSelectedId('new')

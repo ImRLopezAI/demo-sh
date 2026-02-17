@@ -1,9 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
-import { z } from 'zod'
+import type { z } from 'zod'
+import { getZodMeta, hasZodTrait } from '../fields/zod-utils'
 import type { NoSeriesV2Manager } from '../no-series'
 import type { ObservabilityHooks } from '../observability/types'
 import type { PluginHookManager } from '../plugins/hook-manager'
 import type { TablePlugin } from '../plugins/types'
+import type { GenerationContext } from '../seeding'
+import { generateValueFromMeta } from '../seeding'
 import type {
 	FieldMeta,
 	ObservabilityApi,
@@ -12,9 +15,6 @@ import type {
 	SeedConfig,
 	ZodShape,
 } from '../types'
-import { getZodMeta, hasZodTrait } from '../fields/zod-utils'
-import type { GenerationContext } from '../seeding'
-import { generateValueFromMeta } from '../seeding'
 
 // ============================================================================
 // Relation metadata types
@@ -48,7 +48,10 @@ export type ForeignKeyInfo = { targetTable: string; targetColumn: string }
 // ============================================================================
 
 export function resolveTableOrder(
-	tables: Record<string, { _definition: { schemaInput: unknown }; _noSeriesConfig?: unknown }>,
+	tables: Record<
+		string,
+		{ _definition: { schemaInput: unknown }; _noSeriesConfig?: unknown }
+	>,
 	childToParentMap: Map<string, ParentChildRelation[]>,
 	typedOneHelper: (tableName: string) => z.ZodType,
 ): string[] {
@@ -71,12 +74,18 @@ export function resolveTableOrder(
 		const schemaInput = builder._definition.schemaInput
 		const shape =
 			typeof schemaInput === 'function'
-				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(typedOneHelper)
+				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(
+						typedOneHelper,
+					)
 				: (schemaInput as ZodShape)
 
 		for (const fieldSchema of Object.values(shape)) {
 			const meta = getZodMeta(fieldSchema as z.ZodType)
-			if (meta?.related && meta.related !== tableName && allTables.has(meta.related)) {
+			if (
+				meta?.related &&
+				meta.related !== tableName &&
+				allTables.has(meta.related)
+			) {
 				deps.add(meta.related)
 			}
 		}
@@ -161,7 +170,9 @@ export function extractAutoIncrementConfigs(
 		const schemaInput = builder._definition.schemaInput
 		const shape =
 			typeof schemaInput === 'function'
-				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(typedOneHelper)
+				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(
+						typedOneHelper,
+					)
 				: (schemaInput as ZodShape)
 
 		const configs: AutoIncrementConfig[] = []
@@ -219,8 +230,18 @@ export function extractNoSeriesConfigs(
 
 	for (const [tableName, builder] of Object.entries(tables)) {
 		const noSeriesConfig = builder._noSeriesConfig as
-			| { field: string; pattern: string; initialValue?: number; incrementBy?: number }
-			| Array<{ field: string; pattern: string; initialValue?: number; incrementBy?: number }>
+			| {
+					field: string
+					pattern: string
+					initialValue?: number
+					incrementBy?: number
+			  }
+			| Array<{
+					field: string
+					pattern: string
+					initialValue?: number
+					incrementBy?: number
+			  }>
 			| undefined
 
 		if (noSeriesConfig) {
@@ -249,17 +270,17 @@ export function extractNoSeriesConfigs(
 // Query helpers factory
 // ============================================================================
 
-export function createTypedQueryHelpers<T extends object>(item: T): QueryHelpers<T> {
+export function createTypedQueryHelpers<T extends object>(
+	item: T,
+): QueryHelpers<T> {
 	const rec = item as Record<string, unknown>
 	return {
 		eq: (field, value) => rec[field as string] === value,
 		ne: (field, value) => rec[field as string] !== value,
-		gt: (field, value) =>
-			(rec[field as string] as number) > (value as number),
+		gt: (field, value) => (rec[field as string] as number) > (value as number),
 		gte: (field, value) =>
 			(rec[field as string] as number) >= (value as number),
-		lt: (field, value) =>
-			(rec[field as string] as number) < (value as number),
+		lt: (field, value) => (rec[field as string] as number) < (value as number),
 		lte: (field, value) =>
 			(rec[field as string] as number) <= (value as number),
 		like: (field, pattern) => {
@@ -302,12 +323,10 @@ export function createPluginApi(pluginManager: PluginHookManager): PluginApi {
 // Observability API factory
 // ============================================================================
 
-export function createObservabilityApi(
-	observabilityState: {
-		enabled: boolean
-		hooks: ObservabilityHooks
-	},
-): ObservabilityApi {
+export function createObservabilityApi(observabilityState: {
+	enabled: boolean
+	hooks: ObservabilityHooks
+}): ObservabilityApi {
 	return {
 		setHooks: (hooks: ObservabilityHooks) => {
 			observabilityState.hooks = { ...hooks }
@@ -337,7 +356,11 @@ export function generateUniqueValue(
 	const suffix = `-${counter.value}-${createId()}`
 
 	if (hasZodTrait(fieldSchema, 'ZodString')) {
-		const baseValue = generateValueFromMeta(meta, fieldSchema, generationContext)
+		const baseValue = generateValueFromMeta(
+			meta,
+			fieldSchema,
+			generationContext,
+		)
 		return `${String(baseValue)}${suffix}`
 	}
 
@@ -389,9 +412,7 @@ export function ensureUniqueFields(
 					uniqueSuffixCounter,
 				)
 			}
-			valueKey = constraint.fields
-				.map((f) => String(result[f] ?? ''))
-				.join('|')
+			valueKey = constraint.fields.map((f) => String(result[f] ?? '')).join('|')
 		}
 
 		usedSet.add(valueKey)

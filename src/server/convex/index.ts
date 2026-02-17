@@ -1,12 +1,36 @@
 // Hub
-export { moduleNotifications, operationTasks } from './hub'
 
-// Market
-export { cartLines, carts, customers, items, salesHeaders, salesLines } from './market'
+// Flow
+export { bankAccountLedgerEntries, bankAccounts, genJournalLines } from './flow'
+export { moduleNotifications, operationTasks } from './hub'
 
 // Insight
 export { itemLedgerEntries, locations, valueEntries } from './insight'
-
+// Ledger
+export {
+	custLedgerEntries,
+	glEntries,
+	salesInvoiceHeaders,
+	salesInvoiceLines,
+} from './ledger'
+// Market
+export {
+	cartLines,
+	carts,
+	customers,
+	items,
+	salesHeaders,
+	salesLines,
+} from './market'
+// Payroll
+export { employeeLedgerEntries, employees } from './payroll'
+// POS
+export {
+	posSessions,
+	posTransactionLines,
+	posTransactions,
+	terminals,
+} from './pos'
 // Replenishment
 export {
 	purchaseHeaders,
@@ -15,23 +39,6 @@ export {
 	transferLines,
 	vendors,
 } from './replenishment'
-
-// Ledger
-export {
-	custLedgerEntries,
-	glEntries,
-	salesInvoiceHeaders,
-	salesInvoiceLines,
-} from './ledger'
-
-// Flow
-export { bankAccountLedgerEntries, bankAccounts, genJournalLines } from './flow'
-
-// Payroll
-export { employeeLedgerEntries, employees } from './payroll'
-
-// POS
-export { posSessions, posTransactionLines, posTransactions, terminals } from './pos'
 
 // Trace
 export { shipmentLines, shipmentMethods, shipments } from './trace'

@@ -20,11 +20,7 @@ interface OperationTask {
 export default function TasksList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'hub', OperationTask>(
-		'hub',
-		'operationTasks',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('hub', 'operationTasks')
 
 	const handleEdit = React.useCallback(
 		(row: OperationTask) => setSelectedId(row._id),
@@ -49,31 +45,31 @@ export default function TasksList() {
 					<DataGrid.Toolbar filter sort search export />
 				</DataGrid.Header>
 				<DataGrid.Columns>
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column
 						accessorKey='taskNo'
 						title='Task No.'
 						handleEdit={handleEdit}
 					/>
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column
 						accessorKey='moduleId'
 						title='Module'
 					/>
-					<DataGrid.Column<OperationTask> accessorKey='title' title='Title' />
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column accessorKey='title' title='Title' />
+					<DataGrid.Column
 						accessorKey='status'
 						title='Status'
 						cellVariant='select'
 					/>
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column
 						accessorKey='priority'
 						title='Priority'
 						cellVariant='select'
 					/>
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column
 						accessorKey='assigneeUserId'
 						title='Assignee'
 					/>
-					<DataGrid.Column<OperationTask>
+					<DataGrid.Column
 						accessorKey='dueDate'
 						title='Due Date'
 						formatter={(v, f) => f.date(v.dueDate, { format: 'P' })}

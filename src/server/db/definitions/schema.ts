@@ -4,23 +4,34 @@ import {
 	createMemoryAdapter,
 	type SyncStorageAdapter,
 } from './adapters'
+import { createInstrumentedTable } from './core/instrumented-table'
 import {
 	applyColumnSelection,
 	applyOrdering,
 	applyPagination,
 	applyWhereFilter,
 } from './core/query-helpers'
+import { createRelationResolver } from './core/relation-resolver'
+import {
+	applyAutoIncrementToItem,
+	createObservabilityApi,
+	createPluginApi,
+} from './core/schema-helpers'
+import { prepareSchema } from './core/schema-setup'
 import { flowField } from './fields'
+import { FlowFieldCache } from './fields/flow-field-cache'
 import {
-	createNoSeriesV2Api,
-	type InternalsApi,
-} from './no-series'
-import {
-	type RelationsContext,
-	type RelationsSchema,
-	type TableRelations,
-	type WithInferredRelations,
+	buildFlowFieldContext,
+	createFlowFieldWrapper,
+} from './fields/flow-field-wiring'
+import { createNoSeriesV2Api, type InternalsApi } from './no-series'
+import type {
+	RelationsContext,
+	RelationsSchema,
+	TableRelations,
+	WithInferredRelations,
 } from './relations'
+import { createSchemaSeeder } from './seeding/schema-seeder'
 import {
 	AsyncReactiveTable,
 	ReactiveTable,
@@ -54,20 +65,6 @@ import {
 	type WithConfig,
 	type ZodShape,
 } from './types'
-import {
-	applyAutoIncrementToItem,
-	createPluginApi,
-	createObservabilityApi,
-} from './core/schema-helpers'
-import {
-	buildFlowFieldContext,
-	createFlowFieldWrapper,
-} from './fields/flow-field-wiring'
-import { createRelationResolver } from './core/relation-resolver'
-import { createInstrumentedTable } from './core/instrumented-table'
-import { createSchemaSeeder } from './seeding/schema-seeder'
-import { prepareSchema } from './core/schema-setup'
-import { FlowFieldCache } from './fields/flow-field-cache'
 
 // Re-export for backward compatibility
 export { FIELD_TYPES, flowField, type FieldType }
@@ -177,7 +174,8 @@ function defineSchemaImpl<
 		defaultSeed,
 	} = prep
 
-	const { flowFieldDefs, computedFns, relationMeta, reverseRelations } = fieldExtraction
+	const { flowFieldDefs, computedFns, relationMeta, reverseRelations } =
+		fieldExtraction
 
 	const syncAdapter =
 		(options.adapter as SyncStorageAdapter | undefined) ?? createMemoryAdapter()
@@ -216,7 +214,10 @@ function defineSchemaImpl<
 	}
 
 	// Build flow field context, cache, and wrapper
-	const { flowFieldContext } = buildFlowFieldContext(tableInstances, computedFns)
+	const { flowFieldContext } = buildFlowFieldContext(
+		tableInstances,
+		computedFns,
+	)
 	const computedCache = new WeakMap<object, Record<string, unknown>>()
 	const flowFieldCache = new FlowFieldCache()
 	const wrapWithFlowFields = createFlowFieldWrapper(
@@ -229,7 +230,10 @@ function defineSchemaImpl<
 
 	// Create the relation resolver
 	const resolveRelations = createRelationResolver({
-		explicitRelations: explicitRelations as Record<string, TableRelations | undefined>,
+		explicitRelations: explicitRelations as Record<
+			string,
+			TableRelations | undefined
+		>,
 		relationMeta,
 		getTableData: (tableName: string) => {
 			const table = tableInstances.get(tableName)
@@ -246,11 +250,17 @@ function defineSchemaImpl<
 
 	// Create seeder and run initial seeding
 	const seeder = createSchemaSeeder({
-		tables: tables as Record<string, {
-			_definition: { schemaInput: unknown; seedConfig?: number | boolean | SeedConfig }
-			_noSeriesConfig?: unknown
-			_uniqueConstraints?: Array<{ name: string; fields: string[] }>
-		}>,
+		tables: tables as Record<
+			string,
+			{
+				_definition: {
+					schemaInput: unknown
+					seedConfig?: number | boolean | SeedConfig
+				}
+				_noSeriesConfig?: unknown
+				_uniqueConstraints?: Array<{ name: string; fields: string[] }>
+			}
+		>,
 		typedOneHelper,
 		tableOrder,
 		defaultSeed,
@@ -264,8 +274,12 @@ function defineSchemaImpl<
 			const table = tableInstances.get(name)
 			if (!table) return undefined
 			return {
-				toArray: () => table.toArray() as Array<{ _id: string } & Record<string, unknown>>,
-				get: (id: string) => table.get(id) as ({ _id: string } & Record<string, unknown>) | undefined,
+				toArray: () =>
+					table.toArray() as Array<{ _id: string } & Record<string, unknown>>,
+				get: (id: string) =>
+					table.get(id) as
+						| ({ _id: string } & Record<string, unknown>)
+						| undefined,
 				insert: (item: object) => table.insert(item),
 			}
 		},
@@ -314,7 +328,12 @@ function defineSchemaImpl<
 			}
 			let initialData = { ...defaultValues } as Record<string, unknown>
 			if (hasAutoIncrement) {
-				initialData = applyAutoIncrementToItem(tableName, initialData, tableAutoIncrementConfigs, autoIncrementState)
+				initialData = applyAutoIncrementToItem(
+					tableName,
+					initialData,
+					tableAutoIncrementConfigs,
+					autoIncrementState,
+				)
 			}
 			const created = table.insert(initialData as object)
 			return hasFlowFieldsFlag
@@ -331,12 +350,23 @@ function defineSchemaImpl<
 					const updated = table.update(doc._id, updates)
 					if (!updated) return getOrCreate()
 					return hasFlowFieldsFlag
-						? (wrapWithFlowFields(updated, tableName) as WithSystemFields<object>)
+						? (wrapWithFlowFields(
+								updated,
+								tableName,
+							) as WithSystemFields<object>)
 						: (updated as WithSystemFields<object>)
 				}
-				let initialData = { ...defaultValues, ...updates } as Record<string, unknown>
+				let initialData = { ...defaultValues, ...updates } as Record<
+					string,
+					unknown
+				>
 				if (hasAutoIncrement) {
-					initialData = applyAutoIncrementToItem(tableName, initialData, tableAutoIncrementConfigs, autoIncrementState)
+					initialData = applyAutoIncrementToItem(
+						tableName,
+						initialData,
+						tableAutoIncrementConfigs,
+						autoIncrementState,
+					)
 				}
 				const created = table.insert(initialData as object)
 				return hasFlowFieldsFlag
@@ -349,7 +379,10 @@ function defineSchemaImpl<
 
 	// Build the table map
 	const tableMap = {} as TypedTableMap<Tables>
-	const instrumentedTables = new Map<string, ReturnType<typeof createInstrumentedTable>>()
+	const instrumentedTables = new Map<
+		string,
+		ReturnType<typeof createInstrumentedTable>
+	>()
 
 	for (const [tableName, builder] of Object.entries(tables)) {
 		const table = tableInstances.get(tableName)
@@ -366,7 +399,9 @@ function defineSchemaImpl<
 			const schemaInput = definition.schemaInput
 			const shape =
 				typeof schemaInput === 'function'
-					? (schemaInput as (one: TypedOneHelper<string>) => ZodShape)(typedOneHelper)
+					? (schemaInput as (one: TypedOneHelper<string>) => ZodShape)(
+							typedOneHelper,
+						)
 					: (schemaInput as ZodShape)
 			const schemaObj = z.object(shape)
 
@@ -375,7 +410,8 @@ function defineSchemaImpl<
 				table,
 				pluginManager,
 				observabilityState,
-				hasFlowFields: flowFieldDefs.has(tableName) || computedFns.has(tableName),
+				hasFlowFields:
+					flowFieldDefs.has(tableName) || computedFns.has(tableName),
 				wrapWithFlowFields,
 				noSeriesConfigs: tableNoSeriesConfigs.get(tableName),
 				noSeriesManager,
@@ -498,7 +534,10 @@ function defineSchemaImpl<
 	> = {
 		noSeries: createNoSeriesV2Api(noSeriesManager),
 		reset: resetDatabase,
-		relations: explicitRelations as unknown as WithInferredRelations<Tables, Relations>,
+		relations: explicitRelations as unknown as WithInferredRelations<
+			Tables,
+			Relations
+		>,
 	}
 
 	pluginManager.setSchemas(
@@ -595,11 +634,17 @@ async function defineSchemaImplAsync<
 
 	// Create seeder and run async seeding
 	const seeder = createSchemaSeeder({
-		tables: tables as Record<string, {
-			_definition: { schemaInput: unknown; seedConfig?: number | boolean | SeedConfig }
-			_noSeriesConfig?: unknown
-			_uniqueConstraints?: Array<{ name: string; fields: string[] }>
-		}>,
+		tables: tables as Record<
+			string,
+			{
+				_definition: {
+					schemaInput: unknown
+					seedConfig?: number | boolean | SeedConfig
+				}
+				_noSeriesConfig?: unknown
+				_uniqueConstraints?: Array<{ name: string; fields: string[] }>
+			}
+		>,
 		typedOneHelper,
 		tableOrder,
 		defaultSeed,
@@ -613,7 +658,8 @@ async function defineSchemaImplAsync<
 			const table = tableInstances.get(name)
 			if (!table) return undefined
 			return {
-				toArray: () => table.toArray() as Array<{ _id: string } & Record<string, unknown>>,
+				toArray: () =>
+					table.toArray() as Array<{ _id: string } & Record<string, unknown>>,
 				get: (id: string) => {
 					const doc = table.get(id)
 					return doc as ({ _id: string } & Record<string, unknown>) | undefined
@@ -649,7 +695,10 @@ async function defineSchemaImplAsync<
 	// Extract flow fields and build wrapper (after seeding so data is present)
 	const { flowFieldDefs, computedFns } = fieldExtraction
 
-	const { flowFieldContext } = buildFlowFieldContext(tableInstances, computedFns)
+	const { flowFieldContext } = buildFlowFieldContext(
+		tableInstances,
+		computedFns,
+	)
 	const computedCacheAsync = new WeakMap<object, Record<string, unknown>>()
 	const flowFieldCacheAsync = new FlowFieldCache()
 	const wrapWithFlowFieldsAsync = createFlowFieldWrapper(
@@ -665,7 +714,10 @@ async function defineSchemaImplAsync<
 
 	// Create relation resolver for async path
 	const resolveRelationsAsync = createRelationResolver({
-		explicitRelations: explicitRelations as Record<string, TableRelations | undefined>,
+		explicitRelations: explicitRelations as Record<
+			string,
+			TableRelations | undefined
+		>,
 		relationMeta: new Map(), // Async path only uses explicit relations
 		getTableData: (tableName: string) => {
 			const table = tableInstances.get(tableName)
@@ -697,7 +749,12 @@ async function defineSchemaImplAsync<
 			}
 			let initialData = { ...defaultValues } as Record<string, unknown>
 			if (hasAutoIncrement) {
-				initialData = applyAutoIncrementToItem(tableName, initialData, tableAutoIncrementConfigs, autoIncrementState)
+				initialData = applyAutoIncrementToItem(
+					tableName,
+					initialData,
+					tableAutoIncrementConfigs,
+					autoIncrementState,
+				)
 			}
 			const created = await table.insert(initialData as object)
 			return created as WithSystemFields<object>
@@ -709,13 +766,26 @@ async function defineSchemaImplAsync<
 				const docs = table.toArray()
 				if (docs.length > 0) {
 					const doc = docs[0] as WithSystemFields<object>
-					return table.update(doc._id, updates) as unknown as WithSystemFields<object>
+					return table.update(
+						doc._id,
+						updates,
+					) as unknown as WithSystemFields<object>
 				}
-				let initialData = { ...defaultValues, ...updates } as Record<string, unknown>
+				let initialData = { ...defaultValues, ...updates } as Record<
+					string,
+					unknown
+				>
 				if (hasAutoIncrement) {
-					initialData = applyAutoIncrementToItem(tableName, initialData, tableAutoIncrementConfigs, autoIncrementState)
+					initialData = applyAutoIncrementToItem(
+						tableName,
+						initialData,
+						tableAutoIncrementConfigs,
+						autoIncrementState,
+					)
 				}
-				return table.insert(initialData as object) as unknown as WithSystemFields<object>
+				return table.insert(
+					initialData as object,
+				) as unknown as WithSystemFields<object>
 			},
 			subscribe: (callback: () => void) => table.subscribe(callback),
 		}
@@ -766,10 +836,18 @@ async function defineSchemaImplAsync<
 			},
 			insert: async (item: object) => {
 				let processedItem = hasAutoIncrement
-					? applyAutoIncrementToItem(tableName, item as Record<string, unknown>, tableAutoIncrementConfigs, autoIncrementState)
+					? applyAutoIncrementToItem(
+							tableName,
+							item as Record<string, unknown>,
+							tableAutoIncrementConfigs,
+							autoIncrementState,
+						)
 					: item
 				processedItem = hasNoSeries
-					? noSeriesManager.applyToInsert(noSeriesConfigs!, processedItem as Record<string, unknown>)
+					? noSeriesManager.applyToInsert(
+							noSeriesConfigs!,
+							processedItem as Record<string, unknown>,
+						)
 					: processedItem
 				const result = await table.insert(processedItem)
 				return wrapDoc(result)!
@@ -804,14 +882,22 @@ async function defineSchemaImplAsync<
 				with?: WithConfig
 			}): WithSystemFields<object>[] => {
 				if (options?.where) {
-					let results: WithSystemFields<object>[] = wrapDocs(table.proxy.toArray())
-					results = applyWhereFilter(results, options.where) as WithSystemFields<object>[]
+					let results: WithSystemFields<object>[] = wrapDocs(
+						table.proxy.toArray(),
+					)
+					results = applyWhereFilter(
+						results,
+						options.where,
+					) as WithSystemFields<object>[]
 					if (options.orderBy) {
 						results = applyOrdering(results, options.orderBy)
 					}
 					results = applyPagination(results, options.offset, options.limit)
 					if (options.columns) {
-						results = applyColumnSelection(results, options.columns) as WithSystemFields<object>[]
+						results = applyColumnSelection(
+							results,
+							options.columns,
+						) as WithSystemFields<object>[]
 					}
 					if (options.with) {
 						results = results.map((doc) =>
@@ -824,10 +910,17 @@ async function defineSchemaImplAsync<
 				if (options?.orderBy) {
 					rawResults = applyOrdering(rawResults, options.orderBy)
 				}
-				rawResults = applyPagination(rawResults, options?.offset, options?.limit)
+				rawResults = applyPagination(
+					rawResults,
+					options?.offset,
+					options?.limit,
+				)
 				let results = wrapDocs(rawResults) as WithSystemFields<object>[]
 				if (options?.columns) {
-					results = applyColumnSelection(results, options.columns) as WithSystemFields<object>[]
+					results = applyColumnSelection(
+						results,
+						options.columns,
+					) as WithSystemFields<object>[]
 				}
 				if (options?.with) {
 					results = results.map((doc) =>
@@ -845,8 +938,13 @@ async function defineSchemaImplAsync<
 				with?: WithConfig
 			}): WithSystemFields<object> | undefined => {
 				if (options?.where) {
-					let results: WithSystemFields<object>[] = wrapDocs(table.proxy.toArray())
-					results = applyWhereFilter(results, options.where) as WithSystemFields<object>[]
+					let results: WithSystemFields<object>[] = wrapDocs(
+						table.proxy.toArray(),
+					)
+					results = applyWhereFilter(
+						results,
+						options.where,
+					) as WithSystemFields<object>[]
 					if (options.orderBy) {
 						results = applyOrdering(results, options.orderBy)
 					}
@@ -854,7 +952,10 @@ async function defineSchemaImplAsync<
 					if (!first) return undefined
 					let doc: WithSystemFields<object> = first
 					if (options.columns) {
-						doc = applyColumnSelection([doc], options.columns)[0] as WithSystemFields<object>
+						doc = applyColumnSelection(
+							[doc],
+							options.columns,
+						)[0] as WithSystemFields<object>
 					}
 					if (options.with) {
 						doc = resolveRelationsAsync(doc, tableName, options.with)
@@ -869,7 +970,10 @@ async function defineSchemaImplAsync<
 				if (!first) return undefined
 				let doc = wrapDoc(first)! as WithSystemFields<object>
 				if (options?.columns) {
-					doc = applyColumnSelection([doc], options.columns)[0] as WithSystemFields<object>
+					doc = applyColumnSelection(
+						[doc],
+						options.columns,
+					)[0] as WithSystemFields<object>
 				}
 				if (options?.with) {
 					doc = resolveRelationsAsync(doc, tableName, options.with)
@@ -881,10 +985,18 @@ async function defineSchemaImplAsync<
 				insertMany: async (items: object[]) => {
 					const processedItems = items.map((item) => {
 						let processed = hasAutoIncrement
-							? applyAutoIncrementToItem(tableName, item as Record<string, unknown>, tableAutoIncrementConfigs, autoIncrementState)
+							? applyAutoIncrementToItem(
+									tableName,
+									item as Record<string, unknown>,
+									tableAutoIncrementConfigs,
+									autoIncrementState,
+								)
 							: item
 						processed = hasNoSeries
-							? noSeriesManager.applyToInsert(noSeriesConfigs!, processed as Record<string, unknown>)
+							? noSeriesManager.applyToInsert(
+									noSeriesConfigs!,
+									processed as Record<string, unknown>,
+								)
 							: processed
 						return processed
 					})
@@ -940,7 +1052,9 @@ async function defineSchemaImplAsync<
 							if (childTableInstance) {
 								const hasReferences = childTableInstance
 									.toArray()
-									.some((doc) => (doc as Record<string, unknown>)[fieldName] === id)
+									.some(
+										(doc) => (doc as Record<string, unknown>)[fieldName] === id,
+									)
 								if (hasReferences) {
 									throw new Error(
 										`Cannot delete ${tableName} with id ${id}: referenced by ${childTable}.${fieldName} with restrict constraint`,
@@ -961,14 +1075,18 @@ async function defineSchemaImplAsync<
 						if (onDelete === 'cascade') {
 							const toDelete = childTableInstance
 								.toArray()
-								.filter((doc) => (doc as Record<string, unknown>)[fieldName] === id)
+								.filter(
+									(doc) => (doc as Record<string, unknown>)[fieldName] === id,
+								)
 							for (const doc of toDelete) {
 								await childTableInstance.delete(doc._id)
 							}
 						} else if (onDelete === 'setNull') {
 							const toUpdate = childTableInstance
 								.toArray()
-								.filter((doc) => (doc as Record<string, unknown>)[fieldName] === id)
+								.filter(
+									(doc) => (doc as Record<string, unknown>)[fieldName] === id,
+								)
 							for (const doc of toUpdate) {
 								await childTableInstance.update(doc._id, {
 									[fieldName]: null,
@@ -1059,7 +1177,10 @@ async function defineSchemaImplAsync<
 		WithInferredRelations<Tables, Relations>
 	> = {
 		noSeries: createNoSeriesV2Api(noSeriesManager),
-		relations: explicitRelations as unknown as WithInferredRelations<Tables, Relations>,
+		relations: explicitRelations as unknown as WithInferredRelations<
+			Tables,
+			Relations
+		>,
 		reset: resetDatabase,
 	}
 

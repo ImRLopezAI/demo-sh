@@ -7,7 +7,7 @@ import {
 import { SiteHeader } from '@/components/layout/header'
 import { AppSidebarContext } from '@/components/layout/sidebar/context'
 import { ScrollInterceptor } from '@/components/ui/scroll-interceptor'
-import { navGroups } from './nav-config'
+import { navGroups } from './_views/nav-config'
 
 export const Route = createFileRoute('/_shell')({
 	component: ShellLayout,

@@ -1,14 +1,14 @@
-import { z } from 'zod'
+import type { z } from 'zod'
+import type { RelationMeta, ReverseRelation } from '../core/schema-helpers'
 import type {
 	ComputedFn,
 	FlowFieldContext,
 	FlowFieldDef,
 	ZodShape,
 } from '../types'
-import { getZodMeta } from './zod-utils'
+import type { FlowFieldCache } from './flow-field-cache'
 import { computeFlowField } from './flow-fields'
-import type { RelationMeta, ReverseRelation } from '../core/schema-helpers'
-import { FlowFieldCache } from './flow-field-cache'
+import { getZodMeta } from './zod-utils'
 
 // ============================================================================
 // FlowField & computed extraction from schema
@@ -26,16 +26,22 @@ export interface FlowFieldExtractionResult {
  * and reverse relations from table builders.
  */
 export function extractFieldsAndRelations(
-	tables: Record<string, {
-		_definition: {
-			schemaInput: unknown
-			computedFn?: ComputedFn<object, Record<string, unknown>>
+	tables: Record<
+		string,
+		{
+			_definition: {
+				schemaInput: unknown
+				computedFn?: ComputedFn<object, Record<string, unknown>>
+			}
 		}
-	}>,
+	>,
 	typedOneHelper: (tableName: string) => z.ZodType,
 ): FlowFieldExtractionResult {
 	const flowFieldDefs = new Map<string, Map<string, FlowFieldDef>>()
-	const computedFns = new Map<string, ComputedFn<object, Record<string, unknown>>>()
+	const computedFns = new Map<
+		string,
+		ComputedFn<object, Record<string, unknown>>
+	>()
 	const relationMeta = new Map<string, RelationMeta[]>()
 	const reverseRelations = new Map<string, ReverseRelation[]>()
 
@@ -43,7 +49,9 @@ export function extractFieldsAndRelations(
 		const schemaInput = builder._definition.schemaInput
 		const shape =
 			typeof schemaInput === 'function'
-				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(typedOneHelper)
+				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(
+						typedOneHelper,
+					)
 				: (schemaInput as ZodShape)
 
 		const fieldDefs = new Map<string, FlowFieldDef>()
@@ -87,7 +95,9 @@ export function extractFieldsAndRelations(
 
 		// Extract computed function if defined
 		const computedFn = (
-			builder._definition as { computedFn?: ComputedFn<object, Record<string, unknown>> }
+			builder._definition as {
+				computedFn?: ComputedFn<object, Record<string, unknown>>
+			}
 		).computedFn
 		if (computedFn) {
 			computedFns.set(tableName, computedFn)
@@ -109,10 +119,15 @@ export interface FlowFieldSchemaEntry {
 /**
  * Build the flow field context from table instances and computed functions.
  */
-export function buildFlowFieldContext<TTable extends { toArray: () => object[] }>(
+export function buildFlowFieldContext<
+	TTable extends { toArray: () => object[] },
+>(
 	tableInstances: Map<string, TTable>,
 	computedFns: Map<string, ComputedFn<object, Record<string, unknown>>>,
-): { flowFieldContext: FlowFieldContext; flowFieldSchemas: Record<string, FlowFieldSchemaEntry> } {
+): {
+	flowFieldContext: FlowFieldContext
+	flowFieldSchemas: Record<string, FlowFieldSchemaEntry>
+} {
 	const flowFieldSchemas: Record<string, FlowFieldSchemaEntry> = {}
 
 	const applyComputedToItems = (
@@ -182,7 +197,9 @@ export function createFlowFieldWrapper(
 			const def = fieldDefs?.get(fieldName)
 			if (def) {
 				// Check flow field cache first
-				const docId = (target as Record<string, unknown>)._id as string | undefined
+				const docId = (target as Record<string, unknown>)._id as
+					| string
+					| undefined
 				if (flowFieldCache && docId) {
 					const cached = flowFieldCache.get(docId, fieldName)
 					if (cached.hit) return cached.value
@@ -212,7 +229,10 @@ export function createFlowFieldWrapper(
 			let cached = cache.get(target)
 			if (!cached) {
 				const rowWithFlowFields = createRowWithFlowFields(target)
-				cached = computedFn(rowWithFlowFields, flowFieldContext) as Record<string, unknown>
+				cached = computedFn(rowWithFlowFields, flowFieldContext) as Record<
+					string,
+					unknown
+				>
 				cache.set(target, cached)
 			}
 			return cached

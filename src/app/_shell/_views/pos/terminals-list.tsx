@@ -18,13 +18,9 @@ interface Terminal {
 export default function TerminalsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'pos', Terminal>(
-		'pos',
-		'terminals',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('pos', 'terminals')
 
-	const handleEdit = React.useCallback((row: Terminal) => {
+	const handleEdit = React.useCallback((row) => {
 		setSelectedId(row._id)
 	}, [])
 

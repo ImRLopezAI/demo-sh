@@ -308,9 +308,12 @@ export function usePosTerminal() {
 
 	const { create: createTransaction, transitionStatus } = useEntityMutations(
 		'pos',
-		'transactions',
+		'posTransactions',
 	)
-	const { create: createLine } = useEntityMutations('pos', 'transactionLines')
+	const { create: createLine } = useEntityMutations(
+		'pos',
+		'posTransactionLines',
+	)
 
 	const totals = React.useMemo<Totals>(() => {
 		const subtotal = state.cart.reduce(

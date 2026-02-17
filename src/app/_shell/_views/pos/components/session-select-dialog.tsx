@@ -41,10 +41,10 @@ export function SessionSelectDialog({
 	open,
 	dispatch,
 }: SessionSelectDialogProps) {
-	const { items: sessions, isLoading: sessionsLoading } = useModuleData<
+	const { items: sessions, isLoading: sessionsLoading } = useModuleData(
 		'pos',
-		PosSession
-	>('pos', 'sessions', 'all')
+		'posSessions',
+	)
 	const { data: terminalsData, isLoading: terminalsLoading } = useModuleList(
 		'pos',
 		'terminals',

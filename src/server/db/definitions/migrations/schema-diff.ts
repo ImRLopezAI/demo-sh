@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { AnyTableBuilder, TypedOneHelper, ZodShape } from '../types'
 import { getZodMeta } from '../fields/zod-utils'
+import type { AnyTableBuilder, TypedOneHelper, ZodShape } from '../types'
 
 // ============================================================================
 // Schema snapshot & diff engine (Phase 8)
@@ -77,8 +77,10 @@ function resolveTypeName(schema: z.ZodType): string {
 	if (schema instanceof z.ZodEnum) return 'enum'
 	if (schema instanceof z.ZodArray) return 'array'
 	if (schema instanceof z.ZodObject) return 'object'
-	if (schema instanceof z.ZodOptional) return `optional<${resolveTypeName((schema as z.ZodOptional<z.ZodType>)._def.innerType)}>`
-	if (schema instanceof z.ZodNullable) return `nullable<${resolveTypeName((schema as z.ZodNullable<z.ZodType>)._def.innerType)}>`
+	if (schema instanceof z.ZodOptional)
+		return `optional<${resolveTypeName((schema as z.ZodOptional<z.ZodType>)._def.innerType)}>`
+	if (schema instanceof z.ZodNullable)
+		return `nullable<${resolveTypeName((schema as z.ZodNullable<z.ZodType>)._def.innerType)}>`
 	return 'unknown'
 }
 
@@ -99,7 +101,9 @@ export function snapshotSchema(
 		const schemaInput = definition.schemaInput
 		const shape =
 			typeof schemaInput === 'function'
-				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(typedOneHelper)
+				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(
+						typedOneHelper,
+					)
 				: (schemaInput as ZodShape)
 
 		const fields: FieldSnapshot[] = []
@@ -118,10 +122,12 @@ export function snapshotSchema(
 			})
 		}
 
-		const indexes = builder._indexes.map((idx: { name: string; fields: string[] }) => ({
-			name: idx.name,
-			fields: [...idx.fields],
-		}))
+		const indexes = builder._indexes.map(
+			(idx: { name: string; fields: string[] }) => ({
+				name: idx.name,
+				fields: [...idx.fields],
+			}),
+		)
 
 		const uniqueConstraints = (builder._uniqueConstraints ?? []).map(
 			(uc: { name: string; fields: string[] }) => ({
@@ -218,17 +224,29 @@ export function diffSchemas(
 		}
 
 		// Compare constraints
-		const oldConstraints = new Set(oldTable.uniqueConstraints.map((c) => c.name))
-		const newConstraints = new Set(newTable.uniqueConstraints.map((c) => c.name))
+		const oldConstraints = new Set(
+			oldTable.uniqueConstraints.map((c) => c.name),
+		)
+		const newConstraints = new Set(
+			newTable.uniqueConstraints.map((c) => c.name),
+		)
 
 		for (const name of newConstraints) {
 			if (!oldConstraints.has(name)) {
-				diffs.push({ type: 'constraint_added', tableName, constraintName: name })
+				diffs.push({
+					type: 'constraint_added',
+					tableName,
+					constraintName: name,
+				})
 			}
 		}
 		for (const name of oldConstraints) {
 			if (!newConstraints.has(name)) {
-				diffs.push({ type: 'constraint_removed', tableName, constraintName: name })
+				diffs.push({
+					type: 'constraint_removed',
+					tableName,
+					constraintName: name,
+				})
 			}
 		}
 	}

@@ -7,36 +7,7 @@ import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
-interface SalesOrderHeader {
-	_id: string
-	documentNo: string
-	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
-	status:
-		| 'DRAFT'
-		| 'PENDING_APPROVAL'
-		| 'APPROVED'
-		| 'REJECTED'
-		| 'COMPLETED'
-		| 'CANCELED'
-	customerId: string
-	orderDate: string
-	currency: string
-	externalRef: string
-	lineCount: number
-	totalAmount: number
-}
 
-interface SalesLine {
-	_id: string
-	documentNo: string
-	lineNo: number
-	itemId: string
-	description: string
-	quantity: number
-	unitPrice: number
-	discountPercent: number
-	lineAmount: number
-}
 
 const DOCUMENT_TYPES = ['ORDER', 'RETURN_ORDER', 'QUOTE'] as const
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -58,24 +29,21 @@ export function SalesOrderCard({
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
 		'market',
-		'salesOrders',
+		'salesHeaders',
 		selectedId,
 		{ enabled: !isNew && isOpen },
 	)
 
 	const { create, update, transitionStatus } = useEntityMutations(
 		'market',
-		'salesOrders',
+		'salesHeaders',
 	)
 
 	const { data: customersList } = useModuleList('market', 'customers', {
 		limit: 100,
 	})
 
-	const { items: allLines, isLoading: linesLoading } = useModuleData<
-		'market',
-		SalesLine
-	>('market', 'salesLines', 'overview')
+	const { items: allLines, isLoading: linesLoading } = useModuleData('market', 'salesLines')
 
 	const newRecordDefaults = React.useMemo(
 		() => ({
@@ -115,12 +83,6 @@ export function SalesOrderCard({
 		form.reset((resolvedRecord ?? {}) as Record<string, unknown>)
 	}, [resolvedRecord, form, isOpen])
 
-	const lines = React.useMemo(() => {
-		const documentNo = (resolvedRecord as SalesOrderHeader | undefined)
-			?.documentNo
-		if (!documentNo || isNew) return []
-		return allLines.filter((line) => line.documentNo === documentNo)
-	}, [allLines, isNew, resolvedRecord])
 
 	const handleTransition = async (newStatus: string) => {
 		if (!selectedId || isNew) return
@@ -138,17 +100,17 @@ export function SalesOrderCard({
 
 	const LinesGrid = useGrid(
 		() => ({
-			data: lines,
+			data: allLines,
 			isLoading: linesLoading,
 			readOnly: true,
 			enableSearch: false,
 		}),
-		[lines, linesLoading],
+		[allLines, linesLoading],
 	)
 
 	const dialogTitle = isNew
 		? 'New Sales Order'
-		: `Sales Order ${(resolvedRecord as SalesOrderHeader | undefined)?.documentNo ?? ''}`
+		: `Sales Order ${(resolvedRecord )?.documentNo ?? ''}`
 
 	return (
 		<RecordDialog

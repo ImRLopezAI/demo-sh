@@ -1,4 +1,6 @@
 import { defineSchema } from '@server/db/definitions'
+import { createMemoryAdapter } from '@server/db/definitions/adapters/memory'
+import type { SchemaSnapshot } from '@server/db/definitions/migrations'
 import {
 	createAdapterVersionStorage,
 	createPersistentMigrationRunner,
@@ -6,8 +8,6 @@ import {
 	diffSchemas,
 	generateMigration,
 } from '@server/db/definitions/migrations'
-import type { SchemaSnapshot } from '@server/db/definitions/migrations'
-import { createMemoryAdapter } from '@server/db/definitions/adapters/memory'
 import { createTestTable } from '@server/db/definitions/test-utils'
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
@@ -16,15 +16,30 @@ describe('schema diffing', () => {
 	test('detects table additions', () => {
 		const oldSnapshot: SchemaSnapshot = {
 			tables: {
-				users: { name: 'users', fields: [], indexes: [], uniqueConstraints: [] },
+				users: {
+					name: 'users',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
 			},
 			createdAt: 1,
 		}
 
 		const newSnapshot: SchemaSnapshot = {
 			tables: {
-				users: { name: 'users', fields: [], indexes: [], uniqueConstraints: [] },
-				posts: { name: 'posts', fields: [], indexes: [], uniqueConstraints: [] },
+				users: {
+					name: 'users',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
+				posts: {
+					name: 'posts',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
 			},
 			createdAt: 2,
 		}
@@ -36,15 +51,30 @@ describe('schema diffing', () => {
 	test('detects table removals', () => {
 		const oldSnapshot: SchemaSnapshot = {
 			tables: {
-				users: { name: 'users', fields: [], indexes: [], uniqueConstraints: [] },
-				posts: { name: 'posts', fields: [], indexes: [], uniqueConstraints: [] },
+				users: {
+					name: 'users',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
+				posts: {
+					name: 'posts',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
 			},
 			createdAt: 1,
 		}
 
 		const newSnapshot: SchemaSnapshot = {
 			tables: {
-				users: { name: 'users', fields: [], indexes: [], uniqueConstraints: [] },
+				users: {
+					name: 'users',
+					fields: [],
+					indexes: [],
+					uniqueConstraints: [],
+				},
 			},
 			createdAt: 2,
 		}
@@ -59,7 +89,13 @@ describe('schema diffing', () => {
 				users: {
 					name: 'users',
 					fields: [
-						{ name: 'name', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'name',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -73,8 +109,20 @@ describe('schema diffing', () => {
 				users: {
 					name: 'users',
 					fields: [
-						{ name: 'name', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
-						{ name: 'email', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'name',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
+						{
+							name: 'email',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -85,7 +133,11 @@ describe('schema diffing', () => {
 
 		const diffs = diffSchemas(oldSnapshot, newSnapshot)
 		expect(diffs).toContainEqual(
-			expect.objectContaining({ type: 'field_added', tableName: 'users', fieldName: 'email' }),
+			expect.objectContaining({
+				type: 'field_added',
+				tableName: 'users',
+				fieldName: 'email',
+			}),
 		)
 	})
 
@@ -95,8 +147,20 @@ describe('schema diffing', () => {
 				users: {
 					name: 'users',
 					fields: [
-						{ name: 'name', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
-						{ name: 'age', type: 'number', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'name',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
+						{
+							name: 'age',
+							type: 'number',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -110,7 +174,13 @@ describe('schema diffing', () => {
 				users: {
 					name: 'users',
 					fields: [
-						{ name: 'name', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'name',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -121,7 +191,11 @@ describe('schema diffing', () => {
 
 		const diffs = diffSchemas(oldSnapshot, newSnapshot)
 		expect(diffs).toContainEqual(
-			expect.objectContaining({ type: 'field_removed', tableName: 'users', fieldName: 'age' }),
+			expect.objectContaining({
+				type: 'field_removed',
+				tableName: 'users',
+				fieldName: 'age',
+			}),
 		)
 	})
 
@@ -131,7 +205,13 @@ describe('schema diffing', () => {
 				items: {
 					name: 'items',
 					fields: [
-						{ name: 'price', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'price',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -145,7 +225,13 @@ describe('schema diffing', () => {
 				items: {
 					name: 'items',
 					fields: [
-						{ name: 'price', type: 'number', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'price',
+							type: 'number',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [],
 					uniqueConstraints: [],
@@ -192,8 +278,16 @@ describe('schema diffing', () => {
 		}
 
 		const diffs = diffSchemas(oldSnapshot, newSnapshot)
-		expect(diffs).toContainEqual({ type: 'index_added', tableName: 'items', indexName: 'idx_new' })
-		expect(diffs).toContainEqual({ type: 'index_removed', tableName: 'items', indexName: 'idx_old' })
+		expect(diffs).toContainEqual({
+			type: 'index_added',
+			tableName: 'items',
+			indexName: 'idx_new',
+		})
+		expect(diffs).toContainEqual({
+			type: 'index_removed',
+			tableName: 'items',
+			indexName: 'idx_old',
+		})
 	})
 
 	test('detects no changes for identical snapshots', () => {
@@ -202,7 +296,13 @@ describe('schema diffing', () => {
 				users: {
 					name: 'users',
 					fields: [
-						{ name: 'name', type: 'string', isOptional: false, isFlowField: false, isAutoIncrement: false },
+						{
+							name: 'name',
+							type: 'string',
+							isOptional: false,
+							isFlowField: false,
+							isAutoIncrement: false,
+						},
 					],
 					indexes: [{ name: 'idx_name', fields: ['name'] }],
 					uniqueConstraints: [],
@@ -256,13 +356,15 @@ describe('migration generator', () => {
 		db.schemas.items.insert({ price: '42' })
 
 		const migration = generateMigration(
-			[{
-				type: 'field_type_changed',
-				tableName: 'items',
-				fieldName: 'price',
-				oldValue: 'number',
-				newValue: 'string',
-			}],
+			[
+				{
+					type: 'field_type_changed',
+					tableName: 'items',
+					fieldName: 'price',
+					oldValue: 'number',
+					newValue: 'string',
+				},
+			],
 			1,
 		)
 

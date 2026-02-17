@@ -24,43 +24,16 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface SalesInvoiceHeader {
-	id: string
-	invoiceNo: string
-	status: 'DRAFT' | 'POSTED' | 'REVERSED'
-	customerId: string
-	salesOrderNo: string
-	postingDate: string
-	dueDate: string
-	currency: string
-	lineCount: number
-	totalAmount: number
-}
-
-interface CustLedgerEntry {
-	id: string
-	entryNo: number
-	customerId: string
-	postingDate: string
-	documentType: 'INVOICE' | 'CREDIT_MEMO' | 'PAYMENT'
-	documentNo: string
-	description: string
-	amount: number
-	remainingAmount: number
-	open: boolean
-	currency: string
-}
-
 export default function Dashboard() {
-	const { items: invoices, isLoading: invoicesLoading } = useModuleData<
+	const { items: invoices, isLoading: invoicesLoading } = useModuleData(
 		'ledger',
-		SalesInvoiceHeader
-	>('ledger', 'invoices', 'all')
+		'salesInvoiceHeaders',
+	)
 
-	const { items: customerEntries, isLoading: entriesLoading } = useModuleData<
+	const { items: customerEntries, isLoading: entriesLoading } = useModuleData(
 		'ledger',
-		CustLedgerEntry
-	>('ledger', 'customerLedger', 'all')
+		'custLedgerEntries',
+	)
 
 	const totalInvoices = invoices.length
 	const postedInvoices = invoices.filter(
@@ -84,8 +57,8 @@ export default function Dashboard() {
 	const averageDueDays = average(
 		invoices
 			.map((invoice) => {
-				const posting = new Date(invoice.postingDate).getTime()
-				const due = new Date(invoice.dueDate).getTime()
+				const posting = new Date(invoice.postingDate ?? '').getTime()
+				const due = new Date(invoice.dueDate ?? '').getTime()
 				if (Number.isNaN(posting) || Number.isNaN(due)) return null
 				return Math.max(0, (due - posting) / (1000 * 60 * 60 * 24))
 			})
@@ -137,8 +110,8 @@ export default function Dashboard() {
 			[...invoices]
 				.sort(
 					(a, b) =>
-						new Date(b.postingDate).getTime() -
-						new Date(a.postingDate).getTime(),
+						new Date(b.postingDate ?? '').getTime() -
+						new Date(a.postingDate ?? '').getTime(),
 				)
 				.slice(0, 10),
 		[invoices],
@@ -219,7 +192,7 @@ export default function Dashboard() {
 						<ul className='space-y-1'>
 							{recentInvoices.map((invoice) => (
 								<li
-									key={invoice.id}
+									key={invoice._id}
 									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
 								>
 									<div className='flex min-w-0 items-center gap-3'>

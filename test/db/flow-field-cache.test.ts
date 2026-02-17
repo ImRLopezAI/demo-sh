@@ -1,5 +1,5 @@
-import { FlowFieldCache } from '@server/db/definitions/fields/flow-field-cache'
 import { defineSchema } from '@server/db/definitions'
+import { FlowFieldCache } from '@server/db/definitions/fields/flow-field-cache'
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
 
@@ -117,7 +117,9 @@ describe('FlowFieldCache', () => {
 		const flowFieldDefs = new Map<string, Map<string, any>>()
 		flowFieldDefs.set(
 			'orders',
-			new Map([['lineCount', { source: 'lines', type: 'count', key: 'orderId' }]]),
+			new Map([
+				['lineCount', { source: 'lines', type: 'count', key: 'orderId' }],
+			]),
 		)
 		cache.registerFlowFields(flowFieldDefs)
 
@@ -136,13 +138,16 @@ describe('FlowField caching integration', () => {
 			const orders = createTable('orders', {
 				schema: () => ({
 					customerName: z.string(),
-					lineCount: z.number().optional().meta({
-						flowField: {
-							type: 'count',
-							source: 'orderLines',
-							key: 'orderId',
-						},
-					}),
+					lineCount: z
+						.number()
+						.optional()
+						.meta({
+							flowField: {
+								type: 'count',
+								source: 'orderLines',
+								key: 'orderId',
+							},
+						}),
 				}),
 				seed: 0,
 			})
@@ -194,14 +199,17 @@ describe('FlowField caching integration', () => {
 			const invoices = createTable('invoices', {
 				schema: () => ({
 					customer: z.string(),
-					total: z.number().optional().meta({
-						flowField: {
-							type: 'sum',
-							source: 'invoiceLines',
-							field: 'amount',
-							key: 'invoiceId',
-						},
-					}),
+					total: z
+						.number()
+						.optional()
+						.meta({
+							flowField: {
+								type: 'sum',
+								source: 'invoiceLines',
+								field: 'amount',
+								key: 'invoiceId',
+							},
+						}),
 				}),
 				seed: 0,
 			})

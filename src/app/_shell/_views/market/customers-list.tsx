@@ -5,31 +5,17 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { CustomerCard } from './components/customer-card'
 
-interface Customer {
-	_id: string
-	customerNo: string
-	name: string
-	email: string
-	phone: string
-	address: string
-	city: string
-	country: string
-	blocked: boolean
-	orderCount: number
-	totalBalance: number
-}
 
 export default function CustomersList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'market', Customer>(
+	const { DataGrid, windowSize } = useModuleData(
 		'market',
-		'customers',
-		'all',
+		'customers'
 	)
 
 	const handleEdit = React.useCallback(
-		(row: Customer) => setSelectedId(row._id),
+		(row) => setSelectedId(row._id),
 		[],
 	)
 	const handleNew = () => setSelectedId('new')

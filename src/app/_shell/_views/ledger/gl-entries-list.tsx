@@ -15,11 +15,7 @@ interface GlEntry {
 }
 
 export default function GlEntriesList() {
-	const { DataGrid, windowSize } = useModuleData<'ledger', GlEntry>(
-		'ledger',
-		'glEntries',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('ledger', 'glEntries')
 
 	return (
 		<div className='space-y-4'>

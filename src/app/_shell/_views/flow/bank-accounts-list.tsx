@@ -6,32 +6,12 @@ import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 import { BankAccountCard } from './components/bank-account-card'
 
-interface BankAccount {
-	_id: string
-	accountNo: string
-	name: string
-	bankName: string
-	iban: string
-	swiftCode: string
-	currency: string
-	status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED'
-	entryCount: number
-	currentBalance: number
-}
-
 export default function BankAccountsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData<'flow', BankAccount>(
-		'flow',
-		'bankAccounts',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('flow', 'bankAccounts')
 
-	const handleEdit = React.useCallback(
-		(row: BankAccount) => setSelectedId(row._id),
-		[],
-	)
+	const handleEdit = React.useCallback((row) => setSelectedId(row._id), [])
 	const handleNew = () => setSelectedId('new')
 
 	return (

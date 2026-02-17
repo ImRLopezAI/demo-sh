@@ -45,24 +45,24 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
 		'ledger',
-		'invoices',
+		'salesInvoiceHeaders',
 		selectedId,
 		{ enabled: !isNew && !!selectedId },
 	)
 
 	const { create, update, transitionStatus } = useEntityMutations(
 		'ledger',
-		'invoices',
+		'salesInvoiceHeaders',
 	)
 
 	const { data: customersList } = useModuleList('market', 'customers', {
 		limit: 100,
 	})
 
-	const { items: lines, isLoading: linesLoading } = useModuleData<
+	const { items: lines, isLoading: linesLoading } = useModuleData(
 		'ledger',
-		SalesInvoiceLine
-	>('ledger', 'invoiceLines', record?.invoiceNo ?? '__none__')
+		'salesInvoiceLines',
+	)
 
 	const [Form, form] = useCreateForm<InvoiceFormValues>(
 		() => ({
@@ -232,7 +232,7 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 														/>
 														<Form.Combo.Content>
 															<Form.Combo.List>
-																{(customersList?.items ?? []).map(
+																{(customersList ?? []).map(
 																	(c: Record<string, unknown>) => (
 																		<Form.Combo.Item
 																			key={c._id as string}

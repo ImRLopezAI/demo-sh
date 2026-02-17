@@ -21,15 +21,12 @@ export function compileFilter(
 ): AdapterFilter | null {
 	let currentField: string | null = null
 
-	const proxy = new Proxy(
-		{} as Record<string, unknown>,
-		{
-			get(_target, prop: string) {
-				currentField = prop
-				return `__proxy_field_${prop}__`
-			},
+	const proxy = new Proxy({} as Record<string, unknown>, {
+		get(_target, prop: string) {
+			currentField = prop
+			return `__proxy_field_${prop}__`
 		},
-	)
+	})
 
 	try {
 		// Try running the predicate with the proxy
@@ -59,7 +56,10 @@ export function applyAdapterFilter<T extends Record<string, unknown>>(
 	return items.filter((item) => matchesFilter(item, filter))
 }
 
-function matchesFilter(item: Record<string, unknown>, filter: AdapterFilter): boolean {
+function matchesFilter(
+	item: Record<string, unknown>,
+	filter: AdapterFilter,
+): boolean {
 	switch (filter.type) {
 		case 'eq':
 			return item[filter.field] === filter.value

@@ -18,7 +18,9 @@ export class AdapterVersionStorage implements VersionStorage {
 	constructor(private adapter: SyncStorageAdapter) {}
 
 	getApplied(): MigrationRecord[] {
-		const docs = this.adapter.getAll<MigrationRecord>(MIGRATION_TABLE) as WithSystemFields<MigrationRecord>[]
+		const docs = this.adapter.getAll<MigrationRecord>(
+			MIGRATION_TABLE,
+		) as WithSystemFields<MigrationRecord>[]
 		return docs
 			.map((doc) => ({
 				version: doc.version,
@@ -39,7 +41,9 @@ export class AdapterVersionStorage implements VersionStorage {
 
 	recordApplied(record: MigrationRecord): void {
 		// Remove any existing record for this version
-		const existing = this.adapter.getAll<MigrationRecord>(MIGRATION_TABLE) as WithSystemFields<MigrationRecord>[]
+		const existing = this.adapter.getAll<MigrationRecord>(
+			MIGRATION_TABLE,
+		) as WithSystemFields<MigrationRecord>[]
 		const existingRecord = existing.find((r) => r.version === record.version)
 		if (existingRecord) {
 			this.adapter.delete(MIGRATION_TABLE, existingRecord._id)
@@ -56,7 +60,9 @@ export class AdapterVersionStorage implements VersionStorage {
 	}
 
 	removeRecord(version: number): void {
-		const existing = this.adapter.getAll<MigrationRecord>(MIGRATION_TABLE) as WithSystemFields<MigrationRecord>[]
+		const existing = this.adapter.getAll<MigrationRecord>(
+			MIGRATION_TABLE,
+		) as WithSystemFields<MigrationRecord>[]
 		const record = existing.find((r) => r.version === version)
 		if (record) {
 			this.adapter.delete(MIGRATION_TABLE, record._id)

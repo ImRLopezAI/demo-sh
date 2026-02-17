@@ -1,30 +1,8 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 
-interface ItemLedgerEntry {
-	_id: string
-	entryNo: number
-	entryType:
-		| 'SALE'
-		| 'PURCHASE'
-		| 'POSITIVE_ADJUSTMENT'
-		| 'NEGATIVE_ADJUSTMENT'
-		| 'TRANSFER'
-	itemId: string
-	itemDescription: string
-	locationCode: string
-	postingDate: string
-	quantity: number
-	remainingQty: number
-	open: boolean
-}
-
 export default function ItemLedgerList() {
-	const { DataGrid, windowSize } = useModuleData<'insight', ItemLedgerEntry>(
-		'insight',
-		'itemLedgerEntries',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('insight', 'itemLedgerEntries')
 
 	return (
 		<div className='space-y-4'>

@@ -21,17 +21,6 @@ interface PosSessionRecord {
 	totalSales: number
 }
 
-interface SessionTransaction {
-	_id: string
-	receiptNo: string
-	posSessionId: string
-	status: string
-	customerId: string
-	totalAmount: number
-	paymentMethod: string
-	transactionAt: string
-}
-
 export function SessionCard({
 	selectedId,
 	onClose,
@@ -43,15 +32,15 @@ export function SessionCard({
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
 		'pos',
-		'sessions',
+		'posSessions',
 		selectedId,
 		{ enabled: isOpen },
 	)
 
-	const { items: allTransactions, isLoading: txnLoading } = useModuleData<
+	const { items: allTransactions, isLoading: txnLoading } = useModuleData(
 		'pos',
-		SessionTransaction
-	>('pos', 'transactions', 'overview')
+		'posTransactions',
+	)
 
 	const { data: terminalsList } = useModuleList('pos', 'terminals', {
 		limit: 100,
@@ -145,7 +134,7 @@ export function SessionCard({
 														/>
 														<Form.Combo.Content>
 															<Form.Combo.List>
-																{(terminalsList?.items ?? []).map(
+																{(terminalsList ?? []).map(
 																	(t: Record<string, unknown>) => (
 																		<Form.Combo.Item
 																			key={t._id as string}

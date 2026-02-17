@@ -27,7 +27,11 @@ export interface RelationResolverConfig {
  */
 export function createRelationResolver(
 	config: RelationResolverConfig,
-): <T extends object>(doc: T, tableName: string, withConfig: WithConfig | undefined) => T {
+): <T extends object>(
+	doc: T,
+	tableName: string,
+	withConfig: WithConfig | undefined,
+) => T {
 	const {
 		explicitRelations,
 		relationMeta,

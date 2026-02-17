@@ -1,26 +1,11 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 
-interface EmployeeLedgerEntry {
-	_id: string
-	entryNo: number
-	employeeId: string
-	employeeName: string
-	postingDate?: string | null
-	documentType: 'PAYROLL' | 'ADJUSTMENT' | 'PAYMENT' | 'BENEFIT'
-	documentNo?: string | null
-	description?: string | null
-	amount: number
-	remainingAmount: number
-	open: boolean
-	payrollPeriod?: string | null
-}
-
 export default function EmployeeLedgerList() {
-	const { DataGrid, windowSize } = useModuleData<
+	const { DataGrid, windowSize } = useModuleData(
 		'payroll',
-		EmployeeLedgerEntry
-	>('payroll', 'employeeLedger', 'overview')
+		'employeeLedgerEntries',
+	)
 
 	return (
 		<div className='space-y-6'>

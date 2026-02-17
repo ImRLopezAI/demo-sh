@@ -24,27 +24,11 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface Employee {
-	id: string
-	employeeNo: string
-	firstName: string
-	lastName: string
-	email?: string | null
-	department?: string | null
-	jobTitle?: string | null
-	employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACTOR' | 'TEMPORARY'
-	status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED'
-	hireDate?: string | null
-	baseSalary: number
-	payFrequency: 'WEEKLY' | 'BIWEEKLY' | 'SEMI_MONTHLY' | 'MONTHLY'
-	outstandingAmount: number
-}
-
 export default function PayrollDashboard() {
-	const { items: employees, isLoading: employeesLoading } = useModuleData<
+	const { items: employees, isLoading: employeesLoading } = useModuleData(
 		'payroll',
-		Employee
-	>('payroll', 'employees', 'overview')
+		'employees',
+	)
 
 	const totalEmployees = employees.length
 	const activeEmployees = employees.filter(
@@ -207,7 +191,7 @@ export default function PayrollDashboard() {
 						<ul className='divide-y'>
 							{recentEmployees.map((employee) => (
 								<li
-									key={employee.id}
+									key={employee._id}
 									className='flex items-center justify-between gap-2 py-2'
 								>
 									<div className='min-w-0 flex-1'>

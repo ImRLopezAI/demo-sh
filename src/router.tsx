@@ -1,7 +1,6 @@
 import { ErrorComponent } from '@components/layout/errors/error'
 import { NotFoundComponent } from '@components/layout/errors/not-found'
 import { getContext } from '@lib/rpc/context'
-import { QueryClientProvider } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 
@@ -13,19 +12,11 @@ export const getRouter = () => {
 	const context = getContext()
 	const router = createRouter({
 		routeTree,
-		context,
 		scrollRestoration: true,
+		context,
 		defaultPreloadStaleTime: 0,
-		defaultPreload: false,
 		defaultNotFoundComponent: () => <NotFoundComponent />,
 		defaultErrorComponent: ({ error }) => <ErrorComponent error={error} />,
-		Wrap(props) {
-			return (
-				<QueryClientProvider client={context.queryClient}>
-					{props.children}
-				</QueryClientProvider>
-			)
-		},
 	})
 	setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient })
 	return router

@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { createMemoryAdapter } from '../adapters'
 import { ReactiveTable, type TableIndex } from '../table'
 import type { ZodShape } from '../types'
@@ -47,7 +47,9 @@ export function createTestTable<T extends ZodShape>(
 	return new ReactiveTable<z.infer<z.ZodObject<T>>>(name, {
 		indexes,
 		uniqueConstraints,
-		defaultValues: (options?.defaultValues ?? {}) as Partial<z.infer<z.ZodObject<T>>>,
+		defaultValues: (options?.defaultValues ?? {}) as Partial<
+			z.infer<z.ZodObject<T>>
+		>,
 		enableHistory: options?.enableHistory ?? false,
 		adapter,
 	})

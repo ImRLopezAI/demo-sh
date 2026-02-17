@@ -57,14 +57,14 @@ export const queryClient = new QueryClient({
 				return JSON.stringify({ json, meta })
 			},
 			staleTime: 60 * 1000, // > 0 to prevent immediate refetching on mount
-			gcTime: 30 * 1000,
 		},
 		dehydrate: {
 			serializeData: (data) => {
 				const [json, meta] = serializer.serialize(data)
 				return JSON.stringify({ json, meta })
 			},
-			shouldDehydrateQuery: defaultShouldDehydrateQuery,
+			shouldDehydrateQuery: (query) =>
+				defaultShouldDehydrateQuery(query) || query.state.status === 'pending',
 		},
 		hydrate: {
 			deserializeData: (dataStr) =>
@@ -83,7 +83,7 @@ export const getRPCClient = createIsomorphicFn()
 	)
 	.client((): RouterClient<RPCRouter> => {
 		const link = new RPCLink({
-			url: `${window.location.origin}/api/rpc`,
+			url: `${(import.meta.env.VITE_CONVEX_URL ?? '').replace('cloud', 'site')}/api/rpc`,
 			plugins: [
 				new BatchLinkPlugin({
 					groups: [
@@ -113,10 +113,17 @@ export const getRPCClient = createIsomorphicFn()
 				return 'POST'
 			},
 			fetch: (url, options: RequestInit) => {
+				const controller = new AbortController()
+				if (options?.signal) {
+					options.signal.addEventListener('abort', () => {
+						controller.abort()
+					})
+				}
 				return fetch(url, {
 					...options,
 					credentials: 'include',
-					signal: options?.signal,
+					// Ensure we don't pass undefined signal which can cause issues
+					signal: controller.signal,
 				})
 			},
 			interceptors: [
@@ -133,4 +140,4 @@ export const getRPCClient = createIsomorphicFn()
 
 export const caller: RouterClient<RPCRouter> = getRPCClient()
 
-export const $rpc = createTanstackQueryUtils(caller)
+export const $api = createTanstackQueryUtils(caller)

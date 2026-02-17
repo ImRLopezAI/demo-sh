@@ -26,11 +26,7 @@ describe('optimistic concurrency control (_version)', () => {
 	test('insertMany sets _version to 1 on all documents', () => {
 		const table = createTestTable('items', { value: z.number() })
 
-		const docs = table.insertMany([
-			{ value: 1 },
-			{ value: 2 },
-			{ value: 3 },
-		])
+		const docs = table.insertMany([{ value: 1 }, { value: 2 }, { value: 3 }])
 
 		for (const doc of docs) {
 			expect(doc._version).toBe(1)
@@ -52,9 +48,9 @@ describe('optimistic concurrency control (_version)', () => {
 		const item = table.insert({ name: 'original' })
 		table.update(item._id, { name: 'v2' })
 
-		expect(() =>
-			table.update(item._id, { name: 'conflict' }, 1),
-		).toThrow('Optimistic concurrency conflict')
+		expect(() => table.update(item._id, { name: 'conflict' }, 1)).toThrow(
+			'Optimistic concurrency conflict',
+		)
 	})
 
 	test('update without expectedVersion always succeeds', () => {
@@ -152,7 +148,9 @@ describe('sync transactions', () => {
 			items: createTable('items', {
 				schema: { name: z.string() },
 				seed: 0,
-			}).table().unique('name_unique', ['name']),
+			})
+				.table()
+				.unique('name_unique', ['name']),
 		}))
 
 		db.schemas.items.insert({ name: 'Alice' })

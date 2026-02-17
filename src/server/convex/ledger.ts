@@ -6,18 +6,22 @@ export const salesInvoiceHeaders = zodTable('salesInvoiceHeaders', (zid) => ({
 	invoiceNo: z.string(),
 	status: z.enum(INVOICE_STATUS).default('DRAFT'),
 	customerId: zid('customers'),
+	customerName: z.string().optional(),
 	salesOrderNo: z.string().optional(),
 	postingDate: z.string().optional(),
 	dueDate: z.string().optional(),
 	currency: z.string().default('USD'),
 	statusReason: z.string().optional(),
 	statusUpdatedAt: z.number().optional(),
+	lineCount: z.number().default(0),
+	totalAmount: z.number().default(0),
 }))
 
 export const salesInvoiceLines = zodTable('salesInvoiceLines', (zid) => ({
 	invoiceNo: zid('salesInvoiceHeaders'),
 	lineNo: z.number().default(0),
 	itemId: zid('items'),
+	itemDescription: z.string().optional(),
 	quantity: z.number().default(0),
 	unitPrice: z.number().default(0),
 	lineAmount: z.number().default(0),
@@ -26,6 +30,7 @@ export const salesInvoiceLines = zodTable('salesInvoiceLines', (zid) => ({
 export const custLedgerEntries = zodTable('custLedgerEntries', (zid) => ({
 	entryNo: z.number().default(0),
 	customerId: zid('customers'),
+	customerName: z.string().optional(),
 	postingDate: z.string().optional(),
 	documentType: z.enum(CUST_LEDGER_DOCUMENT_TYPE).default('INVOICE'),
 	documentNo: z.string().optional(),
@@ -36,7 +41,7 @@ export const custLedgerEntries = zodTable('custLedgerEntries', (zid) => ({
 	currency: z.string().default('USD'),
 }))
 
-export const glEntries = zodTable('glEntries', (zid) => ({
+export const glEntries = zodTable('glEntries', (_zid) => ({
 	entryNo: z.number().default(0),
 	postingDate: z.string().optional(),
 	accountNo: z.string(),

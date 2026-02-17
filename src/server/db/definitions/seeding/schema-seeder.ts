@@ -1,31 +1,34 @@
-import { z } from 'zod'
-import type { NoSeriesV2Manager } from '../no-series'
-import type { GenerationContext } from './index'
-import { generateValueFromMeta } from './index'
-import { getZodMeta } from '../fields/zod-utils'
-import type { SeedConfig, ZodShape } from '../types'
+import type { z } from 'zod'
 import {
 	type AutoIncrementConfig,
-	type ForeignKeyInfo,
-	type ParentChildRelation,
 	applyAutoIncrementToItem,
 	ensureUniqueFields,
+	type ForeignKeyInfo,
 	getSeedCount,
+	type ParentChildRelation,
 } from '../core/schema-helpers'
+import { getZodMeta } from '../fields/zod-utils'
+import type { NoSeriesV2Manager } from '../no-series'
+import type { SeedConfig, ZodShape } from '../types'
+import type { GenerationContext } from './index'
+import { generateValueFromMeta } from './index'
 
 // ============================================================================
 // Schema seeder types
 // ============================================================================
 
 export interface SchemaSeederConfig {
-	tables: Record<string, {
-		_definition: {
-			schemaInput: unknown
-			seedConfig?: number | boolean | SeedConfig
+	tables: Record<
+		string,
+		{
+			_definition: {
+				schemaInput: unknown
+				seedConfig?: number | boolean | SeedConfig
+			}
+			_noSeriesConfig?: unknown
+			_uniqueConstraints?: Array<{ name: string; fields: string[] }>
 		}
-		_noSeriesConfig?: unknown
-		_uniqueConstraints?: Array<{ name: string; fields: string[] }>
-	}>
+	>
 	typedOneHelper: (tableName: string) => z.ZodType
 	tableOrder: string[]
 	defaultSeed: number
@@ -36,11 +39,15 @@ export interface SchemaSeederConfig {
 	childToParentMap: Map<string, ParentChildRelation[]>
 	foreignKeyFields: Map<string, Map<string, ForeignKeyInfo>>
 	/** Get table instance for data access. Insert can return sync or async. */
-	getTableInstance: (tableName: string) => {
-		toArray: () => Array<{ _id: string } & Record<string, unknown>>
-		get?: (id: string) => (Record<string, unknown> & { _id: string }) | undefined
-		insert: (item: object) => { _id: string } | Promise<{ _id: string }>
-	} | undefined
+	getTableInstance: (tableName: string) =>
+		| {
+				toArray: () => Array<{ _id: string } & Record<string, unknown>>
+				get?: (
+					id: string,
+				) => (Record<string, unknown> & { _id: string }) | undefined
+				insert: (item: object) => { _id: string } | Promise<{ _id: string }>
+		  }
+		| undefined
 }
 
 export interface SeedingState {
@@ -136,7 +143,12 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 		uniqueConstraints: Array<{ name: string; fields: string[] }>,
 	): Record<string, unknown> {
 		let item = generateRecord(tableName, shape, overrides, noSeriesFields)
-		item = applyAutoIncrementToItem(tableName, item, tableAutoIncrementConfigs, autoIncrementState)
+		item = applyAutoIncrementToItem(
+			tableName,
+			item,
+			tableAutoIncrementConfigs,
+			autoIncrementState,
+		)
 		if (noSeriesFields.size > 0) {
 			const noSeriesConfigs = tableNoSeriesConfigs.get(tableName)
 			if (noSeriesConfigs) {
@@ -161,12 +173,18 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 
 		const definition = builder._definition
 		const seedConfig = definition.seedConfig
-		const { count, isPerParent, parentTable: explicitParent } = getSeedCount(seedConfig, defaultSeed)
+		const {
+			count,
+			isPerParent,
+			parentTable: explicitParent,
+		} = getSeedCount(seedConfig, defaultSeed)
 
 		const schemaInput = definition.schemaInput
 		const shape =
 			typeof schemaInput === 'function'
-				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(typedOneHelper)
+				? (schemaInput as (one: typeof typedOneHelper) => ZodShape)(
+						typedOneHelper,
+					)
 				: (schemaInput as ZodShape)
 
 		const uniqueConstraints = builder._uniqueConstraints ?? []
@@ -212,7 +230,15 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 			const cfg = getTableConfig(tableName)
 			if (!cfg) continue
 
-			const { seedConfig, count, isPerParent, explicitParent, shape, uniqueConstraints, noSeriesFields } = cfg
+			const {
+				seedConfig,
+				count,
+				isPerParent,
+				explicitParent,
+				shape,
+				uniqueConstraints,
+				noSeriesFields,
+			} = cfg
 
 			if (count === 0) {
 				state.generationContext.tableIds.set(tableName, [])
@@ -227,30 +253,47 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 				: parentRels?.[0]
 
 			if (isPerParent && parentRel) {
-				const parentIds = state.generationContext.tableIds.get(parentRel.parentTable)
+				const parentIds = state.generationContext.tableIds.get(
+					parentRel.parentTable,
+				)
 				if (parentIds && parentIds.length > 0) {
 					const parentTable = getTableInstance(parentRel.parentTable)
 
 					for (const parentId of parentIds) {
 						const parentRecord = parentTable?.get
-							? parentTable.get(parentId) as Record<string, unknown> | undefined
-							: parentTable?.toArray().find((d) => d._id === parentId) as Record<string, unknown> | undefined
+							? (parentTable.get(parentId) as
+									| Record<string, unknown>
+									| undefined)
+							: (parentTable?.toArray().find((d) => d._id === parentId) as
+									| Record<string, unknown>
+									| undefined)
 						const parentValue =
 							parentRel.parentField === '_id'
 								? parentId
 								: parentRecord?.[parentRel.parentField]
 
 						const perParentCount =
-							typeof seedConfig === 'object' && seedConfig && (seedConfig as SeedConfig).min !== undefined
+							typeof seedConfig === 'object' &&
+							seedConfig &&
+							(seedConfig as SeedConfig).min !== undefined
 								? Math.floor(
 										Math.random() *
-											(((seedConfig as SeedConfig).max ?? (seedConfig as SeedConfig).min!) - (seedConfig as SeedConfig).min! + 1),
+											(((seedConfig as SeedConfig).max ??
+												(seedConfig as SeedConfig).min!) -
+												(seedConfig as SeedConfig).min! +
+												1),
 									) + (seedConfig as SeedConfig).min!
 								: count
 
 						for (let i = 0; i < perParentCount; i++) {
 							const overrides = { [parentRel.childField]: parentValue }
-							const item = prepareItem(tableName, shape, overrides, noSeriesFields, uniqueConstraints)
+							const item = prepareItem(
+								tableName,
+								shape,
+								overrides,
+								noSeriesFields,
+								uniqueConstraints,
+							)
 							const doc = table.insert(item) as { _id: string }
 							ids.push(doc._id)
 						}
@@ -258,7 +301,13 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 				}
 			} else {
 				for (let i = 0; i < count; i++) {
-					const item = prepareItem(tableName, shape, {}, noSeriesFields, uniqueConstraints)
+					const item = prepareItem(
+						tableName,
+						shape,
+						{},
+						noSeriesFields,
+						uniqueConstraints,
+					)
 					const doc = table.insert(item) as { _id: string }
 					ids.push(doc._id)
 				}
@@ -287,7 +336,15 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 			const cfg = getTableConfig(tableName)
 			if (!cfg) continue
 
-			const { seedConfig, count, isPerParent, explicitParent, shape, uniqueConstraints, noSeriesFields } = cfg
+			const {
+				seedConfig,
+				count,
+				isPerParent,
+				explicitParent,
+				shape,
+				uniqueConstraints,
+				noSeriesFields,
+			} = cfg
 
 			if (count === 0) {
 				state.generationContext.tableIds.set(tableName, [])
@@ -302,30 +359,47 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 				: parentRels?.[0]
 
 			if (isPerParent && parentRel) {
-				const parentIds = state.generationContext.tableIds.get(parentRel.parentTable)
+				const parentIds = state.generationContext.tableIds.get(
+					parentRel.parentTable,
+				)
 				if (parentIds && parentIds.length > 0) {
 					const parentTable = getTableInstance(parentRel.parentTable)
 
 					for (const parentId of parentIds) {
 						const parentRecord = parentTable?.get
-							? parentTable.get(parentId) as Record<string, unknown> | undefined
-							: parentTable?.toArray().find((d) => d._id === parentId) as Record<string, unknown> | undefined
+							? (parentTable.get(parentId) as
+									| Record<string, unknown>
+									| undefined)
+							: (parentTable?.toArray().find((d) => d._id === parentId) as
+									| Record<string, unknown>
+									| undefined)
 						const parentValue =
 							parentRel.parentField === '_id'
 								? parentId
 								: parentRecord?.[parentRel.parentField]
 
 						const perParentCount =
-							typeof seedConfig === 'object' && seedConfig && (seedConfig as SeedConfig).min !== undefined
+							typeof seedConfig === 'object' &&
+							seedConfig &&
+							(seedConfig as SeedConfig).min !== undefined
 								? Math.floor(
 										Math.random() *
-											(((seedConfig as SeedConfig).max ?? (seedConfig as SeedConfig).min!) - (seedConfig as SeedConfig).min! + 1),
+											(((seedConfig as SeedConfig).max ??
+												(seedConfig as SeedConfig).min!) -
+												(seedConfig as SeedConfig).min! +
+												1),
 									) + (seedConfig as SeedConfig).min!
 								: count
 
 						for (let i = 0; i < perParentCount; i++) {
 							const overrides = { [parentRel.childField]: parentValue }
-							const item = prepareItem(tableName, shape, overrides, noSeriesFields, uniqueConstraints)
+							const item = prepareItem(
+								tableName,
+								shape,
+								overrides,
+								noSeriesFields,
+								uniqueConstraints,
+							)
 							const doc = await table.insert(item)
 							ids.push(doc._id)
 						}
@@ -333,7 +407,13 @@ export function createSchemaSeeder(config: SchemaSeederConfig) {
 				}
 			} else {
 				for (let i = 0; i < count; i++) {
-					const item = prepareItem(tableName, shape, {}, noSeriesFields, uniqueConstraints)
+					const item = prepareItem(
+						tableName,
+						shape,
+						{},
+						noSeriesFields,
+						uniqueConstraints,
+					)
 					const doc = await table.insert(item)
 					ids.push(doc._id)
 				}

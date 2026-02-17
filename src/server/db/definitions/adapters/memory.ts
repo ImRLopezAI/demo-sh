@@ -1,5 +1,9 @@
 import type { WithSystemFields } from '../table'
-import type { AdapterFilter, AdapterQueryOptions, SyncStorageAdapter } from './types'
+import type {
+	AdapterFilter,
+	AdapterQueryOptions,
+	SyncStorageAdapter,
+} from './types'
 
 /**
  * Internal in-memory storage adapter.
@@ -126,7 +130,10 @@ export class MemoryAdapter implements SyncStorageAdapter {
 	}
 }
 
-function matchesFilter(item: Record<string, unknown>, filter: AdapterFilter): boolean {
+function matchesFilter(
+	item: Record<string, unknown>,
+	filter: AdapterFilter,
+): boolean {
 	switch (filter.type) {
 		case 'eq':
 			return item[filter.field] === filter.value

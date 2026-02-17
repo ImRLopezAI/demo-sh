@@ -154,7 +154,7 @@ type DataGridColumnProps<TData extends object, TValue = unknown> = ColumnDef<
 	TValue
 > & {
 	id?: string
-	accessorKey?: keyof TData | string
+	accessorKey?: keyof TData | (string & {})
 	accessorFn?: (row: TData, index: number) => TValue
 	title?: string
 	cellVariant?: CellVariantValue

@@ -21,18 +21,6 @@ interface PosTransactionHeader {
 	lineCount: number
 }
 
-interface TransactionLine {
-	_id: string
-	transactionId: string
-	lineNo: number
-	itemId: string
-	description: string
-	quantity: number
-	unitPrice: number
-	lineAmount: number
-	discountPercent: number
-}
-
 export function TransactionCard({
 	selectedId,
 	onClose,
@@ -44,15 +32,15 @@ export function TransactionCard({
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
 		'pos',
-		'transactions',
+		'posTransactions',
 		selectedId,
 		{ enabled: isOpen },
 	)
 
-	const { items: allLines, isLoading: linesLoading } = useModuleData<
+	const { items: allLines, isLoading: linesLoading } = useModuleData(
 		'pos',
-		TransactionLine
-	>('pos', 'transactionLines', 'overview')
+		'posTransactionLines',
+	)
 
 	const [Form, form] = useCreateForm(
 		() => ({

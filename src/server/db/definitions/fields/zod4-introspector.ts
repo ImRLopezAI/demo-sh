@@ -1,7 +1,12 @@
 import { z } from 'zod'
 import type { FieldMeta } from '../types'
 import type { SchemaIntrospector } from './schema-introspection'
-import { getZodMeta, hasZodTrait, getEnumValues, getDefaultValue } from './zod-utils'
+import {
+	getDefaultValue,
+	getEnumValues,
+	getZodMeta,
+	hasZodTrait,
+} from './zod-utils'
 
 // ============================================================================
 // Zod 4 implementation of SchemaIntrospector

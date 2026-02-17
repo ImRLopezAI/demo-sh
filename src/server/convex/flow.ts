@@ -9,7 +9,7 @@ import {
 } from './utils/enums'
 import { zodTable } from './utils/helper'
 
-export const bankAccounts = zodTable('bankAccounts', (zid) => ({
+export const bankAccounts = zodTable('bankAccounts', (_zid) => ({
 	accountNo: z.string(),
 	name: z.string(),
 	bankName: z.string().optional(),
@@ -18,6 +18,8 @@ export const bankAccounts = zodTable('bankAccounts', (zid) => ({
 	currency: z.string().default('USD'),
 	status: z.enum(BANK_ACCOUNT_STATUS).default('ACTIVE'),
 	lastSyncAt: z.number().optional(),
+	entryCount: z.number().default(0),
+	currentBalance: z.number().default(0),
 }))
 
 export const bankAccountLedgerEntries = zodTable(
@@ -25,6 +27,7 @@ export const bankAccountLedgerEntries = zodTable(
 	(zid) => ({
 		entryNo: z.number().default(0),
 		bankAccountId: zid('bankAccounts'),
+		bankAccountName: z.string().optional(),
 		postingDate: z.string().optional(),
 		documentType: z.enum(BANK_LEDGER_DOCUMENT_TYPE).default('PAYMENT'),
 		documentNo: z.string().optional(),
@@ -39,7 +42,7 @@ export const bankAccountLedgerEntries = zodTable(
 	}),
 )
 
-export const genJournalLines = zodTable('genJournalLines', (zid) => ({
+export const genJournalLines = zodTable('genJournalLines', (_zid) => ({
 	journalTemplate: z.string().default('GENERAL'),
 	journalBatch: z.string().default('DEFAULT'),
 	lineNo: z.number().default(0),

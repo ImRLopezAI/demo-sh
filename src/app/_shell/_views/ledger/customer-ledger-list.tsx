@@ -17,11 +17,7 @@ interface CustLedgerEntry {
 }
 
 export default function CustomerLedgerList() {
-	const { DataGrid, windowSize } = useModuleData<'ledger', CustLedgerEntry>(
-		'ledger',
-		'customerLedger',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('ledger', 'custLedgerEntries')
 
 	return (
 		<div className='space-y-4'>

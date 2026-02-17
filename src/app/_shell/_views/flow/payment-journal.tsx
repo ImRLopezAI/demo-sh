@@ -6,41 +6,11 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface GenJournalLine {
-	id: string
-	journalTemplate: string
-	journalBatch: string
-	lineNo: number
-	postingDate: string
-	documentType:
-		| 'PAYMENT'
-		| 'INVOICE'
-		| 'REFUND'
-		| 'TRANSFER'
-		| 'PAYROLL'
-		| 'ADJUSTMENT'
-	documentNo: string
-	accountType:
-		| 'GL_ACCOUNT'
-		| 'BANK_ACCOUNT'
-		| 'CUSTOMER'
-		| 'VENDOR'
-		| 'EMPLOYEE'
-	accountNo: string
-	balancingAccountType: string
-	balancingAccountNo: string
-	description: string
-	debitAmount: number
-	creditAmount: number
-	status: 'OPEN' | 'APPROVED' | 'POSTED' | 'VOIDED'
-	sourceModule: string
-}
-
 export default function PaymentJournal() {
 	const windowSize = useWindowSize({ defaultHeight: 900, defaultWidth: 1280 })
 
 	const { items, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useModuleData<'flow', GenJournalLine>('flow', 'journalLines', 'overview')
+		useModuleData('flow', 'genJournalLines')
 
 	const DataGrid = useGrid(
 		() => ({

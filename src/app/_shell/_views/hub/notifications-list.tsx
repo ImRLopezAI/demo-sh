@@ -11,11 +11,7 @@ interface ModuleNotification {
 }
 
 export default function NotificationsList() {
-	const { DataGrid, windowSize } = useModuleData<'hub', ModuleNotification>(
-		'hub',
-		'notifications',
-		'all',
-	)
+	const { DataGrid, windowSize } = useModuleData('hub', 'moduleNotifications')
 
 	return (
 		<div className='space-y-4'>
@@ -32,24 +28,24 @@ export default function NotificationsList() {
 					<DataGrid.Toolbar filter sort search export />
 				</DataGrid.Header>
 				<DataGrid.Columns>
-					<DataGrid.Column<ModuleNotification>
+					<DataGrid.Column
 						accessorKey='moduleId'
 						title='Module'
 					/>
-					<DataGrid.Column<ModuleNotification>
+					<DataGrid.Column
 						accessorKey='title'
 						title='Title'
 					/>
-					<DataGrid.Column<ModuleNotification>
+					<DataGrid.Column
 						accessorKey='body'
 						title='Body'
 					/>
-					<DataGrid.Column<ModuleNotification>
+					<DataGrid.Column
 						accessorKey='status'
 						title='Status'
 						cellVariant='select'
 					/>
-					<DataGrid.Column<ModuleNotification>
+					<DataGrid.Column
 						accessorKey='severity'
 						title='Severity'
 						cellVariant='select'

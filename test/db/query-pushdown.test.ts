@@ -1,15 +1,36 @@
 import { MemoryAdapter } from '@server/db/definitions/adapters/memory'
-import { applyAdapterFilter } from '@server/db/definitions/query/filter-compiler'
 import type { AdapterFilter } from '@server/db/definitions/adapters/types'
+import { applyAdapterFilter } from '@server/db/definitions/query/filter-compiler'
 import { describe, expect, test } from 'vitest'
 
 describe('MemoryAdapter query pushdown', () => {
 	test('query with eq filter', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('users', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, name: 'Alice', status: 'active' } as any)
-		adapter.set('users', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, name: 'Bob', status: 'inactive' } as any)
-		adapter.set('users', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1, name: 'Carol', status: 'active' } as any)
+		adapter.set('users', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			name: 'Alice',
+			status: 'active',
+		} as any)
+		adapter.set('users', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			name: 'Bob',
+			status: 'inactive',
+		} as any)
+		adapter.set('users', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+			name: 'Carol',
+			status: 'active',
+		} as any)
 
 		const results = adapter.query('users', {
 			filter: { type: 'eq', field: 'status', value: 'active' },
@@ -22,9 +43,27 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with ne filter', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, type: 'A' } as any)
-		adapter.set('items', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, type: 'B' } as any)
-		adapter.set('items', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1, type: 'A' } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			type: 'A',
+		} as any)
+		adapter.set('items', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			type: 'B',
+		} as any)
+		adapter.set('items', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+			type: 'A',
+		} as any)
 
 		const results = adapter.query('items', {
 			filter: { type: 'ne', field: 'type', value: 'A' },
@@ -38,7 +77,13 @@ describe('MemoryAdapter query pushdown', () => {
 		const adapter = new MemoryAdapter()
 
 		for (let i = 1; i <= 5; i++) {
-			adapter.set('scores', `${i}`, { _id: `${i}`, _createdAt: i, _updatedAt: i, _version: 1, score: i * 10 } as any)
+			adapter.set('scores', `${i}`, {
+				_id: `${i}`,
+				_createdAt: i,
+				_updatedAt: i,
+				_version: 1,
+				score: i * 10,
+			} as any)
 		}
 
 		// gt 20 and lt 50 → scores 30, 40
@@ -53,14 +98,22 @@ describe('MemoryAdapter query pushdown', () => {
 		})
 
 		expect(results.length).toBe(2)
-		expect(results.map((r: any) => r.score).sort((a: number, b: number) => a - b)).toEqual([30, 40])
+		expect(
+			results.map((r: any) => r.score).sort((a: number, b: number) => a - b),
+		).toEqual([30, 40])
 	})
 
 	test('query with gte/lte filters (inclusive boundaries)', () => {
 		const adapter = new MemoryAdapter()
 
 		for (let i = 1; i <= 5; i++) {
-			adapter.set('scores', `${i}`, { _id: `${i}`, _createdAt: i, _updatedAt: i, _version: 1, score: i * 10 } as any)
+			adapter.set('scores', `${i}`, {
+				_id: `${i}`,
+				_createdAt: i,
+				_updatedAt: i,
+				_version: 1,
+				score: i * 10,
+			} as any)
 		}
 
 		// gte 20 and lte 40 → scores 20, 30, 40
@@ -80,9 +133,27 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with in filter', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, color: 'red' } as any)
-		adapter.set('items', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, color: 'blue' } as any)
-		adapter.set('items', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1, color: 'green' } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			color: 'red',
+		} as any)
+		adapter.set('items', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			color: 'blue',
+		} as any)
+		adapter.set('items', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+			color: 'green',
+		} as any)
 
 		const results = adapter.query('items', {
 			filter: { type: 'in', field: 'color', values: ['red', 'green'] },
@@ -94,9 +165,27 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with orderBy', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, name: 'Charlie' } as any)
-		adapter.set('items', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, name: 'Alice' } as any)
-		adapter.set('items', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1, name: 'Bob' } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			name: 'Charlie',
+		} as any)
+		adapter.set('items', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			name: 'Alice',
+		} as any)
+		adapter.set('items', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+			name: 'Bob',
+		} as any)
 
 		const asc = adapter.query('items', {
 			orderBy: { field: 'name', direction: 'asc' },
@@ -113,7 +202,13 @@ describe('MemoryAdapter query pushdown', () => {
 		const adapter = new MemoryAdapter()
 
 		for (let i = 1; i <= 10; i++) {
-			adapter.set('items', `${i}`, { _id: `${i}`, _createdAt: i, _updatedAt: i, _version: 1, value: i } as any)
+			adapter.set('items', `${i}`, {
+				_id: `${i}`,
+				_createdAt: i,
+				_updatedAt: i,
+				_version: 1,
+				value: i,
+			} as any)
 		}
 
 		const results = adapter.query('items', {
@@ -129,9 +224,26 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with isNull and isNotNull', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, label: 'has value' } as any)
-		adapter.set('items', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, label: null } as any)
-		adapter.set('items', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1 } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			label: 'has value',
+		} as any)
+		adapter.set('items', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			label: null,
+		} as any)
+		adapter.set('items', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+		} as any)
 
 		const nullResults = adapter.query('items', {
 			filter: { type: 'isNull', field: 'label' },
@@ -148,9 +260,30 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with or filter', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, status: 'active', priority: 'high' } as any)
-		adapter.set('items', '2', { _id: '2', _createdAt: 2, _updatedAt: 2, _version: 1, status: 'inactive', priority: 'low' } as any)
-		adapter.set('items', '3', { _id: '3', _createdAt: 3, _updatedAt: 3, _version: 1, status: 'inactive', priority: 'high' } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			status: 'active',
+			priority: 'high',
+		} as any)
+		adapter.set('items', '2', {
+			_id: '2',
+			_createdAt: 2,
+			_updatedAt: 2,
+			_version: 1,
+			status: 'inactive',
+			priority: 'low',
+		} as any)
+		adapter.set('items', '3', {
+			_id: '3',
+			_createdAt: 3,
+			_updatedAt: 3,
+			_version: 1,
+			status: 'inactive',
+			priority: 'high',
+		} as any)
 
 		const results = adapter.query('items', {
 			filter: {
@@ -168,7 +301,13 @@ describe('MemoryAdapter query pushdown', () => {
 	test('query with no results returns empty array', () => {
 		const adapter = new MemoryAdapter()
 
-		adapter.set('items', '1', { _id: '1', _createdAt: 1, _updatedAt: 1, _version: 1, status: 'active' } as any)
+		adapter.set('items', '1', {
+			_id: '1',
+			_createdAt: 1,
+			_updatedAt: 1,
+			_version: 1,
+			status: 'active',
+		} as any)
 
 		const results = adapter.query('items', {
 			filter: { type: 'eq', field: 'status', value: 'nonexistent' },
@@ -192,13 +331,21 @@ describe('applyAdapterFilter', () => {
 	]
 
 	test('filters with eq', () => {
-		const result = applyAdapterFilter(items, { type: 'eq', field: 'name', value: 'Bob' })
+		const result = applyAdapterFilter(items, {
+			type: 'eq',
+			field: 'name',
+			value: 'Bob',
+		})
 		expect(result.length).toBe(1)
 		expect(result[0].name).toBe('Bob')
 	})
 
 	test('filters with ne', () => {
-		const result = applyAdapterFilter(items, { type: 'ne', field: 'active', value: true })
+		const result = applyAdapterFilter(items, {
+			type: 'ne',
+			field: 'active',
+			value: true,
+		})
 		expect(result.length).toBe(1)
 		expect(result[0].name).toBe('Bob')
 	})

@@ -143,7 +143,9 @@ function applyDiff(
 }
 
 function coerceValue(value: unknown, targetType: string): unknown {
-	const baseType = targetType.replace(/^optional<(.+)>$/, '$1').replace(/^nullable<(.+)>$/, '$1')
+	const baseType = targetType
+		.replace(/^optional<(.+)>$/, '$1')
+		.replace(/^nullable<(.+)>$/, '$1')
 
 	switch (baseType) {
 		case 'string':

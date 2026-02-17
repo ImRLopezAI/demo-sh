@@ -2,27 +2,11 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface BankAccountLedgerEntry {
-	_id: string
-	entryNo: number
-	bankAccountId: string
-	bankAccountName: string
-	postingDate: string
-	documentType: 'PAYMENT' | 'REFUND' | 'TRANSFER' | 'ADJUSTMENT' | 'PAYROLL'
-	documentNo: string
-	description: string
-	debitAmount: number
-	creditAmount: number
-	amount: number
-	reconciliationStatus: 'OPEN' | 'MATCHED' | 'RECONCILED' | 'EXCEPTION'
-	open: boolean
-}
-
 export default function BankLedgerList() {
-	const { DataGrid, windowSize } = useModuleData<
+	const { DataGrid, windowSize } = useModuleData(
 		'flow',
-		BankAccountLedgerEntry
-	>('flow', 'bankLedgerEntries', 'all')
+		'bankAccountLedgerEntries',
+	)
 
 	return (
 		<div className='space-y-6'>

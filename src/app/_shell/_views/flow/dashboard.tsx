@@ -25,59 +25,16 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
-interface BankAccount {
-	id: string
-	accountNo: string
-	name: string
-	bankName: string
-	iban: string
-	swiftCode: string
-	currency: string
-	status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED'
-	entryCount: number
-	currentBalance: number
-}
-
-interface GenJournalLine {
-	id: string
-	journalTemplate: string
-	journalBatch: string
-	lineNo: number
-	postingDate: string
-	documentType:
-		| 'PAYMENT'
-		| 'INVOICE'
-		| 'REFUND'
-		| 'TRANSFER'
-		| 'PAYROLL'
-		| 'ADJUSTMENT'
-	documentNo: string
-	accountType:
-		| 'GL_ACCOUNT'
-		| 'BANK_ACCOUNT'
-		| 'CUSTOMER'
-		| 'VENDOR'
-		| 'EMPLOYEE'
-	accountNo: string
-	balancingAccountType: string
-	balancingAccountNo: string
-	description: string
-	debitAmount: number
-	creditAmount: number
-	status: 'OPEN' | 'APPROVED' | 'POSTED' | 'VOIDED'
-	sourceModule: string
-}
-
 export default function Dashboard() {
-	const { items: bankAccounts, isLoading: accountsLoading } = useModuleData<
+	const { items: bankAccounts, isLoading: accountsLoading } = useModuleData(
 		'flow',
-		BankAccount
-	>('flow', 'bankAccounts', 'overview')
+		'bankAccounts',
+	)
 
-	const { items: journalLines, isLoading: journalLoading } = useModuleData<
+	const { items: journalLines, isLoading: journalLoading } = useModuleData(
 		'flow',
-		GenJournalLine
-	>('flow', 'journalLines', 'overview')
+		'genJournalLines',
+	)
 
 	const totalAccounts = bankAccounts.length
 	const activeAccounts = bankAccounts.filter(
@@ -133,7 +90,7 @@ export default function Dashboard() {
 	)
 
 	const monthlyJournalVolume = React.useMemo(
-		() => buildMonthlySeries(journalLines, (line) => line.postingDate),
+		() => buildMonthlySeries(journalLines, (line) => line.postingDate ?? ''),
 		[journalLines],
 	)
 
@@ -225,7 +182,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{recentAccounts.map((account) => (
 									<li
-										key={account.id}
+										key={account._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>
@@ -275,7 +232,7 @@ export default function Dashboard() {
 							<ul className='divide-y'>
 								{journalLines.slice(0, 8).map((line) => (
 									<li
-										key={line.id}
+										key={line._id}
 										className='flex items-center justify-between gap-2 py-2'
 									>
 										<div className='min-w-0 flex-1'>

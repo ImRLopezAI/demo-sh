@@ -141,7 +141,6 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 		.merge(queryOptsSchema)
 		.default({ viewId: 'overview', limit: 25, offset: 0 })
 
-	
 	const NAME = config.prefix ?? config.moduleName
 
 	return createRPCRouter(
@@ -304,9 +303,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				})
 				.handler(({ input, context }) => {
 					if (!config.statusField) {
-						throw new Error(
-							`${NAME} does not have workflow status configured`,
-						)
+						throw new Error(`${NAME} does not have workflow status configured`)
 					}
 
 					const table = getTable(context, config.primaryTable)

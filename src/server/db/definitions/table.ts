@@ -365,11 +365,18 @@ export class ReactiveTable<T extends object> {
 	 * @throws Error if unique constraint is violated
 	 * @throws Error if expectedVersion doesn't match (optimistic concurrency conflict)
 	 */
-	update(id: string, updates: Partial<T>, expectedVersion?: number): WithSystemFields<T> | undefined {
+	update(
+		id: string,
+		updates: Partial<T>,
+		expectedVersion?: number,
+	): WithSystemFields<T> | undefined {
 		const existing = this.adapter.get<T>(this.name, id)
 		if (!existing) return undefined
 
-		if (expectedVersion !== undefined && existing._version !== expectedVersion) {
+		if (
+			expectedVersion !== undefined &&
+			existing._version !== expectedVersion
+		) {
 			throw new Error(
 				`Optimistic concurrency conflict: expected version ${expectedVersion} but found ${existing._version} for document ${id}`,
 			)
@@ -1143,7 +1150,10 @@ export class AsyncReactiveTable<T extends object> {
 		const existing = this.getSync(id)
 		if (!existing) return undefined
 
-		if (expectedVersion !== undefined && existing._version !== expectedVersion) {
+		if (
+			expectedVersion !== undefined &&
+			existing._version !== expectedVersion
+		) {
 			throw new Error(
 				`Optimistic concurrency conflict: expected version ${expectedVersion} but found ${existing._version} for document ${id}`,
 			)

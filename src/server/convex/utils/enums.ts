@@ -24,7 +24,11 @@ export const CART_STATUS = ['OPEN', 'CHECKED_OUT', 'ABANDONED'] as const
 // =====================================================================
 // Insight
 // =====================================================================
-export const LOCATION_TYPE = ['WAREHOUSE', 'STORE', 'DISTRIBUTION_CENTER'] as const
+export const LOCATION_TYPE = [
+	'WAREHOUSE',
+	'STORE',
+	'DISTRIBUTION_CENTER',
+] as const
 export const ITEM_LEDGER_ENTRY_TYPE = [
 	'SALE',
 	'PURCHASE',
@@ -44,7 +48,11 @@ export const VALUE_ENTRY_TYPE = [
 // Ledger
 // =====================================================================
 export const INVOICE_STATUS = ['DRAFT', 'POSTED', 'REVERSED'] as const
-export const CUST_LEDGER_DOCUMENT_TYPE = ['INVOICE', 'CREDIT_MEMO', 'PAYMENT'] as const
+export const CUST_LEDGER_DOCUMENT_TYPE = [
+	'INVOICE',
+	'CREDIT_MEMO',
+	'PAYMENT',
+] as const
 
 // =====================================================================
 // Flow
@@ -57,7 +65,12 @@ export const BANK_LEDGER_DOCUMENT_TYPE = [
 	'ADJUSTMENT',
 	'PAYROLL',
 ] as const
-export const RECONCILIATION_STATUS = ['OPEN', 'MATCHED', 'RECONCILED', 'EXCEPTION'] as const
+export const RECONCILIATION_STATUS = [
+	'OPEN',
+	'MATCHED',
+	'RECONCILED',
+	'EXCEPTION',
+] as const
 export const JOURNAL_DOCUMENT_TYPE = [
 	'PAYMENT',
 	'INVOICE',
@@ -89,9 +102,19 @@ export const TRANSFER_STATUS = [
 // =====================================================================
 // Payroll
 // =====================================================================
-export const EMPLOYMENT_TYPE = ['FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY'] as const
+export const EMPLOYMENT_TYPE = [
+	'FULL_TIME',
+	'PART_TIME',
+	'CONTRACTOR',
+	'TEMPORARY',
+] as const
 export const EMPLOYEE_STATUS = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'] as const
-export const PAY_FREQUENCY = ['WEEKLY', 'BIWEEKLY', 'SEMI_MONTHLY', 'MONTHLY'] as const
+export const PAY_FREQUENCY = [
+	'WEEKLY',
+	'BIWEEKLY',
+	'SEMI_MONTHLY',
+	'MONTHLY',
+] as const
 export const EMPLOYEE_LEDGER_DOCUMENT_TYPE = [
 	'PAYROLL',
 	'ADJUSTMENT',
@@ -104,7 +127,12 @@ export const EMPLOYEE_LEDGER_DOCUMENT_TYPE = [
 // =====================================================================
 export const TERMINAL_STATUS = ['ONLINE', 'OFFLINE', 'MAINTENANCE'] as const
 export const POS_SESSION_STATUS = ['OPEN', 'PAUSED', 'CLOSED'] as const
-export const POS_TRANSACTION_STATUS = ['OPEN', 'COMPLETED', 'VOIDED', 'REFUNDED'] as const
+export const POS_TRANSACTION_STATUS = [
+	'OPEN',
+	'COMPLETED',
+	'VOIDED',
+	'REFUNDED',
+] as const
 export const PAYMENT_METHOD = ['CASH', 'CARD', 'MOBILE', 'MIXED'] as const
 
 // =====================================================================
