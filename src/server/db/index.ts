@@ -1,5 +1,33 @@
 import z from 'zod'
 import { defineSchema, flowField } from './definitions'
+import {
+	OPERATION_TASK_STATUSES,
+	SLA_STATUSES,
+	NOTIFICATION_STATUSES,
+	AUDIT_LOG_STATUSES,
+	SCHEDULED_JOB_STATUSES,
+	ORDER_WORKFLOW_STATUSES,
+	DOCUMENT_APPROVAL_STATUSES,
+	INVENTORY_RESERVATION_STATUSES,
+	CART_STATUSES,
+	POSTING_STATUSES,
+	TRANSFER_STATUSES,
+	SALES_INVOICE_STATUSES,
+	E_INVOICE_STATUSES,
+	BANK_ACCOUNT_STATUSES,
+	RECONCILIATION_STATUSES,
+	JOURNAL_LINE_STATUSES,
+	EMPLOYEE_STATUSES,
+	PAYROLL_RUN_STATUSES,
+	STATUTORY_REPORT_STATUSES,
+	TERMINAL_STATUSES,
+	POS_SESSION_STATUSES,
+	POS_TRANSACTION_STATUSES,
+	SHIPMENT_STATUSES,
+	SHIPMENT_PRIORITY_STATUSES,
+	CARRIER_LABEL_STATUSES,
+	TRACKING_EVENT_SOURCES,
+} from './constants'
 
 export const db = defineSchema(
 	({ createTable }) => ({
@@ -13,7 +41,7 @@ export const db = defineSchema(
 				title: z.string().meta({ type: 'sentence' }),
 				description: z.string().optional(),
 				status: z
-					.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'DONE'])
+					.enum(OPERATION_TASK_STATUSES)
 					.default('OPEN'),
 				priority: z
 					.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
@@ -21,7 +49,7 @@ export const db = defineSchema(
 				assigneeUserId: z.string().optional(),
 				dueDate: z.string().optional().meta({ type: 'date' }),
 				slaTargetAt: z.string().optional().meta({ type: 'date' }),
-				slaStatus: z.enum(['ON_TRACK', 'AT_RISK', 'BREACHED']).optional(),
+				slaStatus: z.enum(SLA_STATUSES).optional(),
 				slaBreachedAt: z.string().optional().meta({ type: 'date' }),
 				slaLastEvaluatedAt: z.string().optional().meta({ type: 'date' }),
 				escalationLevel: z.enum(['NONE', 'L1', 'L2']).optional(),
@@ -40,7 +68,7 @@ export const db = defineSchema(
 				moduleId: z.string(),
 				title: z.string().meta({ type: 'sentence' }),
 				body: z.string().optional(),
-				status: z.enum(['UNREAD', 'READ', 'ARCHIVED']).default('UNREAD'),
+				status: z.enum(NOTIFICATION_STATUSES).default('UNREAD'),
 				severity: z.enum(['INFO', 'WARNING', 'ERROR']).default('INFO'),
 				targetUserId: z.string().optional(),
 			},
@@ -117,7 +145,10 @@ export const db = defineSchema(
 			seed: false,
 		})
 			.table()
-			.unique('hubRolePermissions_role_permission_uq', ['roleId', 'permissionId'])
+			.unique('hubRolePermissions_role_permission_uq', [
+				'roleId',
+				'permissionId',
+			])
 			.index('hubRolePermissions_roleId_idx', ['roleId'])
 			.index('hubRolePermissions_permissionId_idx', ['permissionId']),
 
@@ -158,7 +189,10 @@ export const db = defineSchema(
 				'revisionNo',
 			])
 			.index('hubModuleSettingsRevisions_settingId_idx', ['settingId'])
-			.index('hubModuleSettingsRevisions_module_key_idx', ['moduleId', 'settingKey']),
+			.index('hubModuleSettingsRevisions_module_key_idx', [
+				'moduleId',
+				'settingKey',
+			]),
 
 		hubAuditLogs: createTable('hubAuditLogs', {
 			schema: {
@@ -169,7 +203,7 @@ export const db = defineSchema(
 				action: z.string(),
 				entityType: z.string(),
 				entityId: z.string().optional(),
-				status: z.enum(['SUCCESS', 'DENIED', 'FAILED']).default('SUCCESS'),
+				status: z.enum(AUDIT_LOG_STATUSES).default('SUCCESS'),
 				message: z.string().optional(),
 				beforeJson: z.string().optional(),
 				afterJson: z.string().optional(),
@@ -199,9 +233,7 @@ export const db = defineSchema(
 				retryLimit: z.number().int().min(0).max(5).default(1),
 				nextRunAt: z.string().optional().meta({ type: 'date' }),
 				lastRunAt: z.string().optional().meta({ type: 'date' }),
-				lastRunStatus: z
-					.enum(['IDLE', 'SUCCESS', 'FAILED'])
-					.default('IDLE'),
+				lastRunStatus: z.enum(SCHEDULED_JOB_STATUSES).default('IDLE'),
 				lastRunError: z.string().optional(),
 				configJson: z.string().default('{}'),
 			},
@@ -227,9 +259,7 @@ export const db = defineSchema(
 				finishedAt: z.string().optional().meta({ type: 'date' }),
 				errorSummary: z.string().optional(),
 				attemptNo: z.number().int().min(1).default(1),
-				trigger: z
-					.enum(['SCHEDULED', 'MANUAL', 'RETRY'])
-					.default('SCHEDULED'),
+				trigger: z.enum(['SCHEDULED', 'MANUAL', 'RETRY']).default('SCHEDULED'),
 				resultJson: z.string().optional(),
 			}),
 			seed: false,
@@ -246,7 +276,7 @@ export const db = defineSchema(
 				workflowNo: z.string(),
 				salesOrderId: z.string(),
 				salesOrderNo: z.string().optional(),
-				status: z.enum(['RUNNING', 'FAILED', 'COMPLETED']).default('RUNNING'),
+				status: z.enum(ORDER_WORKFLOW_STATUSES).default('RUNNING'),
 				currentStage: z
 					.enum([
 						'VALIDATE_ORDER',
@@ -396,14 +426,7 @@ export const db = defineSchema(
 					.enum(['ORDER', 'RETURN_ORDER', 'QUOTE'])
 					.default('ORDER'),
 				status: z
-					.enum([
-						'DRAFT',
-						'PENDING_APPROVAL',
-						'APPROVED',
-						'REJECTED',
-						'COMPLETED',
-						'CANCELED',
-					])
+					.enum(DOCUMENT_APPROVAL_STATUSES)
 					.default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
@@ -574,7 +597,7 @@ export const db = defineSchema(
 				itemId: one('items'),
 				quantity: z.number().default(0),
 				status: z
-					.enum(['ACTIVE', 'RELEASED', 'EXPIRED', 'CONSUMED'])
+					.enum(INVENTORY_RESERVATION_STATUSES)
 					.default('ACTIVE'),
 				reason: z.string().optional(),
 				reservedAt: z.string().optional().meta({ type: 'date' }),
@@ -603,7 +626,7 @@ export const db = defineSchema(
 							field: 'name',
 						}),
 					}),
-				status: z.enum(['OPEN', 'CHECKED_OUT', 'ABANDONED']).default('OPEN'),
+				status: z.enum(CART_STATUSES).default('OPEN'),
 				currency: z
 					.string()
 					.default('USD')
@@ -846,14 +869,7 @@ export const db = defineSchema(
 					.enum(['ORDER', 'RETURN_ORDER', 'QUOTE'])
 					.default('ORDER'),
 				status: z
-					.enum([
-						'DRAFT',
-						'PENDING_APPROVAL',
-						'APPROVED',
-						'REJECTED',
-						'COMPLETED',
-						'CANCELED',
-					])
+					.enum(DOCUMENT_APPROVAL_STATUSES)
 					.default('DRAFT'),
 				vendorId: one('vendors'),
 				vendorName: z
@@ -963,7 +979,7 @@ export const db = defineSchema(
 		purchaseInvoiceHeaders: createTable('purchaseInvoiceHeaders', {
 			schema: (one) => ({
 				invoiceNo: z.string(),
-				status: z.enum(['DRAFT', 'POSTED', 'CANCELED']).default('DRAFT'),
+				status: z.enum(POSTING_STATUSES).default('DRAFT'),
 				vendorId: one('vendors'),
 				vendorName: z
 					.string()
@@ -1065,9 +1081,9 @@ export const db = defineSchema(
 						}),
 					}),
 				postingDate: z.string().optional().meta({ type: 'date' }),
-				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
-					'INVOICE',
-				),
+				documentType: z
+					.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO'])
+					.default('INVOICE'),
 				documentNo: z.string(),
 				description: z.string().optional(),
 				amount: z.number().default(0),
@@ -1089,9 +1105,9 @@ export const db = defineSchema(
 				entryNo: z.number().default(0),
 				vendorLedgerEntryId: one('vendorLedgerEntries'),
 				postingDate: z.string().optional().meta({ type: 'date' }),
-				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
-					'INVOICE',
-				),
+				documentType: z
+					.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO'])
+					.default('INVOICE'),
 				documentNo: z.string(),
 				description: z.string().optional(),
 				amount: z.number().default(0),
@@ -1100,17 +1116,16 @@ export const db = defineSchema(
 			seed: false,
 		})
 			.table()
-			.index(
-				'detailedVendorLedgerEntries_vendorLedgerEntryId_idx',
-				['vendorLedgerEntryId'],
-			)
+			.index('detailedVendorLedgerEntries_vendorLedgerEntryId_idx', [
+				'vendorLedgerEntryId',
+			])
 			.index('detailedVendorLedgerEntries_documentNo_idx', ['documentNo']),
 
 		transferHeaders: createTable('transferHeaders', {
 			schema: {
 				transferNo: z.string(),
 				status: z
-					.enum(['DRAFT', 'RELEASED', 'IN_TRANSIT', 'RECEIVED', 'CANCELED'])
+					.enum(TRANSFER_STATUSES)
 					.default('DRAFT'),
 				fromLocationCode: z.string(),
 				toLocationCode: z.string(),
@@ -1173,16 +1188,9 @@ export const db = defineSchema(
 		salesInvoiceHeaders: createTable('salesInvoiceHeaders', {
 			schema: (one) => ({
 				invoiceNo: z.string(),
-				status: z.enum(['DRAFT', 'POSTED', 'REVERSED']).default('DRAFT'),
+				status: z.enum(SALES_INVOICE_STATUSES).default('DRAFT'),
 				eInvoiceStatus: z
-					.enum([
-						'DRAFT',
-						'POSTED',
-						'SUBMITTED',
-						'ACCEPTED',
-						'REJECTED',
-						'CANCELED',
-					])
+					.enum(E_INVOICE_STATUSES)
 					.default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
@@ -1295,16 +1303,9 @@ export const db = defineSchema(
 		salesCreditMemoHeaders: createTable('salesCreditMemoHeaders', {
 			schema: (one) => ({
 				creditMemoNo: z.string(),
-				status: z.enum(['DRAFT', 'POSTED', 'CANCELED']).default('DRAFT'),
+				status: z.enum(POSTING_STATUSES).default('DRAFT'),
 				eInvoiceStatus: z
-					.enum([
-						'DRAFT',
-						'POSTED',
-						'SUBMITTED',
-						'ACCEPTED',
-						'REJECTED',
-						'CANCELED',
-					])
+					.enum(E_INVOICE_STATUSES)
 					.default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
@@ -1415,14 +1416,7 @@ export const db = defineSchema(
 				documentNo: z.string(),
 				documentId: z.string(),
 				status: z
-					.enum([
-						'DRAFT',
-						'POSTED',
-						'SUBMITTED',
-						'ACCEPTED',
-						'REJECTED',
-						'CANCELED',
-					])
+					.enum(E_INVOICE_STATUSES)
 					.default('DRAFT'),
 				attemptNo: z.number().default(1),
 				submittedAt: z.string().optional().meta({ type: 'date' }),
@@ -1544,7 +1538,7 @@ export const db = defineSchema(
 					.string()
 					.default('USD')
 					.meta({ field: 'finance.currencyCode' }),
-				status: z.enum(['ACTIVE', 'INACTIVE', 'BLOCKED']).default('ACTIVE'),
+				status: z.enum(BANK_ACCOUNT_STATUSES).default('ACTIVE'),
 				lastSyncAt: z.date().optional(),
 
 				entryCount: z
@@ -1606,7 +1600,7 @@ export const db = defineSchema(
 				creditAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				amount: z.number().default(0).meta({ min: -5000, max: 5000 }),
 				reconciliationStatus: z
-					.enum(['OPEN', 'MATCHED', 'RECONCILED', 'EXCEPTION'])
+					.enum(RECONCILIATION_STATUSES)
 					.default('OPEN'),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
@@ -1673,7 +1667,7 @@ export const db = defineSchema(
 				debitAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				creditAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				status: z
-					.enum(['OPEN', 'APPROVED', 'POSTED', 'VOIDED'])
+					.enum(JOURNAL_LINE_STATUSES)
 					.default('OPEN'),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
@@ -1707,7 +1701,7 @@ export const db = defineSchema(
 				employmentType: z
 					.enum(['FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY'])
 					.default('FULL_TIME'),
-				status: z.enum(['ACTIVE', 'ON_LEAVE', 'TERMINATED']).default('ACTIVE'),
+				status: z.enum(EMPLOYEE_STATUSES).default('ACTIVE'),
 				hireDate: z.string().optional().meta({ type: 'date' }),
 				terminationDate: z.string().optional(),
 				taxId: z.string().optional(),
@@ -1848,7 +1842,7 @@ export const db = defineSchema(
 			schema: (one) => ({
 				runNo: z.string(),
 				status: z
-					.enum(['DRAFT', 'CALCULATED', 'POSTED', 'PAID', 'CANCELED'])
+					.enum(PAYROLL_RUN_STATUSES)
 					.default('DRAFT'),
 				periodStart: z.string().optional().meta({ type: 'date' }),
 				periodEnd: z.string().optional().meta({ type: 'date' }),
@@ -1925,7 +1919,7 @@ export const db = defineSchema(
 				reportType: z
 					.enum(['TAX_SUMMARY', 'DEDUCTION_SUMMARY', 'PAYMENT_FILE'])
 					.default('TAX_SUMMARY'),
-				status: z.enum(['GENERATED', 'VOIDED']).default('GENERATED'),
+				status: z.enum(STATUTORY_REPORT_STATUSES).default('GENERATED'),
 				periodStart: z.string().optional().meta({ type: 'date' }),
 				periodEnd: z.string().optional().meta({ type: 'date' }),
 				artifactJson: z.string().default('{}'),
@@ -1947,7 +1941,7 @@ export const db = defineSchema(
 				terminalCode: z.string(),
 				name: z.string().meta({ field: 'commerce.department' }),
 				locationCode: z.string().optional(),
-				status: z.enum(['ONLINE', 'OFFLINE', 'MAINTENANCE']).default('ONLINE'),
+				status: z.enum(TERMINAL_STATUSES).default('ONLINE'),
 				lastHeartbeat: z.date().optional(),
 
 				sessionCount: z
@@ -1984,7 +1978,7 @@ export const db = defineSchema(
 						}),
 					}),
 				cashierId: z.string().optional(),
-				status: z.enum(['OPEN', 'PAUSED', 'CLOSED']).default('OPEN'),
+				status: z.enum(POS_SESSION_STATUSES).default('OPEN'),
 				openedAt: z.date().optional(),
 				closedAt: z.date().optional(),
 				openingBalance: z.number().default(0).meta({ min: 0, max: 50000 }),
@@ -2024,7 +2018,7 @@ export const db = defineSchema(
 				receiptNo: z.string(),
 				posSessionId: one('posSessions'),
 				status: z
-					.enum(['OPEN', 'COMPLETED', 'VOIDED', 'REFUNDED'])
+					.enum(POS_TRANSACTION_STATUSES)
 					.default('OPEN'),
 				customerId: z.string().optional(),
 				customerName: z
@@ -2099,19 +2093,13 @@ export const db = defineSchema(
 			schema: {
 				shipmentNo: z.string(),
 				status: z
-					.enum([
-						'PLANNED',
-						'DISPATCHED',
-						'IN_TRANSIT',
-						'DELIVERED',
-						'EXCEPTION',
-					])
+					.enum(SHIPMENT_STATUSES)
 					.default('PLANNED'),
 				sourceDocumentType: z.string().optional(),
 				sourceDocumentNo: z.string().optional(),
 				shipmentMethodCode: z.string().optional(),
 				priority: z
-					.enum(['LOW', 'NORMAL', 'HIGH', 'EXPRESS'])
+					.enum(SHIPMENT_PRIORITY_STATUSES)
 					.default('NORMAL'),
 				plannedDispatchDate: z.string().optional().meta({ type: 'date' }),
 				plannedDeliveryDate: z.string().optional().meta({ type: 'date' }),
@@ -2211,7 +2199,7 @@ export const db = defineSchema(
 				shipmentId: one('shipments'),
 				carrierAccountId: one('carrierAccounts'),
 				status: z
-					.enum(['QUOTED', 'PURCHASED', 'VOIDED', 'ERROR'])
+					.enum(CARRIER_LABEL_STATUSES)
 					.default('QUOTED'),
 				serviceLevel: z.string().optional(),
 				rateQuoteAmount: z.number().default(0),
@@ -2239,7 +2227,7 @@ export const db = defineSchema(
 				eventStatus: z.string(),
 				occurredAt: z.string().optional().meta({ type: 'date' }),
 				location: z.string().optional(),
-				source: z.enum(['WEBHOOK', 'POLL']).default('WEBHOOK'),
+				source: z.enum(TRACKING_EVENT_SOURCES).default('WEBHOOK'),
 				exception: z.boolean().default(false),
 				rawPayload: z.string().optional(),
 			}),
@@ -2252,7 +2240,9 @@ export const db = defineSchema(
 				'carrierEventId',
 			])
 			.index('shipmentTrackingEvents_shipmentId_idx', ['shipmentId'])
-			.index('shipmentTrackingEvents_carrierAccountId_idx', ['carrierAccountId'])
+			.index('shipmentTrackingEvents_carrierAccountId_idx', [
+				'carrierAccountId',
+			])
 			.index('shipmentTrackingEvents_occurredAt_idx', ['occurredAt']),
 	}),
 	{

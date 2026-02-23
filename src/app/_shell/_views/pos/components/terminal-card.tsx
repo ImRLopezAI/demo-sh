@@ -1,15 +1,20 @@
+import {
+	getLabeledTransitions,
+	TERMINAL_STATUS_LABELS,
+	TERMINAL_TRANSITIONS,
+	type TerminalStatus,
+} from '@server/db/constants'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface TerminalFormValues {
 	terminalCode: string
 	name: string
 	locationCode: string
-	status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE'
 }
 
 export function TerminalCard({
@@ -29,7 +34,10 @@ export function TerminalCard({
 		{ enabled: !isNew && isOpen },
 	)
 
-	const { create, update } = useEntityMutations('pos', 'terminals')
+	const { create, update, transitionStatus } = useEntityMutations(
+		'pos',
+		'terminals',
+	)
 
 	const resolvedRecord = isNew
 		? {
@@ -46,7 +54,6 @@ export function TerminalCard({
 				terminalCode: resolvedRecord?.terminalCode ?? '',
 				name: resolvedRecord?.name ?? '',
 				locationCode: resolvedRecord?.locationCode ?? '',
-				status: resolvedRecord?.status ?? 'OFFLINE',
 			},
 			onSubmit: async (data) => {
 				if (isNew) {
@@ -75,126 +82,170 @@ export function TerminalCard({
 				terminalCode: record.terminalCode ?? '',
 				name: record.name ?? '',
 				locationCode: record.locationCode ?? '',
-				status: record.status ?? 'OFFLINE',
 			})
 		} else if (isNew) {
 			form.reset({
 				terminalCode: '',
 				name: '',
 				locationCode: '',
-				status: 'OFFLINE',
 			})
 		}
 	}, [record, isNew, form])
+
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!selectedId || isNew) return
+			await transitionStatus.mutateAsync({
+				id: selectedId,
+				toStatus,
+				reason,
+			})
+		},
+		[selectedId, isNew, transitionStatus],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'pos',
+		entityId: 'terminals',
+		disabled: transitionStatus.isPending,
+		onTransition: handleTransition,
+	})
+
+	const currentStatus = record?.status ?? 'OFFLINE'
+	const statusOptions = getLabeledTransitions(
+		currentStatus as TerminalStatus,
+		TERMINAL_TRANSITIONS,
+		TERMINAL_STATUS_LABELS,
+	)
 
 	const dialogTitle = isNew
 		? 'New Terminal'
 		: `Terminal ${resolvedRecord?.terminalCode ?? ''}`
 
 	return (
-		<RecordDialog
-			open={isOpen}
-			onOpenChange={(open) => !open && onClose()}
-			title={dialogTitle}
-			description={
-				isNew
-					? 'Register a new POS terminal.'
-					: 'View and edit terminal details.'
-			}
-			footer={
-				<>
-					<Button variant='outline' size='sm' onClick={onClose}>
-						Cancel
-					</Button>
-					<Button size='sm' onClick={() => form.submit()}>
-						{isNew ? 'Create' : 'Save'}
-					</Button>
-				</>
-			}
-		>
-			{recordLoading && !isNew ? (
-				<div className='flex items-center justify-center py-12 text-muted-foreground text-sm'>
-					Loading...
-				</div>
-			) : (
-				<Form>
-					{() => (
-						<div className='grid gap-4 pt-4'>
-							{!isNew && (
+		<>
+			<RecordDialog
+				open={isOpen}
+				onOpenChange={(open) => !open && onClose()}
+				title={dialogTitle}
+				description={
+					isNew
+						? 'Register a new POS terminal.'
+						: 'View and edit terminal details.'
+				}
+				footer={
+					<>
+						<Button variant='outline' size='sm' onClick={onClose}>
+							Cancel
+						</Button>
+						<Button size='sm' onClick={() => form.submit()}>
+							{isNew ? 'Create' : 'Save'}
+						</Button>
+					</>
+				}
+			>
+				{recordLoading && !isNew ? (
+					<div className='flex items-center justify-center py-12 text-muted-foreground text-sm'>
+						Loading...
+					</div>
+				) : (
+					<Form>
+						{() => (
+							<div className='grid gap-4 pt-4'>
+								{!isNew && (
+									<Form.Field
+										name='terminalCode'
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Terminal Code</Form.Label>
+												<Form.Control
+													render={
+														<Form.Input
+															{...field}
+															readOnly
+															className='bg-muted'
+														/>
+													}
+												/>
+											</Form.Item>
+										)}
+									/>
+								)}
+
 								<Form.Field
-									name='terminalCode'
+									name='name'
+									rules={{ required: 'Name is required' }}
 									render={({ field }) => (
 										<Form.Item>
-											<Form.Label>Terminal Code</Form.Label>
+											<Form.Label>Name</Form.Label>
 											<Form.Control
 												render={
-													<Form.Input
-														{...field}
-														readOnly
-														className='bg-muted'
-													/>
+													<Form.Input {...field} placeholder='Terminal name…' />
 												}
 											/>
+											<Form.Message />
 										</Form.Item>
 									)}
 								/>
-							)}
 
-							<Form.Field
-								name='name'
-								rules={{ required: 'Name is required' }}
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>Name</Form.Label>
-										<Form.Control
-											render={
-												<Form.Input
-													{...field}
-													placeholder='Terminal name\u2026'
-												/>
-											}
-										/>
-										<Form.Message />
-									</Form.Item>
-								)}
-							/>
-
-							<Form.Field
-								name='locationCode'
-								rules={{ required: 'Location is required' }}
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>Location Code</Form.Label>
-										<Form.Control
-											render={
-												<Form.Input
-													{...field}
-													placeholder='Location code\u2026'
-												/>
-											}
-										/>
-										<Form.Message />
-									</Form.Item>
-								)}
-							/>
-
-							{!isNew && (
 								<Form.Field
-									name='status'
+									name='locationCode'
+									rules={{ required: 'Location is required' }}
 									render={({ field }) => (
 										<Form.Item>
-											<Form.Label>Status</Form.Label>
+											<Form.Label>Location Code</Form.Label>
 											<Form.Control
-												render={<StatusBadge status={field.value as string} />}
+												render={
+													<Form.Input {...field} placeholder='Location code…' />
+												}
 											/>
+											<Form.Message />
 										</Form.Item>
 									)}
 								/>
-							)}
-						</div>
-					)}
-				</Form>
-			)}
-		</RecordDialog>
+
+								{!isNew && (
+									<Form.Item>
+										<Form.Label>Status</Form.Label>
+										<Form.Select
+											value={currentStatus}
+											onValueChange={(toStatus) => {
+												if (toStatus && toStatus !== currentStatus) {
+													void requestTransition(toStatus)
+												}
+											}}
+											disabled={statusOptions.length === 0}
+										>
+											<Form.Select.Trigger>
+												<Form.Select.Value
+													placeholder={
+														TERMINAL_STATUS_LABELS[
+															currentStatus as TerminalStatus
+														] ?? currentStatus
+													}
+												/>
+											</Form.Select.Trigger>
+											<Form.Select.Content>
+												<Form.Select.Item value={currentStatus}>
+													{TERMINAL_STATUS_LABELS[
+														currentStatus as TerminalStatus
+													] ?? currentStatus}
+												</Form.Select.Item>
+												{statusOptions.map((opt) => (
+													<Form.Select.Item key={opt.to} value={opt.to}>
+														{opt.label}
+													</Form.Select.Item>
+												))}
+											</Form.Select.Content>
+										</Form.Select>
+									</Form.Item>
+								)}
+							</div>
+						)}
+					</Form>
+				)}
+			</RecordDialog>
+			{reasonDialog}
+		</>
 	)
 }

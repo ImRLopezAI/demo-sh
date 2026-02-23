@@ -1,5 +1,12 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	DOCUMENT_APPROVAL_TRANSITIONS,
+	DOCUMENT_APPROVAL_REASON_REQUIRED,
+	INVENTORY_RESERVATION_TRANSITIONS,
+	INVENTORY_RESERVATION_REASON_REQUIRED,
+	CART_TRANSITIONS,
+} from '@server/db/constants'
 import { assertPermission, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,13 +16,8 @@ const salesHeadersRouter = createTenantScopedCrudRouter({
 	primaryTable: 'salesHeaders',
 	viewTables: { overview: 'salesHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['PENDING_APPROVAL'],
-		PENDING_APPROVAL: ['APPROVED', 'REJECTED'],
-		APPROVED: ['COMPLETED', 'CANCELED'],
-		REJECTED: ['DRAFT'],
-	},
-	reasonRequiredStatuses: ['REJECTED', 'CANCELED'],
+	transitions: DOCUMENT_APPROVAL_TRANSITIONS,
+	reasonRequiredStatuses: DOCUMENT_APPROVAL_REASON_REQUIRED,
 	statusRoleRequirements: {
 		APPROVED: 'MANAGER',
 		REJECTED: 'MANAGER',
@@ -191,13 +193,8 @@ const inventoryReservationsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'inventoryReservations',
 	viewTables: { overview: 'inventoryReservations' },
 	statusField: 'status',
-	transitions: {
-		ACTIVE: ['RELEASED', 'EXPIRED', 'CONSUMED'],
-		RELEASED: [],
-		EXPIRED: [],
-		CONSUMED: [],
-	},
-	reasonRequiredStatuses: ['RELEASED', 'EXPIRED'],
+	transitions: INVENTORY_RESERVATION_TRANSITIONS,
+	reasonRequiredStatuses: INVENTORY_RESERVATION_REASON_REQUIRED,
 })
 
 const releaseReservationInputSchema = z.object({
@@ -217,9 +214,7 @@ const cartsCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'carts',
 	viewTables: { overview: 'carts' },
 	statusField: 'status',
-	transitions: {
-		OPEN: ['CHECKED_OUT', 'ABANDONED'],
-	},
+	transitions: CART_TRANSITIONS,
 })
 
 const checkoutInputSchema = z.object({

@@ -1,4 +1,10 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import {
+	getLabeledTransitions,
+	SHIPMENT_STATUS_LABELS,
+	SHIPMENT_TRANSITIONS,
+	type ShipmentStatus,
+} from '@server/db/constants'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -12,7 +18,7 @@ import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 interface ShipmentHeader {
 	_id: string
 	shipmentNo: string
-	status: 'PLANNED' | 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED' | 'EXCEPTION'
+	status: ShipmentStatus
 	sourceDocumentType: string
 	sourceDocumentNo: string
 	shipmentMethodCode: string
@@ -48,13 +54,6 @@ interface TrackingEvent {
 }
 
 const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'EXPRESS'] as const
-
-const STATUS_TRANSITIONS: Record<string, string[]> = {
-	PLANNED: ['DISPATCHED', 'EXCEPTION'],
-	DISPATCHED: ['IN_TRANSIT', 'EXCEPTION'],
-	IN_TRANSIT: ['DELIVERED', 'EXCEPTION'],
-	DELIVERED: ['EXCEPTION'],
-}
 
 export function ShipmentCard({
 	selectedId,
@@ -186,8 +185,12 @@ export function ShipmentCard({
 	})
 
 	const currentStatus = (resolvedRecord as ShipmentHeader | undefined)?.status
-	const nextStatuses = currentStatus
-		? (STATUS_TRANSITIONS[currentStatus] ?? [])
+	const statusOptions = currentStatus
+		? getLabeledTransitions(
+				currentStatus as ShipmentStatus,
+				SHIPMENT_TRANSITIONS,
+				SHIPMENT_STATUS_LABELS,
+			)
 		: []
 
 	const LinesGrid = useGrid(
@@ -213,21 +216,6 @@ export function ShipmentCard({
 				description='Shipment header and line details'
 				footer={
 					<>
-						{currentStatus && <StatusBadge status={currentStatus} />}
-						{!isNew &&
-							nextStatuses.map((status) => (
-								<Button
-									key={status}
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										void requestTransition(status)
-									}}
-									disabled={transitionWithNotification.isPending}
-								>
-									{status.replace(/_/g, ' ')}
-								</Button>
-							))}
 						<Button variant='outline' size='sm' onClick={onClose}>
 							Cancel
 						</Button>
@@ -279,7 +267,39 @@ export function ShipmentCard({
 											<Form.Item>
 												<Form.Label>Status</Form.Label>
 												<Form.Control>
-													<StatusBadge status={field.value as string} />
+													<Form.Select
+														value={(field.value as string) ?? ''}
+														onValueChange={(toStatus) => {
+															if (toStatus && toStatus !== field.value) {
+																void requestTransition(toStatus)
+															}
+														}}
+														disabled={isNew || statusOptions.length === 0}
+													>
+														<Form.Select.Trigger className='w-full'>
+															<Form.Select.Value
+																placeholder={
+																	SHIPMENT_STATUS_LABELS[
+																		(field.value as ShipmentStatus) ?? 'PLANNED'
+																	] ?? String(field.value ?? 'PLANNED')
+																}
+															/>
+														</Form.Select.Trigger>
+														<Form.Select.Content>
+															<Form.Select.Item
+																value={(field.value as string) ?? 'PLANNED'}
+															>
+																{SHIPMENT_STATUS_LABELS[
+																	(field.value as ShipmentStatus) ?? 'PLANNED'
+																] ?? String(field.value ?? 'PLANNED')}
+															</Form.Select.Item>
+															{statusOptions.map((opt) => (
+																<Form.Select.Item key={opt.to} value={opt.to}>
+																	{opt.label}
+																</Form.Select.Item>
+															))}
+														</Form.Select.Content>
+													</Form.Select>
 												</Form.Control>
 											</Form.Item>
 										)}

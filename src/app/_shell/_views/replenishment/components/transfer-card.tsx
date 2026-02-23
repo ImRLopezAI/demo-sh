@@ -1,17 +1,22 @@
+import {
+	getLabeledTransitions,
+	TRANSFER_STATUS_LABELS,
+	TRANSFER_TRANSITIONS,
+	type TransferStatus,
+} from '@server/db/constants'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface TransferHeader {
 	_id: string
 	transferNo: string
-	status: 'DRAFT' | 'RELEASED' | 'IN_TRANSIT' | 'RECEIVED' | 'CANCELED'
+	status: TransferStatus
 	fromLocationCode: string
 	toLocationCode: string
 	shipmentDate: string
@@ -28,24 +33,6 @@ interface TransferLine {
 	quantity: number
 	quantityShipped: number
 	quantityReceived: number
-}
-
-type TransferStatus = TransferHeader['status']
-
-const STATUS_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
-	DRAFT: ['RELEASED'],
-	RELEASED: ['IN_TRANSIT', 'CANCELED'],
-	IN_TRANSIT: ['RECEIVED'],
-	RECEIVED: [],
-	CANCELED: [],
-}
-
-const TRANSITION_LABELS: Record<TransferStatus, string> = {
-	DRAFT: 'Draft',
-	RELEASED: 'Release',
-	IN_TRANSIT: 'Ship',
-	RECEIVED: 'Receive',
-	CANCELED: 'Cancel',
 }
 
 export function TransferCard({
@@ -183,7 +170,11 @@ export function TransferCard({
 	}, [isNew, draftLines, header, linesFromApi])
 
 	const currentStatus = header?.status ?? 'DRAFT'
-	const availableTransitions = STATUS_TRANSITIONS[currentStatus]
+	const statusOptions = getLabeledTransitions(
+		currentStatus as TransferStatus,
+		TRANSFER_TRANSITIONS,
+		TRANSFER_STATUS_LABELS,
+	)
 
 	const handleTransition = React.useCallback(
 		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
@@ -203,7 +194,7 @@ export function TransferCard({
 		entityId: 'transfers',
 		disabled: transitionStatus.isPending,
 		getStatusLabel: (status) =>
-			TRANSITION_LABELS[status as TransferStatus] ?? status,
+			TRANSFER_STATUS_LABELS[status as TransferStatus] ?? status,
 		onTransition: handleTransition,
 	})
 
@@ -289,20 +280,6 @@ export function TransferCard({
 				description='Manage transfer header and lines.'
 				footer={
 					<>
-						{!isNew &&
-							availableTransitions.map((nextStatus) => (
-								<Button
-									key={nextStatus}
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										void requestTransition(nextStatus)
-									}}
-									disabled={transitionStatus.isPending}
-								>
-									{TRANSITION_LABELS[nextStatus]}
-								</Button>
-							))}
 						<Button variant='outline' size='sm' onClick={onClose}>
 							Cancel
 						</Button>
@@ -330,9 +307,37 @@ export function TransferCard({
 
 								<Form.Item>
 									<Form.Label>Status</Form.Label>
-									<div className='flex h-7 items-center'>
-										<StatusBadge status={currentStatus} />
-									</div>
+									<Form.Select
+										value={currentStatus}
+										onValueChange={(toStatus) => {
+											if (toStatus && toStatus !== currentStatus) {
+												void requestTransition(toStatus)
+											}
+										}}
+										disabled={isNew || statusOptions.length === 0}
+									>
+										<Form.Select.Trigger className='w-full'>
+											<Form.Select.Value
+												placeholder={
+													TRANSFER_STATUS_LABELS[
+														currentStatus as TransferStatus
+													] ?? currentStatus
+												}
+											/>
+										</Form.Select.Trigger>
+										<Form.Select.Content>
+											<Form.Select.Item value={currentStatus}>
+												{TRANSFER_STATUS_LABELS[
+													currentStatus as TransferStatus
+												] ?? currentStatus}
+											</Form.Select.Item>
+											{statusOptions.map((opt) => (
+												<Form.Select.Item key={opt.to} value={opt.to}>
+													{opt.label}
+												</Form.Select.Item>
+											))}
+										</Form.Select.Content>
+									</Form.Select>
 								</Form.Item>
 
 								<Form.Field

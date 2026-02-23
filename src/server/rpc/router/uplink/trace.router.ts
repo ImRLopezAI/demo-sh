@@ -1,5 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	SHIPMENT_TRANSITIONS,
+	SHIPMENT_REASON_REQUIRED,
+	CARRIER_LABEL_TRANSITIONS,
+	CARRIER_LABEL_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,13 +15,8 @@ const shipmentsCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'shipments',
 	viewTables: { overview: 'shipments' },
 	statusField: 'status',
-	transitions: {
-		PLANNED: ['DISPATCHED', 'EXCEPTION'],
-		DISPATCHED: ['IN_TRANSIT', 'EXCEPTION'],
-		IN_TRANSIT: ['DELIVERED', 'EXCEPTION'],
-		DELIVERED: ['EXCEPTION'],
-	},
-	reasonRequiredStatuses: ['EXCEPTION'],
+	transitions: SHIPMENT_TRANSITIONS,
+	reasonRequiredStatuses: SHIPMENT_REASON_REQUIRED,
 	statusRoleRequirements: {
 		EXCEPTION: 'MANAGER',
 	},
@@ -59,13 +60,8 @@ const carrierLabelsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'shipmentCarrierLabels',
 	viewTables: { overview: 'shipmentCarrierLabels' },
 	statusField: 'status',
-	transitions: {
-		QUOTED: ['PURCHASED', 'VOIDED', 'ERROR'],
-		PURCHASED: ['VOIDED'],
-		VOIDED: [],
-		ERROR: ['QUOTED'],
-	},
-	reasonRequiredStatuses: ['ERROR'],
+	transitions: CARRIER_LABEL_TRANSITIONS,
+	reasonRequiredStatuses: CARRIER_LABEL_REASON_REQUIRED,
 })
 
 const trackingEventsRouter = createTenantScopedCrudRouter({
@@ -161,7 +157,11 @@ const notificationForStatus = (status: string) => {
 	}
 }
 
-const requireShipment = (context: any, tenantId: string, shipmentId: string) => {
+const requireShipment = (
+	context: any,
+	tenantId: string,
+	shipmentId: string,
+) => {
 	const shipment = context.db.schemas.shipments.get(shipmentId)
 	if (!shipment || readTenantId(shipment) !== tenantId) {
 		throw new Error('Shipment not found')
@@ -223,7 +223,9 @@ const validateWebhookSignature = (
 
 const normalizeShipmentStatusFromTracking = (eventStatus: string) => {
 	const normalized = eventStatus.trim().toUpperCase()
-	if (['DISPATCHED', 'IN_TRANSIT', 'DELIVERED', 'EXCEPTION'].includes(normalized)) {
+	if (
+		['DISPATCHED', 'IN_TRANSIT', 'DELIVERED', 'EXCEPTION'].includes(normalized)
+	) {
 		return normalized as 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED' | 'EXCEPTION'
 	}
 	if (['FAILED', 'DELAYED', 'RETURNED'].includes(normalized)) return 'EXCEPTION'
@@ -252,7 +254,8 @@ const carrierOpsRouter = createRPCRouter({
 
 			const shipmentLines = context.db.schemas.shipmentLines.findMany({
 				where: (row: any) =>
-					readTenantId(row) === tenantId && row.shipmentNo === shipment.shipmentNo,
+					readTenantId(row) === tenantId &&
+					row.shipmentNo === shipment.shipmentNo,
 			})
 			const lineCount = Math.max(1, shipmentLines.length)
 			const quoteAmount = roundMoney(
@@ -300,14 +303,15 @@ const carrierOpsRouter = createRPCRouter({
 				throw new Error('Carrier account is inactive')
 			}
 
-			const existingPurchased = context.db.schemas.shipmentCarrierLabels.findMany({
-				where: (row: any) =>
-					readTenantId(row) === tenantId &&
-					row.shipmentId === shipment._id &&
-					row.carrierAccountId === carrierAccount._id &&
-					row.status === 'PURCHASED',
-				limit: 1,
-			})[0]
+			const existingPurchased =
+				context.db.schemas.shipmentCarrierLabels.findMany({
+					where: (row: any) =>
+						readTenantId(row) === tenantId &&
+						row.shipmentId === shipment._id &&
+						row.carrierAccountId === carrierAccount._id &&
+						row.status === 'PURCHASED',
+					limit: 1,
+				})[0]
 			if (existingPurchased) {
 				return {
 					labelId: existingPurchased._id,
@@ -333,12 +337,15 @@ const carrierOpsRouter = createRPCRouter({
 			const trackingNo =
 				shipment.trackingNo ||
 				`${carrierAccount.carrierCode}-${Date.now().toString().slice(-8)}`
-			const purchased = context.db.schemas.shipmentCarrierLabels.update(quote._id, {
-				status: 'PURCHASED',
-				trackingNo,
-				labelUrl: `https://labels.uplink.local/${quote.labelNo}.pdf`,
-				purchasedAt: new Date().toISOString(),
-			})
+			const purchased = context.db.schemas.shipmentCarrierLabels.update(
+				quote._id,
+				{
+					status: 'PURCHASED',
+					trackingNo,
+					labelUrl: `https://labels.uplink.local/${quote.labelNo}.pdf`,
+					purchasedAt: new Date().toISOString(),
+				},
+			)
 			if (!purchased) {
 				throw new Error('Unable to purchase carrier label')
 			}
@@ -397,7 +404,9 @@ const carrierOpsRouter = createRPCRouter({
 				}
 			}
 
-			const normalizedStatus = normalizeShipmentStatusFromTracking(input.eventStatus)
+			const normalizedStatus = normalizeShipmentStatusFromTracking(
+				input.eventStatus,
+			)
 			const isException =
 				normalizedStatus === 'EXCEPTION' ||
 				['FAILED', 'DELAYED', 'RETURNED'].includes(
@@ -423,10 +432,12 @@ const carrierOpsRouter = createRPCRouter({
 					statusUpdatedAt: new Date(),
 				}
 				if (normalizedStatus === 'DISPATCHED' && !shipment.actualDispatchDate) {
-					updatePayload.actualDispatchDate = input.occurredAt ?? new Date().toISOString()
+					updatePayload.actualDispatchDate =
+						input.occurredAt ?? new Date().toISOString()
 				}
 				if (normalizedStatus === 'DELIVERED' && !shipment.actualDeliveryDate) {
-					updatePayload.actualDeliveryDate = input.occurredAt ?? new Date().toISOString()
+					updatePayload.actualDeliveryDate =
+						input.occurredAt ?? new Date().toISOString()
 				}
 				if (isException) {
 					updatePayload.statusReason = `Carrier event: ${input.eventStatus}`
@@ -479,7 +490,9 @@ const carrierOpsRouter = createRPCRouter({
 					carrierEventId: event.carrierEventId,
 					eventType: event.eventType,
 					eventStatus: event.eventStatus,
-					normalizedStatus: normalizeShipmentStatusFromTracking(event.eventStatus),
+					normalizedStatus: normalizeShipmentStatusFromTracking(
+						event.eventStatus,
+					),
 					occurredAt: event.occurredAt,
 					location: event.location,
 					exception: Boolean(event.exception),
@@ -496,7 +509,9 @@ const carrierOpsRouter = createRPCRouter({
 		.handler(({ input, context }) => {
 			assertRole(context, 'AGENT', 'trace carrier KPI analytics')
 			const tenantId = context.auth.tenantId
-			const dateFromMs = input.dateFrom ? new Date(input.dateFrom).getTime() : null
+			const dateFromMs = input.dateFrom
+				? new Date(input.dateFrom).getTime()
+				: null
 			const dateToMs = input.dateTo ? new Date(input.dateTo).getTime() : null
 
 			const carrierAccounts = context.db.schemas.carrierAccounts.findMany({
@@ -515,7 +530,9 @@ const carrierOpsRouter = createRPCRouter({
 				)
 				const shipments = shipmentIds
 					.map((id) => context.db.schemas.shipments.get(id))
-					.filter((shipment: any) => shipment && readTenantId(shipment) === tenantId)
+					.filter(
+						(shipment: any) => shipment && readTenantId(shipment) === tenantId,
+					)
 					.filter((shipment: any) => {
 						if (!dateFromMs && !dateToMs) return true
 						const marker = new Date(
@@ -535,12 +552,13 @@ const carrierOpsRouter = createRPCRouter({
 					if (Number.isNaN(planned) || Number.isNaN(actual)) return false
 					return actual <= planned
 				})
-				const exceptionEvents = context.db.schemas.shipmentTrackingEvents.findMany({
-					where: (row: any) =>
-						readTenantId(row) === tenantId &&
-						row.carrierAccountId === carrier._id &&
-						row.exception === true,
-				})
+				const exceptionEvents =
+					context.db.schemas.shipmentTrackingEvents.findMany({
+						where: (row: any) =>
+							readTenantId(row) === tenantId &&
+							row.carrierAccountId === carrier._id &&
+							row.exception === true,
+					})
 
 				const shipmentCount = shipments.length
 				const deliveredCount = deliveredShipments.length
@@ -558,9 +576,7 @@ const carrierOpsRouter = createRPCRouter({
 						deliveredCount > 0 ? roundMoney(onTimeCount / deliveredCount) : 0,
 					exceptionCount,
 					exceptionRate:
-						shipmentCount > 0
-							? roundMoney(exceptionCount / shipmentCount)
-							: 0,
+						shipmentCount > 0 ? roundMoney(exceptionCount / shipmentCount) : 0,
 				}
 			})
 		}),

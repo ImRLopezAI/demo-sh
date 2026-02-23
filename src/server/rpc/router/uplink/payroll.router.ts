@@ -1,5 +1,17 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	EMPLOYEE_TRANSITIONS,
+	EMPLOYEE_REASON_REQUIRED,
+	JOURNAL_LINE_TRANSITIONS,
+	JOURNAL_LINE_REASON_REQUIRED,
+	RECONCILIATION_TRANSITIONS,
+	RECONCILIATION_REASON_REQUIRED,
+	STATUTORY_REPORT_TRANSITIONS,
+	STATUTORY_REPORT_REASON_REQUIRED,
+	PAYROLL_RUN_TRANSITIONS,
+	PAYROLL_RUN_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,11 +21,8 @@ const employeesRouter = createTenantScopedCrudRouter({
 	primaryTable: 'employees',
 	viewTables: { overview: 'employees' },
 	statusField: 'status',
-	transitions: {
-		ACTIVE: ['ON_LEAVE', 'TERMINATED'],
-		ON_LEAVE: ['ACTIVE', 'TERMINATED'],
-	},
-	reasonRequiredStatuses: ['TERMINATED'],
+	transitions: EMPLOYEE_TRANSITIONS,
+	reasonRequiredStatuses: EMPLOYEE_REASON_REQUIRED,
 	statusRoleRequirements: {
 		TERMINATED: 'MANAGER',
 	},
@@ -32,11 +41,8 @@ const journalLinesRouter = createTenantScopedCrudRouter({
 	primaryTable: 'genJournalLines',
 	viewTables: { overview: 'genJournalLines' },
 	statusField: 'status',
-	transitions: {
-		OPEN: ['APPROVED', 'POSTED', 'VOIDED'],
-		APPROVED: ['POSTED', 'VOIDED'],
-	},
-	reasonRequiredStatuses: ['VOIDED'],
+	transitions: JOURNAL_LINE_TRANSITIONS,
+	reasonRequiredStatuses: JOURNAL_LINE_REASON_REQUIRED,
 	statusRoleRequirements: {
 		POSTED: 'MANAGER',
 		VOIDED: 'MANAGER',
@@ -56,12 +62,8 @@ const bankLedgerEntriesRouter = createTenantScopedCrudRouter({
 	primaryTable: 'bankAccountLedgerEntries',
 	viewTables: { overview: 'bankAccountLedgerEntries' },
 	statusField: 'reconciliationStatus',
-	transitions: {
-		OPEN: ['MATCHED', 'EXCEPTION'],
-		MATCHED: ['RECONCILED', 'EXCEPTION'],
-		EXCEPTION: ['MATCHED'],
-	},
-	reasonRequiredStatuses: ['EXCEPTION'],
+	transitions: RECONCILIATION_TRANSITIONS,
+	reasonRequiredStatuses: RECONCILIATION_REASON_REQUIRED,
 	statusRoleRequirements: {
 		RECONCILED: 'MANAGER',
 	},
@@ -101,11 +103,8 @@ const payrollRunStatutoryReportsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'payrollRunStatutoryReports',
 	viewTables: { overview: 'payrollRunStatutoryReports' },
 	statusField: 'status',
-	transitions: {
-		GENERATED: ['VOIDED'],
-		VOIDED: [],
-	},
-	reasonRequiredStatuses: ['VOIDED'],
+	transitions: STATUTORY_REPORT_TRANSITIONS,
+	reasonRequiredStatuses: STATUTORY_REPORT_REASON_REQUIRED,
 })
 
 const payrollRunsCrudRouter = createTenantScopedCrudRouter({
@@ -114,11 +113,8 @@ const payrollRunsCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'payrollRuns',
 	viewTables: { overview: 'payrollRuns' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['CANCELED'],
-		CALCULATED: ['CANCELED'],
-	},
-	reasonRequiredStatuses: ['CANCELED'],
+	transitions: PAYROLL_RUN_TRANSITIONS,
+	reasonRequiredStatuses: PAYROLL_RUN_REASON_REQUIRED,
 	statusRoleRequirements: {
 		CANCELED: 'MANAGER',
 	},
@@ -233,7 +229,8 @@ const resolveRunEmployees = (
 	}
 
 	return context.db.schemas.employees.findMany({
-		where: (row: any) => readTenantId(row) === tenantId && row.status === 'ACTIVE',
+		where: (row: any) =>
+			readTenantId(row) === tenantId && row.status === 'ACTIVE',
 	})
 }
 
@@ -255,15 +252,16 @@ const resolveRuleset = (context: any, tenantId: string, run: any) => {
 				const fromMs = row.effectiveFrom
 					? new Date(row.effectiveFrom).getTime()
 					: null
-				const toMs = row.effectiveTo ? new Date(row.effectiveTo).getTime() : null
+				const toMs = row.effectiveTo
+					? new Date(row.effectiveTo).getTime()
+					: null
 				if (fromMs && !Number.isNaN(fromMs) && now < fromMs) return false
 				if (toMs && !Number.isNaN(toMs) && now > toMs) return false
 				return true
 			},
 		})
 		.sort(
-			(a: any, b: any) =>
-				Number(b.versionNo ?? 0) - Number(a.versionNo ?? 0),
+			(a: any, b: any) => Number(b.versionNo ?? 0) - Number(a.versionNo ?? 0),
 		)[0]
 }
 
@@ -276,7 +274,10 @@ const computeProgressiveTax = (
 	}>,
 ) => {
 	if (taxableAmount <= 0) {
-		return { taxAmount: 0, taxBreakdown: [] as PayrollCalculationSnapshotRow['taxBreakdown'] }
+		return {
+			taxAmount: 0,
+			taxBreakdown: [] as PayrollCalculationSnapshotRow['taxBreakdown'],
+		}
 	}
 	if (brackets.length === 0) {
 		const defaultTax = roundMoney(taxableAmount * 0.2)
@@ -355,7 +356,7 @@ const payrollRunsRouter = createRPCRouter({
 				? context.db.schemas.payrollTaxBrackets.findMany({
 						where: (row: any) =>
 							readTenantId(row) === tenantId && row.rulesetId === ruleset._id,
-				  })
+					})
 				: []
 			const deductionRules = ruleset
 				? context.db.schemas.payrollDeductionRules.findMany({
@@ -363,7 +364,7 @@ const payrollRunsRouter = createRPCRouter({
 							readTenantId(row) === tenantId &&
 							row.rulesetId === ruleset._id &&
 							row.active,
-				  })
+					})
 				: []
 
 			const runAdjustments = context.db.schemas.payrollRunAdjustments.findMany({
@@ -393,7 +394,10 @@ const payrollRunsRouter = createRPCRouter({
 			const calculations: PayrollCalculationSnapshotRow[] = employees.map(
 				(employee: any) => {
 					const grossAmount = roundMoney(
-						toPeriodGross(Number(employee.baseSalary ?? 0), employee.payFrequency),
+						toPeriodGross(
+							Number(employee.baseSalary ?? 0),
+							employee.payFrequency,
+						),
 					)
 					const preTaxDeductions = preTaxRules.map((rule: any) => {
 						const amount = roundMoney(
@@ -409,8 +413,13 @@ const payrollRunsRouter = createRPCRouter({
 					const preTaxTotal = roundMoney(
 						preTaxDeductions.reduce((sum, row) => sum + row.amount, 0),
 					)
-					const taxableAmount = roundMoney(Math.max(0, grossAmount - preTaxTotal))
-					const progressiveTax = computeProgressiveTax(taxableAmount, taxBrackets)
+					const taxableAmount = roundMoney(
+						Math.max(0, grossAmount - preTaxTotal),
+					)
+					const progressiveTax = computeProgressiveTax(
+						taxableAmount,
+						taxBrackets,
+					)
 
 					const postTaxDeductions = postTaxRules.map((rule: any) => {
 						const amount = roundMoney(
@@ -477,12 +486,12 @@ const payrollRunsRouter = createRPCRouter({
 								id: ruleset._id,
 								code: ruleset.code,
 								name: ruleset.name,
-						  }
+							}
 						: {
 								id: null,
 								code: 'DEFAULT',
 								name: 'Default 20% flat tax',
-						  },
+							},
 					calculations,
 				}),
 				statusUpdatedAt: new Date(),
@@ -566,7 +575,9 @@ const payrollRunsRouter = createRPCRouter({
 				throw new Error('Payroll run not found')
 			}
 			if (!run.calculationSnapshot) {
-				throw new Error('Payroll run must be calculated before generating reports')
+				throw new Error(
+					'Payroll run must be calculated before generating reports',
+				)
 			}
 
 			let snapshot: {
@@ -594,10 +605,11 @@ const payrollRunsRouter = createRPCRouter({
 				throw new Error('Payroll run calculation snapshot is invalid')
 			}
 
-			const existingReports = context.db.schemas.payrollRunStatutoryReports.findMany({
-				where: (row: any) =>
-					readTenantId(row) === tenantId && row.runId === run._id,
-			})
+			const existingReports =
+				context.db.schemas.payrollRunStatutoryReports.findMany({
+					where: (row: any) =>
+						readTenantId(row) === tenantId && row.runId === run._id,
+				})
 
 			const reports = input.reportTypes.map((reportType) => {
 				const existing = existingReports.find(
@@ -793,7 +805,9 @@ const payrollRunsRouter = createRPCRouter({
 				)
 
 				for (const [index, calculation] of calculations.entries()) {
-					const employee = context.db.schemas.employees.get(calculation.employeeId)
+					const employee = context.db.schemas.employees.get(
+						calculation.employeeId,
+					)
 					if (!employee || readTenantId(employee) !== tenantId) {
 						throw new Error(
 							`Employee ${calculation.employeeId} is not available for posting`,
@@ -973,7 +987,7 @@ const payrollRunsRouter = createRPCRouter({
 						where: (row: any) =>
 							readTenantId(row) === tenantId && row.status === 'ACTIVE',
 						limit: 1,
-				  })[0]
+					})[0]
 			if (!bankAccount || readTenantId(bankAccount) !== tenantId) {
 				throw new Error(
 					'An active bank account is required for payroll disbursement',

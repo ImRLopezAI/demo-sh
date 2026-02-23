@@ -1,12 +1,17 @@
-import * as React from 'react'
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import {
+	DOCUMENT_APPROVAL_STATUS_LABELS,
+	DOCUMENT_APPROVAL_TRANSITIONS,
+	type DocumentApprovalStatus,
+	getLabeledTransitions,
+} from '@server/db/constants'
+import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -14,13 +19,7 @@ interface SalesOrderHeader {
 	_id: string
 	documentNo: string
 	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
-	status:
-		| 'DRAFT'
-		| 'PENDING_APPROVAL'
-		| 'APPROVED'
-		| 'REJECTED'
-		| 'COMPLETED'
-		| 'CANCELED'
+	status: DocumentApprovalStatus
 	customerId: string
 	orderDate: string
 	currency: string
@@ -65,12 +64,6 @@ interface SalesOrderCreateInput {
 }
 
 const DOCUMENT_TYPES = ['ORDER', 'RETURN_ORDER', 'QUOTE'] as const
-const STATUS_TRANSITIONS: Record<string, string[]> = {
-	DRAFT: ['PENDING_APPROVAL'],
-	PENDING_APPROVAL: ['APPROVED', 'REJECTED'],
-	APPROVED: ['COMPLETED', 'CANCELED'],
-	REJECTED: ['DRAFT'],
-}
 
 export function SalesOrderCard({
 	selectedId,
@@ -91,7 +84,10 @@ export function SalesOrderCard({
 		{ enabled: !isNew && isOpen },
 	)
 
-	const { update, transitionStatus } = useEntityMutations('market', 'salesOrders')
+	const { update, transitionStatus } = useEntityMutations(
+		'market',
+		'salesOrders',
+	)
 
 	const {
 		create: createLine,
@@ -280,8 +276,12 @@ export function SalesOrderCard({
 	})
 
 	const currentStatus = (resolvedRecord as SalesOrderHeader | undefined)?.status
-	const nextStatuses = currentStatus
-		? (STATUS_TRANSITIONS[currentStatus] ?? [])
+	const statusOptions = currentStatus
+		? getLabeledTransitions(
+				currentStatus as DocumentApprovalStatus,
+				DOCUMENT_APPROVAL_TRANSITIONS,
+				DOCUMENT_APPROVAL_STATUS_LABELS,
+			)
 		: []
 
 	const LinesGrid = useGrid(
@@ -370,22 +370,6 @@ export function SalesOrderCard({
 				description='Sales order header and line details'
 				footer={
 					<>
-						{currentStatus && <StatusBadge status={currentStatus} />}
-						{!isNew &&
-							nextStatuses.map((status) => (
-								<Button
-									key={status}
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										void requestTransition(status)
-									}}
-									disabled={transitionStatus.isPending}
-									className='shadow-sm transition-all hover:shadow-md'
-								>
-									{status.replace(/_/g, ' ')}
-								</Button>
-							))}
 						<Button
 							variant='outline'
 							size='sm'
@@ -477,9 +461,46 @@ export function SalesOrderCard({
 												render={({ field }) => (
 													<Form.Item>
 														<Form.Label>Status</Form.Label>
-														<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3'>
-															<StatusBadge status={field.value as string} />
-														</div>
+														<Form.Control>
+															<Form.Select
+																value={(field.value as string) ?? ''}
+																onValueChange={(toStatus) => {
+																	if (toStatus && toStatus !== field.value) {
+																		void requestTransition(toStatus)
+																	}
+																}}
+																disabled={isNew || statusOptions.length === 0}
+															>
+																<Form.Select.Trigger className='w-full bg-background/50'>
+																	<Form.Select.Value
+																		placeholder={
+																			DOCUMENT_APPROVAL_STATUS_LABELS[
+																				(field.value as DocumentApprovalStatus) ??
+																					'DRAFT'
+																			] ?? String(field.value ?? 'DRAFT')
+																		}
+																	/>
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	<Form.Select.Item
+																		value={(field.value as string) ?? 'DRAFT'}
+																	>
+																		{DOCUMENT_APPROVAL_STATUS_LABELS[
+																			(field.value as DocumentApprovalStatus) ??
+																				'DRAFT'
+																		] ?? String(field.value ?? 'DRAFT')}
+																	</Form.Select.Item>
+																	{statusOptions.map((opt) => (
+																		<Form.Select.Item
+																			key={opt.to}
+																			value={opt.to}
+																		>
+																			{opt.label}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
 													</Form.Item>
 												)}
 											/>
@@ -500,17 +521,17 @@ export function SalesOrderCard({
 																	<Form.Select.Value placeholder='Select customer' />
 																</Form.Select.Trigger>
 																<Form.Select.Content>
-																{customerOptions.map((customer) => (
-																	<Form.Select.Item
-																		key={customer._id}
-																		value={customer._id}
-																	>
-																		{customer.name ?? 'Unnamed customer'}
-																		{customer.customerNo
-																			? ` (${customer.customerNo})`
-																			: ''}
-																	</Form.Select.Item>
-																))}
+																	{customerOptions.map((customer) => (
+																		<Form.Select.Item
+																			key={customer._id}
+																			value={customer._id}
+																		>
+																			{customer.name ?? 'Unnamed customer'}
+																			{customer.customerNo
+																				? ` (${customer.customerNo})`
+																				: ''}
+																		</Form.Select.Item>
+																	))}
 																</Form.Select.Content>
 															</Form.Select>
 														</Form.Control>
