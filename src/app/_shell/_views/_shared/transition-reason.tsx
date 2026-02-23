@@ -9,6 +9,18 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
+import {
+	DOCUMENT_APPROVAL_REASON_REQUIRED,
+	RECONCILIATION_REASON_REQUIRED,
+	JOURNAL_LINE_REASON_REQUIRED,
+	TRANSFER_REASON_REQUIRED,
+	SALES_INVOICE_REASON_REQUIRED,
+	OPERATION_TASK_REASON_REQUIRED,
+	BANK_ACCOUNT_REASON_REQUIRED,
+	EMPLOYEE_REASON_REQUIRED,
+	POS_TRANSACTION_REASON_REQUIRED,
+	SHIPMENT_REASON_REQUIRED,
+} from '@server/db/constants'
 
 type UplinkModuleId =
 	| 'market'
@@ -21,19 +33,19 @@ type UplinkModuleId =
 	| 'hub'
 
 const REASON_REQUIRED_STATUSES: Record<string, readonly string[]> = {
-	'market.salesOrders': ['REJECTED', 'CANCELED'],
-	'replenishment.purchaseOrders': ['REJECTED', 'CANCELED'],
-	'replenishment.transfers': ['CANCELED'],
-	'ledger.invoices': ['REVERSED'],
-	'pos.transactions': ['VOIDED', 'REFUNDED'],
-	'trace.shipments': ['EXCEPTION'],
-	'flow.bankAccounts': ['BLOCKED'],
-	'flow.bankLedgerEntries': ['EXCEPTION'],
-	'flow.journalLines': ['VOIDED'],
-	'payroll.employees': ['TERMINATED'],
-	'payroll.journalLines': ['VOIDED'],
-	'payroll.bankLedgerEntries': ['EXCEPTION'],
-	'hub.operationTasks': ['BLOCKED'],
+	'market.salesOrders': DOCUMENT_APPROVAL_REASON_REQUIRED,
+	'replenishment.purchaseOrders': DOCUMENT_APPROVAL_REASON_REQUIRED,
+	'replenishment.transfers': TRANSFER_REASON_REQUIRED,
+	'ledger.invoices': SALES_INVOICE_REASON_REQUIRED,
+	'pos.transactions': POS_TRANSACTION_REASON_REQUIRED,
+	'trace.shipments': SHIPMENT_REASON_REQUIRED,
+	'flow.bankAccounts': BANK_ACCOUNT_REASON_REQUIRED,
+	'flow.bankLedgerEntries': RECONCILIATION_REASON_REQUIRED,
+	'flow.journalLines': JOURNAL_LINE_REASON_REQUIRED,
+	'payroll.employees': EMPLOYEE_REASON_REQUIRED,
+	'payroll.journalLines': JOURNAL_LINE_REASON_REQUIRED,
+	'payroll.bankLedgerEntries': RECONCILIATION_REASON_REQUIRED,
+	'hub.operationTasks': OPERATION_TASK_REASON_REQUIRED,
 }
 
 function transitionKey(moduleId: string, entityId: string): string {
@@ -199,7 +211,6 @@ export function useTransitionWithReason({
 
 	return {
 		requestTransition,
-		requiresReasonForStatus,
 		reasonDialog,
 	}
 }
