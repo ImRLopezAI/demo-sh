@@ -11,7 +11,7 @@ function getSeededCustomerAndItem() {
 	return { customerId: customer._id, itemId: item._id }
 }
 
-describe.sequential('ledger module', () => {
+describe('ledger module', () => {
 	beforeEach(async () => {
 		await db._internals.reset()
 	})

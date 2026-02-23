@@ -2,7 +2,7 @@ import { db } from '@server/db'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { createCaller } from './helpers'
 
-describe.sequential('market module', () => {
+describe('market module', () => {
 	beforeEach(async () => {
 		await db._internals.reset()
 	})

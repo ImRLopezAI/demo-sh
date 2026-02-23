@@ -2,7 +2,7 @@ import { db } from '@server/db'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { createCaller } from './helpers'
 
-describe.sequential('replenishment module', () => {
+describe('replenishment module', () => {
 	const createApprovedPurchaseOrder = async (quantity = 5, unitCost = 20) => {
 		const caller = createCaller()
 		const vendor = db.schemas.vendors.toArray()[0]

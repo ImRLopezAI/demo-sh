@@ -2,7 +2,7 @@ import { db } from '@server/db'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { createCaller } from '../../../../../../../test/uplink/helpers'
 
-describe.sequential('cross-module workflows', () => {
+describe('cross-module workflows', () => {
 	const createApprovedSalesOrder = async () => {
 		const caller = createCaller()
 		const customer = db.schemas.customers.toArray()[0]

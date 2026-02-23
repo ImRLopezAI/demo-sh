@@ -47,7 +47,7 @@ function insertBankLedgerEntry(overrides: Partial<BankAccountLedgerInsert>) {
 	})
 }
 
-describe.sequential('flow module', () => {
+describe('flow module', () => {
 	beforeEach(async () => {
 		await db._internals.reset()
 	})

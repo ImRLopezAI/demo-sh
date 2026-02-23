@@ -62,7 +62,7 @@ function insertBankAccount(overrides: Partial<BankAccountInsert> = {}) {
 	})
 }
 
-describe.sequential('payroll module', () => {
+describe('payroll module', () => {
 	beforeEach(async () => {
 		await db._internals.reset()
 	})

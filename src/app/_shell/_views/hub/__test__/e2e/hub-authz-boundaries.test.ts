@@ -2,7 +2,7 @@ import { db } from '@server/db'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { createCaller } from '../../../../../../../test/uplink/helpers'
 
-describe.sequential('uplink authorization boundaries', () => {
+describe('uplink authorization boundaries', () => {
 	beforeEach(async () => {
 		await db._internals.reset()
 	})
