@@ -1,11 +1,16 @@
+import {
+	EMPLOYEE_STATUS_LABELS,
+	EMPLOYEE_TRANSITIONS,
+	type EmployeeStatus,
+	getLabeledTransitions,
+} from '@server/db/constants'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface EmployeeCardProps {
 	recordId: string | null
@@ -29,18 +34,6 @@ interface EmployeeFormValues {
 	bankAccountId: string
 }
 
-const STATUS_TRANSITIONS: Record<string, { label: string; to: string }[]> = {
-	ACTIVE: [
-		{ label: 'Set On Leave', to: 'ON_LEAVE' },
-		{ label: 'Terminate', to: 'TERMINATED' },
-	],
-	ON_LEAVE: [
-		{ label: 'Reactivate', to: 'ACTIVE' },
-		{ label: 'Terminate', to: 'TERMINATED' },
-	],
-	TERMINATED: [],
-}
-
 export function EmployeeCard({
 	recordId,
 	open,
@@ -55,7 +48,10 @@ export function EmployeeCard({
 		{ enabled: !isNew && !!recordId },
 	)
 
-	const { create, update } = useEntityMutations('payroll', 'employees')
+	const { create, update, transitionStatus } = useEntityMutations(
+		'payroll',
+		'employees',
+	)
 
 	const [Form, form] = useCreateForm<EmployeeFormValues>(
 		() => ({
@@ -151,16 +147,31 @@ export function EmployeeCard({
 		}
 	}, [record, isNew, form])
 
-	const { requestTransition, reasonDialog, transitionStatus } =
-		useStatusTransition({
-			moduleId: 'payroll',
-			entityId: 'employees',
-			recordId,
-			isNew,
-		})
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!recordId || isNew) return
+			await transitionStatus.mutateAsync({
+				id: recordId,
+				toStatus,
+				reason,
+			})
+		},
+		[recordId, isNew, transitionStatus],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'payroll',
+		entityId: 'employees',
+		disabled: transitionStatus.isPending,
+		onTransition: handleTransition,
+	})
 
 	const currentStatus = record?.status ?? 'ACTIVE'
-	const transitions = STATUS_TRANSITIONS[currentStatus] ?? []
+	const statusOptions = getLabeledTransitions(
+		currentStatus as EmployeeStatus,
+		EMPLOYEE_TRANSITIONS,
+		EMPLOYEE_STATUS_LABELS,
+	)
 
 	return (
 		<>
@@ -374,10 +385,40 @@ export function EmployeeCard({
 										/>
 
 										{!isNew && (
-											<div className='space-y-2'>
-												<p className='font-medium text-sm'>Status</p>
-												<StatusBadge status={currentStatus} />
-											</div>
+											<Form.Item>
+												<Form.Label>Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
+														}
+													}}
+													disabled={statusOptions.length === 0}
+												>
+													<Form.Select.Trigger>
+														<Form.Select.Value
+															placeholder={
+																EMPLOYEE_STATUS_LABELS[
+																	currentStatus as EmployeeStatus
+																] ?? currentStatus
+															}
+														/>
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{EMPLOYEE_STATUS_LABELS[
+																currentStatus as EmployeeStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
+											</Form.Item>
 										)}
 
 										<Form.Field
@@ -506,44 +547,6 @@ export function EmployeeCard({
 										/>
 									</div>
 								</FormSection>
-
-								{!isNew && (
-									<FormSection title='Status'>
-										<div className='space-y-6'>
-											<div className='space-y-2'>
-												<p className='font-medium text-sm'>Current Status</p>
-												<StatusBadge status={currentStatus} />
-											</div>
-
-											{transitions.length > 0 && (
-												<div className='space-y-2'>
-													<p className='font-medium text-sm'>Transition to</p>
-													<div className='flex flex-wrap gap-2'>
-														{transitions.map((transition) => (
-															<Button
-																key={transition.to}
-																variant='outline'
-																onClick={() => {
-																	void requestTransition(transition.to)
-																}}
-																disabled={transitionStatus.isPending}
-															>
-																{transition.label}
-															</Button>
-														))}
-													</div>
-												</div>
-											)}
-
-											{transitions.length === 0 && (
-												<p className='text-muted-foreground text-sm'>
-													This employee record is terminated. No further
-													transitions are available.
-												</p>
-											)}
-										</div>
-									</FormSection>
-								)}
 							</div>
 						)}
 					</Form>

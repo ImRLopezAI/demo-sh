@@ -1,4 +1,10 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import {
+	DOCUMENT_APPROVAL_STATUS_LABELS,
+	DOCUMENT_APPROVAL_TRANSITIONS,
+	type DocumentApprovalStatus,
+	getLabeledTransitions,
+} from '@server/db/constants'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -6,21 +12,14 @@ import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface PurchaseOrderHeader {
 	_id: string
 	documentNo: string
 	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
-	status:
-		| 'DRAFT'
-		| 'PENDING_APPROVAL'
-		| 'APPROVED'
-		| 'REJECTED'
-		| 'COMPLETED'
-		| 'CANCELED'
+	status: DocumentApprovalStatus
 	vendorId: string
 	orderDate: string
 	expectedReceiptDate: string
@@ -64,26 +63,6 @@ interface PurchaseOrderCreateInput {
 	currency: string
 }
 
-type POStatus = PurchaseOrderHeader['status']
-
-const STATUS_TRANSITIONS: Record<POStatus, POStatus[]> = {
-	DRAFT: ['PENDING_APPROVAL'],
-	PENDING_APPROVAL: ['APPROVED', 'REJECTED'],
-	APPROVED: ['COMPLETED', 'CANCELED'],
-	REJECTED: ['DRAFT'],
-	COMPLETED: [],
-	CANCELED: [],
-}
-
-const TRANSITION_LABELS: Record<string, string> = {
-	DRAFT: 'Draft',
-	PENDING_APPROVAL: 'Submit for Approval',
-	APPROVED: 'Approve',
-	REJECTED: 'Reject',
-	COMPLETED: 'Complete',
-	CANCELED: 'Cancel',
-}
-
 export function PurchaseOrderCard({
 	recordId,
 	onClose,
@@ -113,7 +92,10 @@ export function PurchaseOrderCard({
 		PurchaseLine
 	>('replenishment', 'purchaseLines', 'overview', { filters: lineFilters })
 
-	const { update } = useEntityMutations('replenishment', 'purchaseOrders')
+	const { update, transitionStatus } = useEntityMutations(
+		'replenishment',
+		'purchaseOrders',
+	)
 
 	const {
 		create: createLine,
@@ -264,7 +246,13 @@ export function PurchaseOrderCard({
 	}, [isNew, open])
 
 	const currentStatus = header?.status ?? 'DRAFT'
-	const availableTransitions = isNew ? [] : STATUS_TRANSITIONS[currentStatus]
+	const statusOptions = isNew
+		? []
+		: getLabeledTransitions(
+				currentStatus as DocumentApprovalStatus,
+				DOCUMENT_APPROVAL_TRANSITIONS,
+				DOCUMENT_APPROVAL_STATUS_LABELS,
+			)
 	const canReceive =
 		!isNew &&
 		!!header &&
@@ -281,6 +269,18 @@ export function PurchaseOrderCard({
 				Number(line.quantityReceived ?? 0) > Number(line.quantityInvoiced ?? 0),
 		)
 
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!recordId) return
+			await transitionStatus.mutateAsync({
+				id: recordId,
+				toStatus,
+				reason,
+			})
+			onClose()
+		},
+		[recordId, transitionStatus, onClose],
+	)
 	const handleReceive = React.useCallback(async () => {
 		if (!header?._id) return
 		await receivePurchaseOrder.mutateAsync({
@@ -294,15 +294,15 @@ export function PurchaseOrderCard({
 		})
 	}, [header?._id, createInvoiceFromOrder])
 
-	const { requestTransition, reasonDialog, transitionStatus } =
-		useStatusTransition({
-			moduleId: 'replenishment',
-			entityId: 'purchaseOrders',
-			recordId,
-			isNew,
-			getStatusLabel: (status) => TRANSITION_LABELS[status] ?? status,
-			onSuccess: onClose,
-		})
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'replenishment',
+		entityId: 'purchaseOrders',
+		disabled: transitionStatus.isPending,
+		getStatusLabel: (status) =>
+			DOCUMENT_APPROVAL_STATUS_LABELS[status as DocumentApprovalStatus] ??
+			status,
+		onTransition: handleTransition,
+	})
 
 	const LinesGrid = useGrid(
 		() => ({
@@ -393,23 +393,6 @@ export function PurchaseOrderCard({
 				description='Manage purchase order header and lines.'
 				footer={
 					<>
-						{availableTransitions.map((nextStatus) => (
-							<Button
-								key={nextStatus}
-								variant={
-									nextStatus === 'REJECTED' || nextStatus === 'CANCELED'
-										? 'destructive'
-										: 'outline'
-								}
-								size='sm'
-								onClick={() => {
-									void requestTransition(nextStatus)
-								}}
-								disabled={transitionStatus.isPending}
-							>
-								{TRANSITION_LABELS[nextStatus]}
-							</Button>
-						))}
 						{!isNew && (
 							<Button
 								variant='outline'
@@ -511,9 +494,37 @@ export function PurchaseOrderCard({
 
 									<Form.Item>
 										<Form.Label>Status</Form.Label>
-										<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3'>
-											<StatusBadge status={currentStatus} />
-										</div>
+										<Form.Select
+											value={currentStatus}
+											onValueChange={(toStatus) => {
+												if (toStatus && toStatus !== currentStatus) {
+													void requestTransition(toStatus)
+												}
+											}}
+											disabled={isNew || statusOptions.length === 0}
+										>
+											<Form.Select.Trigger className='w-full bg-background/50'>
+												<Form.Select.Value
+													placeholder={
+														DOCUMENT_APPROVAL_STATUS_LABELS[
+															currentStatus as DocumentApprovalStatus
+														] ?? currentStatus
+													}
+												/>
+											</Form.Select.Trigger>
+											<Form.Select.Content>
+												<Form.Select.Item value={currentStatus}>
+													{DOCUMENT_APPROVAL_STATUS_LABELS[
+														currentStatus as DocumentApprovalStatus
+													] ?? currentStatus}
+												</Form.Select.Item>
+												{statusOptions.map((opt) => (
+													<Form.Select.Item key={opt.to} value={opt.to}>
+														{opt.label}
+													</Form.Select.Item>
+												))}
+											</Form.Select.Content>
+										</Form.Select>
 									</Form.Item>
 
 									<Form.Field

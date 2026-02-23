@@ -1,4 +1,12 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import {
+	E_INVOICE_STATUS_LABELS,
+	type EInvoiceStatus,
+	getLabeledTransitions,
+	SALES_INVOICE_STATUS_LABELS,
+	SALES_INVOICE_TRANSITIONS,
+	type SalesInvoiceStatus,
+} from '@server/db/constants'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -6,9 +14,8 @@ import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface InvoiceCardProps {
 	selectedId: string | null
@@ -27,14 +34,8 @@ interface InvoiceFormValues {
 interface SalesInvoiceHeader {
 	_id: string
 	invoiceNo: string
-	status: 'DRAFT' | 'POSTED' | 'REVERSED'
-	eInvoiceStatus:
-		| 'DRAFT'
-		| 'POSTED'
-		| 'SUBMITTED'
-		| 'ACCEPTED'
-		| 'REJECTED'
-		| 'CANCELED'
+	status: SalesInvoiceStatus
+	eInvoiceStatus: EInvoiceStatus
 	customerId: string
 	salesOrderNo?: string
 	postingDate?: string
@@ -51,12 +52,6 @@ interface SalesInvoiceLine {
 	quantity: number
 	unitPrice: number
 	lineAmount: number
-}
-
-const STATUS_TRANSITIONS: Record<string, { label: string; to: string }[]> = {
-	DRAFT: [{ label: 'Post', to: 'POSTED' }],
-	POSTED: [{ label: 'Reverse', to: 'REVERSED' }],
-	REVERSED: [],
 }
 
 export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
@@ -226,7 +221,11 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 
 	const currentStatus = invoice?.status ?? 'DRAFT'
 	const currentEInvoiceStatus = invoice?.eInvoiceStatus ?? 'DRAFT'
-	const transitions = STATUS_TRANSITIONS[currentStatus] ?? []
+	const statusOptions = getLabeledTransitions(
+		currentStatus as SalesInvoiceStatus,
+		SALES_INVOICE_TRANSITIONS,
+		SALES_INVOICE_STATUS_LABELS,
+	)
 	const canEditLines = currentStatus === 'DRAFT'
 
 	const handleTransition = React.useCallback(
@@ -245,11 +244,9 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 		[selectedId, isNew, postInvoice, transitionStatus],
 	)
 
-	const { requestTransition, reasonDialog } = useStatusTransition({
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
 		moduleId: 'ledger',
 		entityId: 'invoices',
-		recordId: selectedId,
-		isNew,
 		disabled: transitionStatus.isPending || postInvoice.isPending,
 		onTransition: handleTransition,
 	})
@@ -364,24 +361,6 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 				}
 				footer={
 					<>
-						{!isNew &&
-							transitions.length > 0 &&
-							transitions.map((transition) => (
-								<Button
-									key={transition.to}
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										void requestTransition(transition.to)
-									}}
-									disabled={transitionStatus.isPending || postInvoice.isPending}
-									className='shadow-sm transition-all hover:shadow-md'
-								>
-									{postInvoice.isPending && transition.to === 'POSTED'
-										? 'Posting...'
-										: transition.label}
-								</Button>
-							))}
 						<Button
 							variant='outline'
 							size='sm'
@@ -465,14 +444,50 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 										)}
 
 										{!isNew && (
-											<div className='flex items-end'>
-												<StatusBadge status={currentStatus} />
-											</div>
+											<Form.Item>
+												<Form.Label>Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
+														}
+													}}
+													disabled={statusOptions.length === 0}
+												>
+													<Form.Select.Trigger className='w-full bg-background/50'>
+														<Form.Select.Value
+															placeholder={
+																SALES_INVOICE_STATUS_LABELS[
+																	currentStatus as SalesInvoiceStatus
+																] ?? currentStatus
+															}
+														/>
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{SALES_INVOICE_STATUS_LABELS[
+																currentStatus as SalesInvoiceStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
+											</Form.Item>
 										)}
 										{!isNew && (
-											<div className='flex items-end'>
-												<StatusBadge status={currentEInvoiceStatus} />
-											</div>
+											<Form.Item>
+												<Form.Label>E-Invoice Status</Form.Label>
+												<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3 text-sm'>
+													{E_INVOICE_STATUS_LABELS[
+														currentEInvoiceStatus as EInvoiceStatus
+													] ?? currentEInvoiceStatus}
+												</div>
+											</Form.Item>
 										)}
 
 										<Form.Field
@@ -654,51 +669,6 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 													</LinesGrid.Columns>
 												</LinesGrid>
 											</div>
-										</div>
-									</FormSection>
-								)}
-
-								{!isNew && (
-									<FormSection title='Status'>
-										<div className='space-y-6'>
-											<div className='space-y-2'>
-												<p className='font-medium text-sm'>Current Status</p>
-												<StatusBadge status={currentStatus} />
-											</div>
-
-											{transitions.length > 0 && (
-												<div className='space-y-2'>
-													<p className='font-medium text-sm'>Transition to</p>
-													<div className='flex flex-wrap gap-2'>
-														{transitions.map((transition) => (
-															<Button
-																key={transition.to}
-																variant='outline'
-																onClick={() => {
-																	void requestTransition(transition.to)
-																}}
-																disabled={
-																	transitionStatus.isPending ||
-																	postInvoice.isPending
-																}
-																className='shadow-sm transition-all hover:shadow-md'
-															>
-																{postInvoice.isPending &&
-																transition.to === 'POSTED'
-																	? 'Posting...'
-																	: transition.label}
-															</Button>
-														))}
-													</div>
-												</div>
-											)}
-
-											{transitions.length === 0 && (
-												<p className='text-muted-foreground text-sm'>
-													This invoice has been {currentStatus.toLowerCase()}.
-													No further transitions are available.
-												</p>
-											)}
 										</div>
 									</FormSection>
 								)}

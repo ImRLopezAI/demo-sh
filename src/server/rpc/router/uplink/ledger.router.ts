@@ -1,5 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	SALES_INVOICE_TRANSITIONS,
+	SALES_INVOICE_REASON_REQUIRED,
+	POSTING_TRANSITIONS,
+	POSTING_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertPermission, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,12 +15,8 @@ const invoicesCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'salesInvoiceHeaders',
 	viewTables: { overview: 'salesInvoiceHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: [],
-		POSTED: ['REVERSED'],
-		REVERSED: [],
-	},
-	reasonRequiredStatuses: ['REVERSED'],
+	transitions: SALES_INVOICE_TRANSITIONS,
+	reasonRequiredStatuses: SALES_INVOICE_REASON_REQUIRED,
 	statusRoleRequirements: {
 		REVERSED: 'MANAGER',
 	},
@@ -44,12 +46,8 @@ const creditMemosCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'salesCreditMemoHeaders',
 	viewTables: { overview: 'salesCreditMemoHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['POSTED', 'CANCELED'],
-		POSTED: ['CANCELED'],
-		CANCELED: [],
-	},
-	reasonRequiredStatuses: ['CANCELED'],
+	transitions: POSTING_TRANSITIONS,
+	reasonRequiredStatuses: POSTING_REASON_REQUIRED,
 	statusRoleRequirements: {
 		POSTED: 'MANAGER',
 		CANCELED: 'MANAGER',

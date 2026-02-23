@@ -9,7 +9,7 @@ import { type AuthRole, assertRole } from './authz'
 
 type TableNames = keyof RpcContextType['db']['schemas']
 
-type TransitionMap = Record<string, string[]>
+type TransitionMap = Record<string, readonly string[]>
 type ViewTableMap = Record<string, string>
 type ParentRelationConstraint = {
 	childField: string
@@ -48,7 +48,7 @@ export interface CrudRouterConfig {
 	parentRelations?: ParentRelationConstraint[]
 	statusField?: string
 	transitions?: TransitionMap
-	reasonRequiredStatuses?: string[]
+	reasonRequiredStatuses?: readonly string[]
 	statusRoleRequirements?: Partial<Record<string, AuthRole>>
 	createSchema?: z.ZodObject<any>
 	updateSchema?: z.ZodObject<any>

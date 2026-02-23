@@ -1,5 +1,13 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	DOCUMENT_APPROVAL_TRANSITIONS,
+	DOCUMENT_APPROVAL_REASON_REQUIRED,
+	POSTING_TRANSITIONS,
+	POSTING_REASON_REQUIRED,
+	TRANSFER_TRANSITIONS,
+	TRANSFER_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,13 +17,8 @@ const purchaseHeadersRouter = createTenantScopedCrudRouter({
 	primaryTable: 'purchaseHeaders',
 	viewTables: { overview: 'purchaseHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['PENDING_APPROVAL'],
-		PENDING_APPROVAL: ['APPROVED', 'REJECTED'],
-		APPROVED: ['COMPLETED', 'CANCELED'],
-		REJECTED: ['DRAFT'],
-	},
-	reasonRequiredStatuses: ['REJECTED', 'CANCELED'],
+	transitions: DOCUMENT_APPROVAL_TRANSITIONS,
+	reasonRequiredStatuses: DOCUMENT_APPROVAL_REASON_REQUIRED,
 	statusRoleRequirements: {
 		APPROVED: 'MANAGER',
 		REJECTED: 'MANAGER',
@@ -113,12 +116,8 @@ const purchaseInvoicesCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'purchaseInvoiceHeaders',
 	viewTables: { overview: 'purchaseInvoiceHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['POSTED', 'CANCELED'],
-		POSTED: ['CANCELED'],
-		CANCELED: [],
-	},
-	reasonRequiredStatuses: ['CANCELED'],
+	transitions: POSTING_TRANSITIONS,
+	reasonRequiredStatuses: POSTING_REASON_REQUIRED,
 	statusRoleRequirements: {
 		POSTED: 'MANAGER',
 		CANCELED: 'MANAGER',
@@ -174,12 +173,8 @@ const transferHeadersRouter = createTenantScopedCrudRouter({
 	primaryTable: 'transferHeaders',
 	viewTables: { overview: 'transferHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['RELEASED'],
-		RELEASED: ['IN_TRANSIT', 'CANCELED'],
-		IN_TRANSIT: ['RECEIVED'],
-	},
-	reasonRequiredStatuses: ['CANCELED'],
+	transitions: TRANSFER_TRANSITIONS,
+	reasonRequiredStatuses: TRANSFER_REASON_REQUIRED,
 	statusRoleRequirements: {
 		RELEASED: 'MANAGER',
 		CANCELED: 'MANAGER',

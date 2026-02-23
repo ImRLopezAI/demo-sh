@@ -1,10 +1,16 @@
+import {
+	BANK_ACCOUNT_STATUS_LABELS,
+	BANK_ACCOUNT_TRANSITIONS,
+	type BankAccountStatus,
+	getLabeledTransitions,
+} from '@server/db/constants'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { formatCurrency } from '@/lib/utils'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface BankAccountCardProps {
@@ -42,7 +48,10 @@ export function BankAccountCard({ selectedId, onClose }: BankAccountCardProps) {
 		{ enabled: !isNew && !!selectedId },
 	)
 
-	const { create, update } = useEntityMutations('flow', 'bankAccounts')
+	const { create, update, transitionStatus } = useEntityMutations(
+		'flow',
+		'bankAccounts',
+	)
 
 	const [Form, form] = useCreateForm<BankAccountFormValues>(
 		() => ({
@@ -103,211 +112,270 @@ export function BankAccountCard({ selectedId, onClose }: BankAccountCardProps) {
 		}
 	}, [record, isNew, form])
 
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!selectedId || isNew) return
+			await transitionStatus.mutateAsync({
+				id: selectedId,
+				toStatus,
+				reason,
+			})
+		},
+		[selectedId, isNew, transitionStatus],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'flow',
+		entityId: 'bankAccounts',
+		disabled: transitionStatus.isPending,
+		onTransition: handleTransition,
+	})
+
+	const currentStatus = record?.status ?? 'ACTIVE'
+	const statusOptions = getLabeledTransitions(
+		currentStatus as BankAccountStatus,
+		BANK_ACCOUNT_TRANSITIONS,
+		BANK_ACCOUNT_STATUS_LABELS,
+	)
+
 	return (
-		<RecordDialog
-			open={open}
-			onOpenChange={(isOpen) => {
-				if (!isOpen) onClose()
-			}}
-			title={
-				isNew ? 'New Bank Account' : `Bank Account ${record?.accountNo ?? ''}`
-			}
-			description={
-				isNew
-					? 'Add a new bank account to the system.'
-					: 'View and edit bank account details.'
-			}
-			footer={
-				<>
-					<Button variant='outline' size='sm' onClick={onClose}>
-						Cancel
-					</Button>
-					<Button size='sm' onClick={() => form.submit()}>
-						{isNew ? 'Create' : 'Save'}
-					</Button>
-				</>
-			}
-		>
-			{recordLoading && !isNew ? (
-				<div className='flex items-center justify-center py-12 text-muted-foreground text-sm'>
-					Loading...
-				</div>
-			) : (
-				<Form>
-					{() => (
-						<div className='space-y-8 pt-1'>
-							<FormSection title='General'>
-								<div className='grid gap-4'>
-									{!isNew && (
+		<>
+			<RecordDialog
+				open={open}
+				onOpenChange={(isOpen) => {
+					if (!isOpen) onClose()
+				}}
+				title={
+					isNew ? 'New Bank Account' : `Bank Account ${record?.accountNo ?? ''}`
+				}
+				description={
+					isNew
+						? 'Add a new bank account to the system.'
+						: 'View and edit bank account details.'
+				}
+				footer={
+					<>
+						<Button variant='outline' size='sm' onClick={onClose}>
+							Cancel
+						</Button>
+						<Button size='sm' onClick={() => form.submit()}>
+							{isNew ? 'Create' : 'Save'}
+						</Button>
+					</>
+				}
+			>
+				{recordLoading && !isNew ? (
+					<div className='flex items-center justify-center py-12 text-muted-foreground text-sm'>
+						Loading...
+					</div>
+				) : (
+					<Form>
+						{() => (
+							<div className='space-y-8 pt-1'>
+								<FormSection title='General'>
+									<div className='grid gap-4'>
+										{!isNew && (
+											<Form.Field
+												name='accountNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Account No.</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	readOnly
+																	autoComplete='off'
+																	className='bg-muted'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
+										)}
+
 										<Form.Field
-											name='accountNo'
+											name='name'
+											rules={{ required: 'Name is required' }}
 											render={({ field }) => (
 												<Form.Item>
-													<Form.Label>Account No.</Form.Label>
+													<Form.Label>Name</Form.Label>
 													<Form.Control
 														render={
 															<Form.Input
 																{...field}
-																readOnly
+																placeholder='Account name\u2026'
 																autoComplete='off'
-																className='bg-muted'
+															/>
+														}
+													/>
+													<Form.Message />
+												</Form.Item>
+											)}
+										/>
+
+										<Form.Field
+											name='bankName'
+											rules={{ required: 'Bank name is required' }}
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Bank Name</Form.Label>
+													<Form.Control
+														render={
+															<Form.Input
+																{...field}
+																placeholder='Bank name\u2026'
+																autoComplete='off'
+															/>
+														}
+													/>
+													<Form.Message />
+												</Form.Item>
+											)}
+										/>
+
+										<Form.Field
+											name='iban'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>IBAN</Form.Label>
+													<Form.Control
+														render={
+															<Form.Input
+																{...field}
+																placeholder='IBAN number\u2026'
+																autoComplete='off'
 															/>
 														}
 													/>
 												</Form.Item>
 											)}
 										/>
-									)}
 
-									<Form.Field
-										name='name'
-										rules={{ required: 'Name is required' }}
-										render={({ field }) => (
+										<Form.Field
+											name='swiftCode'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>SWIFT Code</Form.Label>
+													<Form.Control
+														render={
+															<Form.Input
+																{...field}
+																placeholder='SWIFT / BIC code\u2026'
+																autoComplete='off'
+															/>
+														}
+													/>
+												</Form.Item>
+											)}
+										/>
+
+										<Form.Field
+											name='currency'
+											rules={{ required: 'Currency is required' }}
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Currency</Form.Label>
+													<Form.Control
+														render={
+															<Form.Select
+																value={field.value}
+																onValueChange={field.onChange}
+															>
+																<Form.Select.Trigger>
+																	<Form.Select.Value placeholder='Select currency\u2026' />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	{CURRENCY_OPTIONS.map((option) => (
+																		<Form.Select.Item
+																			key={option.value}
+																			value={option.value}
+																		>
+																			{option.label}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														}
+													/>
+													<Form.Message />
+												</Form.Item>
+											)}
+										/>
+
+										{!isNew && (
 											<Form.Item>
-												<Form.Label>Name</Form.Label>
-												<Form.Control
-													render={
-														<Form.Input
-															{...field}
-															placeholder='Account name\u2026'
-															autoComplete='off'
+												<Form.Label>Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
+														}
+													}}
+													disabled={statusOptions.length === 0}
+												>
+													<Form.Select.Trigger>
+														<Form.Select.Value
+															placeholder={
+																BANK_ACCOUNT_STATUS_LABELS[
+																	currentStatus as BankAccountStatus
+																] ?? currentStatus
+															}
 														/>
-													}
-												/>
-												<Form.Message />
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{BANK_ACCOUNT_STATUS_LABELS[
+																currentStatus as BankAccountStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
 											</Form.Item>
 										)}
-									/>
-
-									<Form.Field
-										name='bankName'
-										rules={{ required: 'Bank name is required' }}
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Bank Name</Form.Label>
-												<Form.Control
-													render={
-														<Form.Input
-															{...field}
-															placeholder='Bank name\u2026'
-															autoComplete='off'
-														/>
-													}
-												/>
-												<Form.Message />
-											</Form.Item>
-										)}
-									/>
-
-									<Form.Field
-										name='iban'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>IBAN</Form.Label>
-												<Form.Control
-													render={
-														<Form.Input
-															{...field}
-															placeholder='IBAN number\u2026'
-															autoComplete='off'
-														/>
-													}
-												/>
-											</Form.Item>
-										)}
-									/>
-
-									<Form.Field
-										name='swiftCode'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>SWIFT Code</Form.Label>
-												<Form.Control
-													render={
-														<Form.Input
-															{...field}
-															placeholder='SWIFT / BIC code\u2026'
-															autoComplete='off'
-														/>
-													}
-												/>
-											</Form.Item>
-										)}
-									/>
-
-									<Form.Field
-										name='currency'
-										rules={{ required: 'Currency is required' }}
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Currency</Form.Label>
-												<Form.Control
-													render={
-														<Form.Select
-															value={field.value}
-															onValueChange={field.onChange}
-														>
-															<Form.Select.Trigger>
-																<Form.Select.Value placeholder='Select currency\u2026' />
-															</Form.Select.Trigger>
-															<Form.Select.Content>
-																{CURRENCY_OPTIONS.map((option) => (
-																	<Form.Select.Item
-																		key={option.value}
-																		value={option.value}
-																	>
-																		{option.label}
-																	</Form.Select.Item>
-																))}
-															</Form.Select.Content>
-														</Form.Select>
-													}
-												/>
-												<Form.Message />
-											</Form.Item>
-										)}
-									/>
-
-									{!isNew && (
-										<div className='space-y-2'>
-											<p className='font-medium text-sm'>Status</p>
-											<StatusBadge status={record?.status} />
-										</div>
-									)}
-								</div>
-							</FormSection>
-
-							{!isNew && (
-								<FormSection title='Statistics'>
-									<div className='grid gap-4'>
-										<div className='grid grid-cols-2 gap-4'>
-											<div className='space-y-1'>
-												<p className='font-medium text-muted-foreground text-xs'>
-													Entry Count
-												</p>
-												<p className='font-semibold text-lg tabular-nums'>
-													{record?.entryCount?.toLocaleString() ?? '0'}
-												</p>
-											</div>
-											<div className='space-y-1'>
-												<p className='font-medium text-muted-foreground text-xs'>
-													Current Balance
-												</p>
-												<p className='font-semibold text-lg tabular-nums'>
-													{formatCurrency(
-														record?.currentBalance,
-														record?.currency || 'USD',
-													)}
-												</p>
-											</div>
-										</div>
 									</div>
 								</FormSection>
-							)}
-						</div>
-					)}
-				</Form>
-			)}
-		</RecordDialog>
+
+								{!isNew && (
+									<FormSection title='Statistics'>
+										<div className='grid gap-4'>
+											<div className='grid grid-cols-2 gap-4'>
+												<div className='space-y-1'>
+													<p className='font-medium text-muted-foreground text-xs'>
+														Entry Count
+													</p>
+													<p className='font-semibold text-lg tabular-nums'>
+														{record?.entryCount?.toLocaleString() ?? '0'}
+													</p>
+												</div>
+												<div className='space-y-1'>
+													<p className='font-medium text-muted-foreground text-xs'>
+														Current Balance
+													</p>
+													<p className='font-semibold text-lg tabular-nums'>
+														{formatCurrency(
+															record?.currentBalance,
+															record?.currency || 'USD',
+														)}
+													</p>
+												</div>
+											</div>
+										</div>
+									</FormSection>
+								)}
+							</div>
+						)}
+					</Form>
+				)}
+			</RecordDialog>
+			{reasonDialog}
+		</>
 	)
 }

@@ -1,5 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	SHIPMENT_TRANSITIONS,
+	SHIPMENT_REASON_REQUIRED,
+	CARRIER_LABEL_TRANSITIONS,
+	CARRIER_LABEL_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,13 +15,8 @@ const shipmentsCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'shipments',
 	viewTables: { overview: 'shipments' },
 	statusField: 'status',
-	transitions: {
-		PLANNED: ['DISPATCHED', 'EXCEPTION'],
-		DISPATCHED: ['IN_TRANSIT', 'EXCEPTION'],
-		IN_TRANSIT: ['DELIVERED', 'EXCEPTION'],
-		DELIVERED: ['EXCEPTION'],
-	},
-	reasonRequiredStatuses: ['EXCEPTION'],
+	transitions: SHIPMENT_TRANSITIONS,
+	reasonRequiredStatuses: SHIPMENT_REASON_REQUIRED,
 	statusRoleRequirements: {
 		EXCEPTION: 'MANAGER',
 	},
@@ -59,13 +60,8 @@ const carrierLabelsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'shipmentCarrierLabels',
 	viewTables: { overview: 'shipmentCarrierLabels' },
 	statusField: 'status',
-	transitions: {
-		QUOTED: ['PURCHASED', 'VOIDED', 'ERROR'],
-		PURCHASED: ['VOIDED'],
-		VOIDED: [],
-		ERROR: ['QUOTED'],
-	},
-	reasonRequiredStatuses: ['ERROR'],
+	transitions: CARRIER_LABEL_TRANSITIONS,
+	reasonRequiredStatuses: CARRIER_LABEL_REASON_REQUIRED,
 })
 
 const trackingEventsRouter = createTenantScopedCrudRouter({

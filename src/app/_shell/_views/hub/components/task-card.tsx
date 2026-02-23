@@ -1,11 +1,18 @@
+import {
+	getLabeledTransitions,
+	OPERATION_TASK_STATUS_LABELS,
+	OPERATION_TASK_TRANSITIONS,
+	type OperationTaskStatus,
+	SLA_STATUS_LABELS,
+	type SlaStatus,
+} from '@server/db/constants'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
-import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface TaskCardProps {
 	recordId: string | null
@@ -24,22 +31,6 @@ interface TaskFormValues {
 	slaTargetAt: string
 }
 
-const STATUS_TRANSITIONS: Record<string, { label: string; to: string }[]> = {
-	OPEN: [
-		{ label: 'Start', to: 'IN_PROGRESS' },
-		{ label: 'Block', to: 'BLOCKED' },
-	],
-	IN_PROGRESS: [
-		{ label: 'Block', to: 'BLOCKED' },
-		{ label: 'Complete', to: 'DONE' },
-	],
-	BLOCKED: [
-		{ label: 'Resume', to: 'IN_PROGRESS' },
-		{ label: 'Complete', to: 'DONE' },
-	],
-	DONE: [],
-}
-
 export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 	const isNew = recordId === 'new'
 
@@ -50,7 +41,10 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 		{ enabled: !isNew && !!recordId },
 	)
 
-	const { create, update } = useEntityMutations('hub', 'operationTasks')
+	const { create, update, transitionStatus } = useEntityMutations(
+		'hub',
+		'operationTasks',
+	)
 
 	const [Form, form] = useCreateForm<TaskFormValues>(
 		() => ({
@@ -121,18 +115,33 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 		}
 	}, [record, isNew, form])
 
-	const { requestTransition, reasonDialog, transitionStatus } =
-		useStatusTransition({
-			moduleId: 'hub',
-			entityId: 'operationTasks',
-			recordId,
-			isNew,
-		})
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!recordId || isNew) return
+			await transitionStatus.mutateAsync({
+				id: recordId,
+				toStatus,
+				reason,
+			})
+		},
+		[recordId, isNew, transitionStatus],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'hub',
+		entityId: 'operationTasks',
+		disabled: transitionStatus.isPending,
+		onTransition: handleTransition,
+	})
 
 	const currentStatus = record?.status ?? 'OPEN'
 	const currentSlaStatus = record?.slaStatus ?? 'ON_TRACK'
 	const currentEscalationLevel = record?.escalationLevel ?? 'NONE'
-	const transitions = STATUS_TRANSITIONS[currentStatus] ?? []
+	const statusOptions = getLabeledTransitions(
+		currentStatus as OperationTaskStatus,
+		OPERATION_TASK_TRANSITIONS,
+		OPERATION_TASK_STATUS_LABELS,
+	)
 
 	return (
 		<>
@@ -377,45 +386,53 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 
 								{!isNew && (
 									<FormSection title='Status'>
-										<div className='space-y-6'>
-											<div className='space-y-2'>
-												<p className='font-medium text-sm'>Current Status</p>
-												<StatusBadge status={currentStatus} />
-											</div>
+										<div className='grid gap-4'>
+											<Form.Item>
+												<Form.Label>Current Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
+														}
+													}}
+													disabled={statusOptions.length === 0}
+												>
+													<Form.Select.Trigger>
+														<Form.Select.Value
+															placeholder={
+																OPERATION_TASK_STATUS_LABELS[
+																	currentStatus as OperationTaskStatus
+																] ?? currentStatus
+															}
+														/>
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{OPERATION_TASK_STATUS_LABELS[
+																currentStatus as OperationTaskStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
+											</Form.Item>
 											<div className='space-y-2'>
 												<p className='font-medium text-sm'>SLA Status</p>
-												<div className='flex items-center gap-2'>
-													<StatusBadge status={currentSlaStatus} />
-													<StatusBadge status={currentEscalationLevel} />
+												<div className='flex items-center gap-2 text-sm'>
+													<span className='rounded-md border border-border/50 bg-background/30 px-2 py-1'>
+														{SLA_STATUS_LABELS[currentSlaStatus as SlaStatus] ??
+															currentSlaStatus}
+													</span>
+													<span className='rounded-md border border-border/50 bg-background/30 px-2 py-1'>
+														{currentEscalationLevel}
+													</span>
 												</div>
 											</div>
-
-											{transitions.length > 0 && (
-												<div className='space-y-2'>
-													<p className='font-medium text-sm'>Transition to</p>
-													<div className='flex flex-wrap gap-2'>
-														{transitions.map((transition) => (
-															<Button
-																key={transition.to}
-																variant='outline'
-																onClick={() => {
-																	void requestTransition(transition.to)
-																}}
-																disabled={transitionStatus.isPending}
-															>
-																{transition.label}
-															</Button>
-														))}
-													</div>
-												</div>
-											)}
-
-											{transitions.length === 0 && (
-												<p className='text-muted-foreground text-sm'>
-													This task is complete. No further transitions are
-													available.
-												</p>
-											)}
 										</div>
 									</FormSection>
 								)}

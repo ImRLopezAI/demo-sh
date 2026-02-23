@@ -1,6 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
 import {
+	OPERATION_TASK_TRANSITIONS,
+	OPERATION_TASK_REASON_REQUIRED,
+	NOTIFICATION_TRANSITIONS,
+} from '@server/db/constants'
+import {
 	appendAuditLog,
 	assertPermission,
 	assertRole,
@@ -18,12 +23,8 @@ const operationTasksCrudRouter = createTenantScopedCrudRouter({
 		notifications: 'moduleNotifications',
 	},
 	statusField: 'status',
-	transitions: {
-		OPEN: ['IN_PROGRESS', 'BLOCKED'],
-		IN_PROGRESS: ['BLOCKED', 'DONE'],
-		BLOCKED: ['IN_PROGRESS', 'DONE'],
-	},
-	reasonRequiredStatuses: ['BLOCKED'],
+	transitions: OPERATION_TASK_TRANSITIONS,
+	reasonRequiredStatuses: OPERATION_TASK_REASON_REQUIRED,
 	statusRoleRequirements: {
 		BLOCKED: 'MANAGER',
 		DONE: 'MANAGER',
@@ -36,10 +37,7 @@ const notificationsCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'moduleNotifications',
 	viewTables: { overview: 'moduleNotifications' },
 	statusField: 'status',
-	transitions: {
-		UNREAD: ['READ', 'ARCHIVED'],
-		READ: ['ARCHIVED'],
-	},
+	transitions: NOTIFICATION_TRANSITIONS,
 	statusRoleRequirements: {
 		ARCHIVED: 'MANAGER',
 	},

@@ -1,5 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	POS_TRANSACTION_TRANSITIONS,
+	POS_TRANSACTION_REASON_REQUIRED,
+	TERMINAL_TRANSITIONS,
+	POS_SESSION_TRANSITIONS,
+} from '@server/db/constants'
 import { appendAuditLog, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,11 +15,8 @@ const posTransactionsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'posTransactions',
 	viewTables: { overview: 'posTransactions' },
 	statusField: 'status',
-	transitions: {
-		OPEN: ['COMPLETED', 'VOIDED'],
-		COMPLETED: ['REFUNDED'],
-	},
-	reasonRequiredStatuses: ['VOIDED', 'REFUNDED'],
+	transitions: POS_TRANSACTION_TRANSITIONS,
+	reasonRequiredStatuses: POS_TRANSACTION_REASON_REQUIRED,
 	statusRoleRequirements: {
 		VOIDED: 'MANAGER',
 		REFUNDED: 'MANAGER',
@@ -43,11 +46,7 @@ const terminalsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'terminals',
 	viewTables: { overview: 'terminals' },
 	statusField: 'status',
-	transitions: {
-		ONLINE: ['OFFLINE', 'MAINTENANCE'],
-		OFFLINE: ['ONLINE', 'MAINTENANCE'],
-		MAINTENANCE: ['ONLINE', 'OFFLINE'],
-	},
+	transitions: TERMINAL_TRANSITIONS,
 	statusRoleRequirements: {
 		MAINTENANCE: 'MANAGER',
 	},
@@ -59,10 +58,7 @@ const posSessionsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'posSessions',
 	viewTables: { overview: 'posSessions' },
 	statusField: 'status',
-	transitions: {
-		OPEN: ['PAUSED', 'CLOSED'],
-		PAUSED: ['OPEN', 'CLOSED'],
-	},
+	transitions: POS_SESSION_TRANSITIONS,
 	statusRoleRequirements: {
 		CLOSED: 'MANAGER',
 	},
