@@ -152,9 +152,7 @@ describe.sequential('hub module', () => {
 		const escalationNotifications = db.schemas.moduleNotifications.findMany({
 			where: (row) =>
 				Boolean(
-					row.body?.includes(
-						`[scheduled-run:${String(retryAttempt.runId)}]`,
-					),
+					row.body?.includes(`[scheduled-run:${String(retryAttempt.runId)}]`),
 				),
 		})
 		expect(escalationNotifications.length).toBeGreaterThan(0)
@@ -186,7 +184,9 @@ describe.sequential('hub module', () => {
 		})
 		expect(effective.found).toBe(true)
 		expect(effective.roleCodes).toContain('VIEWER')
-		expect(effective.permissionCodes).toEqual(expect.arrayContaining(permissions))
+		expect(effective.permissionCodes).toEqual(
+			expect.arrayContaining(permissions),
+		)
 	})
 
 	test('upserts and rolls back module settings while preserving revisions', async () => {
@@ -207,12 +207,13 @@ describe.sequential('hub module', () => {
 			changeReason: 'Relax threshold',
 		})
 
-		const revisionsBeforeRollback = await caller.hub.moduleSettingRevisions.list({
-			moduleId: 'market',
-			settingKey: 'approval.policy',
-			limit: 20,
-			offset: 0,
-		})
+		const revisionsBeforeRollback =
+			await caller.hub.moduleSettingRevisions.list({
+				moduleId: 'market',
+				settingKey: 'approval.policy',
+				limit: 20,
+				offset: 0,
+			})
 		expect(revisionsBeforeRollback.items.length).toBeGreaterThanOrEqual(2)
 		const oldestRevision = revisionsBeforeRollback.items
 			.map((revision) => Number(revision.revisionNo))
@@ -235,12 +236,14 @@ describe.sequential('hub module', () => {
 		expect(settings.items[0]?.revisionNo).toBeGreaterThanOrEqual(3)
 		expect(settings.items[0]?.valueJson).toContain('strict')
 
-		const revisionsAfterRollback = await caller.hub.moduleSettingRevisions.list({
-			moduleId: 'market',
-			settingKey: 'approval.policy',
-			limit: 20,
-			offset: 0,
-		})
+		const revisionsAfterRollback = await caller.hub.moduleSettingRevisions.list(
+			{
+				moduleId: 'market',
+				settingKey: 'approval.policy',
+				limit: 20,
+				offset: 0,
+			},
+		)
 		expect(revisionsAfterRollback.items.length).toBeGreaterThanOrEqual(3)
 		expect(
 			revisionsAfterRollback.items.some(

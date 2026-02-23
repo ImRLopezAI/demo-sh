@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { FunctionReference } from "convex/server";
+import type { FunctionReference } from 'convex/server'
 
 /**
  * A utility for referencing a Convex component's exposed API.
@@ -22,16 +22,16 @@ import type { FunctionReference } from "convex/server";
  * ```
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
-  {
-    log: {
-      clearLog: FunctionReference<"mutation", "internal", {}, null, Name>;
-      getSeedStatus: FunctionReference<"query", "internal", {}, any, Name>;
-      logSeed: FunctionReference<
-        "mutation",
-        "internal",
-        { count: number; status: string; tableName: string },
-        null,
-        Name
-      >;
-    };
-  };
+	{
+		log: {
+			clearLog: FunctionReference<'mutation', 'internal', {}, null, Name>
+			getSeedStatus: FunctionReference<'query', 'internal', {}, any, Name>
+			logSeed: FunctionReference<
+				'mutation',
+				'internal',
+				{ count: number; status: string; tableName: string },
+				null,
+				Name
+			>
+		}
+	}

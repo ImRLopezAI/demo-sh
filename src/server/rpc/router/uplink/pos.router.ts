@@ -1,11 +1,11 @@
+import {
+	POS_SESSION_TRANSITIONS,
+	POS_TRANSACTION_REASON_REQUIRED,
+	POS_TRANSACTION_TRANSITIONS,
+	TERMINAL_TRANSITIONS,
+} from '@server/db/constants'
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
-import {
-	POS_TRANSACTION_TRANSITIONS,
-	POS_TRANSACTION_REASON_REQUIRED,
-	TERMINAL_TRANSITIONS,
-	POS_SESSION_TRANSITIONS,
-} from '@server/db/constants'
 import { appendAuditLog, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 

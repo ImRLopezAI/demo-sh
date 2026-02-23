@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 async function selectFirstOption(trigger: Locator, page: Page) {
 	await trigger.click()
@@ -32,15 +32,22 @@ test('hub notifications bulk actions keep selected count in sync @smoke', async 
 	await expect(page.getByText('Bulk Notification Result')).toBeVisible()
 })
 
-test('market sales order create-with-lines flow works @smoke', async ({ page }) => {
+test('market sales order create-with-lines flow works @smoke', async ({
+	page,
+}) => {
 	await page.goto('/market/sales-orders')
-	await expect(page.getByRole('heading', { name: 'Sales Orders' })).toBeVisible()
+	await expect(
+		page.getByRole('heading', { name: 'Sales Orders' }),
+	).toBeVisible()
 
 	await page.getByTestId('sales-order-new-button').click()
 	const dialog = page.getByRole('dialog')
 	await expect(dialog.getByText('New Sales Order')).toBeVisible()
 
-	await selectFirstOption(dialog.getByTestId('sales-order-customer-select'), page)
+	await selectFirstOption(
+		dialog.getByTestId('sales-order-customer-select'),
+		page,
+	)
 	await dialog.getByRole('button', { name: /Add row/i }).click()
 	await dialog.getByTestId('sales-order-save-button').click()
 
@@ -61,7 +68,10 @@ test('replenishment purchase order create-with-lines flow works @smoke', async (
 	const dialog = page.getByRole('dialog')
 	await expect(dialog.getByText('New Purchase Order')).toBeVisible()
 
-	await selectFirstOption(dialog.getByTestId('purchase-order-vendor-select'), page)
+	await selectFirstOption(
+		dialog.getByTestId('purchase-order-vendor-select'),
+		page,
+	)
 	await dialog.getByRole('button', { name: /Add row/i }).click()
 	await dialog.getByTestId('purchase-order-save-button').click()
 

@@ -14,8 +14,7 @@ export const DOCUMENT_APPROVAL_STATUSES = [
 	'COMPLETED',
 	'CANCELED',
 ] as const
-export type DocumentApprovalStatus =
-	(typeof DOCUMENT_APPROVAL_STATUSES)[number]
+export type DocumentApprovalStatus = (typeof DOCUMENT_APPROVAL_STATUSES)[number]
 
 export const DOCUMENT_APPROVAL_STATUS_LABELS: Record<
 	DocumentApprovalStatus,
@@ -214,11 +213,7 @@ export const TRANSFER_REASON_REQUIRED: readonly TransferStatus[] = ['CANCELED']
 
 // ── Ledger ──────────────────────────────────────────────────────────────────
 
-export const SALES_INVOICE_STATUSES = [
-	'DRAFT',
-	'POSTED',
-	'REVERSED',
-] as const
+export const SALES_INVOICE_STATUSES = ['DRAFT', 'POSTED', 'REVERSED'] as const
 export type SalesInvoiceStatus = (typeof SALES_INVOICE_STATUSES)[number]
 
 export const SALES_INVOICE_STATUS_LABELS: Record<SalesInvoiceStatus, string> = {
@@ -269,15 +264,13 @@ export const OPERATION_TASK_STATUSES = [
 ] as const
 export type OperationTaskStatus = (typeof OPERATION_TASK_STATUSES)[number]
 
-export const OPERATION_TASK_STATUS_LABELS: Record<
-	OperationTaskStatus,
-	string
-> = {
-	OPEN: 'Open',
-	IN_PROGRESS: 'In Progress',
-	BLOCKED: 'Blocked',
-	DONE: 'Done',
-}
+export const OPERATION_TASK_STATUS_LABELS: Record<OperationTaskStatus, string> =
+	{
+		OPEN: 'Open',
+		IN_PROGRESS: 'In Progress',
+		BLOCKED: 'Blocked',
+		DONE: 'Done',
+	}
 
 export const OPERATION_TASK_TRANSITIONS: Record<
 	OperationTaskStatus,
@@ -302,11 +295,7 @@ export const SLA_STATUS_LABELS: Record<SlaStatus, string> = {
 	BREACHED: 'Breached',
 }
 
-export const NOTIFICATION_STATUSES = [
-	'UNREAD',
-	'READ',
-	'ARCHIVED',
-] as const
+export const NOTIFICATION_STATUSES = ['UNREAD', 'READ', 'ARCHIVED'] as const
 export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number]
 
 export const NOTIFICATION_STATUS_LABELS: Record<NotificationStatus, string> = {
@@ -333,11 +322,7 @@ export const AUDIT_LOG_STATUS_LABELS: Record<AuditLogStatus, string> = {
 	FAILED: 'Failed',
 }
 
-export const SCHEDULED_JOB_STATUSES = [
-	'IDLE',
-	'SUCCESS',
-	'FAILED',
-] as const
+export const SCHEDULED_JOB_STATUSES = ['IDLE', 'SUCCESS', 'FAILED'] as const
 export type ScheduledJobStatus = (typeof SCHEDULED_JOB_STATUSES)[number]
 
 export const SCHEDULED_JOB_STATUS_LABELS: Record<ScheduledJobStatus, string> = {
@@ -353,22 +338,16 @@ export const ORDER_WORKFLOW_STATUSES = [
 ] as const
 export type OrderWorkflowStatus = (typeof ORDER_WORKFLOW_STATUSES)[number]
 
-export const ORDER_WORKFLOW_STATUS_LABELS: Record<
-	OrderWorkflowStatus,
-	string
-> = {
-	RUNNING: 'Running',
-	FAILED: 'Failed',
-	COMPLETED: 'Completed',
-}
+export const ORDER_WORKFLOW_STATUS_LABELS: Record<OrderWorkflowStatus, string> =
+	{
+		RUNNING: 'Running',
+		FAILED: 'Failed',
+		COMPLETED: 'Completed',
+	}
 
 // ── Flow ────────────────────────────────────────────────────────────────────
 
-export const BANK_ACCOUNT_STATUSES = [
-	'ACTIVE',
-	'INACTIVE',
-	'BLOCKED',
-] as const
+export const BANK_ACCOUNT_STATUSES = ['ACTIVE', 'INACTIVE', 'BLOCKED'] as const
 export type BankAccountStatus = (typeof BANK_ACCOUNT_STATUSES)[number]
 
 export const BANK_ACCOUNT_STATUS_LABELS: Record<BankAccountStatus, string> = {
@@ -392,11 +371,7 @@ export const BANK_ACCOUNT_REASON_REQUIRED: readonly BankAccountStatus[] = [
 
 // ── Payroll ─────────────────────────────────────────────────────────────────
 
-export const EMPLOYEE_STATUSES = [
-	'ACTIVE',
-	'ON_LEAVE',
-	'TERMINATED',
-] as const
+export const EMPLOYEE_STATUSES = ['ACTIVE', 'ON_LEAVE', 'TERMINATED'] as const
 export type EmployeeStatus = (typeof EMPLOYEE_STATUSES)[number]
 
 export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
@@ -450,10 +425,7 @@ export const PAYROLL_RUN_REASON_REQUIRED: readonly PayrollRunStatus[] = [
 	'CANCELED',
 ]
 
-export const STATUTORY_REPORT_STATUSES = [
-	'GENERATED',
-	'VOIDED',
-] as const
+export const STATUTORY_REPORT_STATUSES = ['GENERATED', 'VOIDED'] as const
 export type StatutoryReportStatus = (typeof STATUTORY_REPORT_STATUSES)[number]
 
 export const STATUTORY_REPORT_STATUS_LABELS: Record<
@@ -477,11 +449,7 @@ export const STATUTORY_REPORT_REASON_REQUIRED: readonly StatutoryReportStatus[] 
 
 // ── POS ─────────────────────────────────────────────────────────────────────
 
-export const TERMINAL_STATUSES = [
-	'ONLINE',
-	'OFFLINE',
-	'MAINTENANCE',
-] as const
+export const TERMINAL_STATUSES = ['ONLINE', 'OFFLINE', 'MAINTENANCE'] as const
 export type TerminalStatus = (typeof TERMINAL_STATUSES)[number]
 
 export const TERMINAL_STATUS_LABELS: Record<TerminalStatus, string> = {

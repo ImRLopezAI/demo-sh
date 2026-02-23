@@ -268,13 +268,15 @@ describe.sequential('payroll module', () => {
 		})
 		await caller.payroll.payrollRuns.calculateRun({ runId: run._id })
 
-		const generated = await caller.payroll.payrollRuns.generateStatutoryReports({
-			runId: run._id,
-		})
-		expect(generated.reportCount).toBe(3)
-		expect(generated.reports.every((report) => report.status === 'GENERATED')).toBe(
-			true,
+		const generated = await caller.payroll.payrollRuns.generateStatutoryReports(
+			{
+				runId: run._id,
+			},
 		)
+		expect(generated.reportCount).toBe(3)
+		expect(
+			generated.reports.every((report) => report.status === 'GENERATED'),
+		).toBe(true)
 
 		const persisted = db.schemas.payrollRunStatutoryReports.findMany({
 			where: (row) => row.runId === run._id,

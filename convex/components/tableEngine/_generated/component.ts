@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { FunctionReference } from "convex/server";
+import type { FunctionReference } from 'convex/server'
 
 /**
  * A utility for referencing a Convex component's exposed API.
@@ -22,37 +22,37 @@ import type { FunctionReference } from "convex/server";
  * ```
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
-  {
-    convex: {
-      noSeries: {
-        getNextCode: FunctionReference<
-          "mutation",
-          "internal",
-          { code: string; incrementBy?: number; pattern?: string },
-          string,
-          Name
-        >;
-        initSeries: FunctionReference<
-          "mutation",
-          "internal",
-          { code: string; incrementBy?: number; pattern: string },
-          null,
-          Name
-        >;
-        peekNextCode: FunctionReference<
-          "query",
-          "internal",
-          { code: string },
-          string,
-          Name
-        >;
-        resetSeries: FunctionReference<
-          "mutation",
-          "internal",
-          { code: string; startAt?: number },
-          null,
-          Name
-        >;
-      };
-    };
-  };
+	{
+		convex: {
+			noSeries: {
+				getNextCode: FunctionReference<
+					'mutation',
+					'internal',
+					{ code: string; incrementBy?: number; pattern?: string },
+					string,
+					Name
+				>
+				initSeries: FunctionReference<
+					'mutation',
+					'internal',
+					{ code: string; incrementBy?: number; pattern: string },
+					null,
+					Name
+				>
+				peekNextCode: FunctionReference<
+					'query',
+					'internal',
+					{ code: string },
+					string,
+					Name
+				>
+				resetSeries: FunctionReference<
+					'mutation',
+					'internal',
+					{ code: string; startAt?: number },
+					null,
+					Name
+				>
+			}
+		}
+	}

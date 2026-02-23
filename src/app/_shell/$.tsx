@@ -1,6 +1,6 @@
 import { NotFoundComponent } from '@components/layout/errors/not-found'
 import type { ParsedLocation } from '@tanstack/react-router'
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, notFound, useLocation } from '@tanstack/react-router'
 import type { ComponentType, LazyExoticComponent } from 'react'
 import { lazy, Suspense } from 'react'
 
@@ -115,12 +115,9 @@ export const Route = createFileRoute('/_shell/$')({
 	component: RouteComponent,
 })
 
-function RouteComponent(props: {
-	params: Record<string, string>
-	search: Record<string, unknown>
-	location: ParsedLocation
-}) {
+function RouteComponent() {
 	const { _splat } = Route.useParams()
+	const location = useLocation()
 	const routeKey = _splat ?? ''
 
 	if (!isViewRouteKey(routeKey)) {
@@ -138,9 +135,9 @@ function RouteComponent(props: {
 		<Suspense fallback={<ViewSkeleton />}>
 			<ViewComponent
 				splat={routeKey}
-				params={props.params}
-				search={props.search}
-				location={props.location}
+				params={{ _splat: routeKey }}
+				search={location.search}
+				location={location}
 			/>
 		</Suspense>
 	)

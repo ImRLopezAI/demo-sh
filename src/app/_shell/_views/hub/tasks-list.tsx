@@ -77,7 +77,8 @@ export default function TasksList() {
 	const permissionsQuery = useModuleList('hub', 'permissions', { limit: 600 })
 
 	const roleItems = (rolesQuery.data?.items ?? []) as HubRole[]
-	const permissionItems = (permissionsQuery.data?.items ?? []) as HubPermission[]
+	const permissionItems = (permissionsQuery.data?.items ??
+		[]) as HubPermission[]
 
 	const availableRoleCodes = React.useMemo(() => {
 		const set = new Set<string>(['VIEWER', 'AGENT', 'MANAGER', 'ADMIN'])
@@ -134,7 +135,9 @@ export default function TasksList() {
 			Array.from(
 				new Set(
 					rolePermissionItems
-						.map((assignment) => permissionCodeById.get(assignment.permissionId))
+						.map((assignment) =>
+							permissionCodeById.get(assignment.permissionId),
+						)
 						.filter((code): code is string => Boolean(code)),
 				),
 			).sort(),

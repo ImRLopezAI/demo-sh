@@ -235,7 +235,9 @@ describe.sequential('replenishment module', () => {
 		expect(created.header.documentNo).toBeTruthy()
 		expect(created.lines).toHaveLength(2)
 		expect(
-			created.lines.every((line) => line.documentNo === created.header.documentNo),
+			created.lines.every(
+				(line) => line.documentNo === created.header.documentNo,
+			),
 		).toBe(true)
 	})
 
@@ -410,7 +412,9 @@ describe.sequential('replenishment module', () => {
 
 		expect(updated.header.currency).toBe('EUR')
 		expect(updated.lines).toHaveLength(2)
-		expect(updated.lines.some((line) => line._id === secondLine._id)).toBe(false)
+		expect(updated.lines.some((line) => line._id === secondLine._id)).toBe(
+			false,
+		)
 		expect(
 			updated.lines.some(
 				(line) =>

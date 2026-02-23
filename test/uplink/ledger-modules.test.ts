@@ -509,7 +509,9 @@ describe.sequential('ledger module', () => {
 		})
 		expect(accepted.status).toBe('ACCEPTED')
 
-		const invoiceAfter = await caller.ledger.invoices.getById({ id: invoice._id })
+		const invoiceAfter = await caller.ledger.invoices.getById({
+			id: invoice._id,
+		})
 		expect(invoiceAfter.eInvoiceStatus).toBe('ACCEPTED')
 
 		const submissionRows = db.schemas.eInvoiceSubmissions.findMany({
@@ -521,7 +523,9 @@ describe.sequential('ledger module', () => {
 		const eventRows = db.schemas.eInvoiceEvents.findMany({
 			where: (row) => row.submissionId === retried.submissionId,
 		})
-		expect(eventRows.some((event) => event.eventType === 'SUBMITTED')).toBe(true)
+		expect(eventRows.some((event) => event.eventType === 'SUBMITTED')).toBe(
+			true,
+		)
 	})
 
 	test('keeps 25-row ledger pagination within acceptable latency', async () => {
