@@ -259,6 +259,19 @@ export const E_INVOICE_STATUS_LABELS: Record<EInvoiceStatus, string> = {
 	CANCELED: 'Canceled',
 }
 
+/** eInvoice status is system-managed; no manual transitions allowed. */
+export const E_INVOICE_TRANSITIONS: Record<
+	EInvoiceStatus,
+	readonly EInvoiceStatus[]
+> = {
+	DRAFT: [],
+	POSTED: [],
+	SUBMITTED: [],
+	ACCEPTED: [],
+	REJECTED: [],
+	CANCELED: [],
+}
+
 // ── Hub ─────────────────────────────────────────────────────────────────────
 
 export const OPERATION_TASK_STATUSES = [
