@@ -78,7 +78,8 @@ const findHubUserByExternalId = (
 ) =>
 	context.db.schemas.hubUsers.findMany({
 		where: (row) =>
-			readTenantId(row) === context.auth.tenantId && row.userId === externalUserId,
+			readTenantId(row) === context.auth.tenantId &&
+			row.userId === externalUserId,
 		limit: 1,
 	})[0]
 
@@ -97,7 +98,9 @@ export function listEffectivePermissionCodes(
 	})
 	if (roleAssignments.length === 0) return [] as string[]
 
-	const roleIdSet = new Set(roleAssignments.map((assignment) => assignment.roleId))
+	const roleIdSet = new Set(
+		roleAssignments.map((assignment) => assignment.roleId),
+	)
 	const rolePermissions = context.db.schemas.hubRolePermissions.findMany({
 		where: (row) =>
 			readTenantId(row) === context.auth.tenantId && roleIdSet.has(row.roleId),
@@ -114,7 +117,9 @@ export function listEffectivePermissionCodes(
 			Boolean(row.permissionCode),
 	})
 
-	return Array.from(new Set(permissions.map((permission) => permission.permissionCode)))
+	return Array.from(
+		new Set(permissions.map((permission) => permission.permissionCode)),
+	)
 }
 
 export function hasPermission(
@@ -130,7 +135,8 @@ export function hasPermission(
 }
 
 export function appendAuditLog(context: RpcContextType, input: AuditLogInput) {
-	const auditTable = (context.db.schemas as Record<string, unknown>).hubAuditLogs as
+	const auditTable = (context.db.schemas as Record<string, unknown>)
+		.hubAuditLogs as
 		| {
 				insert: (data: Record<string, unknown>) => unknown
 		  }
@@ -172,7 +178,8 @@ export function assertPermission(
 	if (hasPermission(context, normalizedPermissionCode)) {
 		if (options.logSuccess) {
 			appendAuditLog(context, {
-				moduleId: options.moduleId ?? normalizedPermissionCode.split('.')[0] ?? 'hub',
+				moduleId:
+					options.moduleId ?? normalizedPermissionCode.split('.')[0] ?? 'hub',
 				action: normalizedPermissionCode,
 				entityType: options.entityType ?? 'permission',
 				entityId: options.entityId,
@@ -220,7 +227,8 @@ export function assertPermission(
 	}
 
 	appendAuditLog(context, {
-		moduleId: options.moduleId ?? normalizedPermissionCode.split('.')[0] ?? 'hub',
+		moduleId:
+			options.moduleId ?? normalizedPermissionCode.split('.')[0] ?? 'hub',
 		action: normalizedPermissionCode,
 		entityType: options.entityType ?? 'permission',
 		entityId: options.entityId,

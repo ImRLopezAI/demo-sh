@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -7,8 +7,8 @@ import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface PurchaseOrderHeader {
 	_id: string
@@ -75,7 +75,7 @@ const STATUS_TRANSITIONS: Record<POStatus, POStatus[]> = {
 	CANCELED: [],
 }
 
-const TRANSITION_LABELS: Record<POStatus, string> = {
+const TRANSITION_LABELS: Record<string, string> = {
 	DRAFT: 'Draft',
 	PENDING_APPROVAL: 'Submit for Approval',
 	APPROVED: 'Approve',
@@ -113,10 +113,7 @@ export function PurchaseOrderCard({
 		PurchaseLine
 	>('replenishment', 'purchaseLines', 'overview', { filters: lineFilters })
 
-	const { update, transitionStatus } = useEntityMutations(
-		'replenishment',
-		'purchaseOrders',
-	)
+	const { update } = useEntityMutations('replenishment', 'purchaseOrders')
 
 	const {
 		create: createLine,
@@ -273,8 +270,7 @@ export function PurchaseOrderCard({
 		!!header &&
 		(currentStatus === 'APPROVED' || currentStatus === 'COMPLETED') &&
 		lines.some(
-			(line) =>
-				Number(line.quantityReceived ?? 0) < Number(line.quantity ?? 0),
+			(line) => Number(line.quantityReceived ?? 0) < Number(line.quantity ?? 0),
 		)
 	const canCreateInvoice =
 		!isNew &&
@@ -285,18 +281,6 @@ export function PurchaseOrderCard({
 				Number(line.quantityReceived ?? 0) > Number(line.quantityInvoiced ?? 0),
 		)
 
-	const handleTransition = React.useCallback(
-		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
-			if (!recordId) return
-			await transitionStatus.mutateAsync({
-				id: recordId,
-				toStatus,
-				reason,
-			})
-			onClose()
-		},
-		[recordId, transitionStatus, onClose],
-	)
 	const handleReceive = React.useCallback(async () => {
 		if (!header?._id) return
 		await receivePurchaseOrder.mutateAsync({
@@ -310,13 +294,15 @@ export function PurchaseOrderCard({
 		})
 	}, [header?._id, createInvoiceFromOrder])
 
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
-		moduleId: 'replenishment',
-		entityId: 'purchaseOrders',
-		disabled: transitionStatus.isPending,
-		getStatusLabel: (status) => TRANSITION_LABELS[status as POStatus] ?? status,
-		onTransition: handleTransition,
-	})
+	const { requestTransition, reasonDialog, transitionStatus } =
+		useStatusTransition({
+			moduleId: 'replenishment',
+			entityId: 'purchaseOrders',
+			recordId,
+			isNew,
+			getStatusLabel: (status) => TRANSITION_LABELS[status] ?? status,
+			onSuccess: onClose,
+		})
 
 	const LinesGrid = useGrid(
 		() => ({

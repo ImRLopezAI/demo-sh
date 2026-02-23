@@ -561,11 +561,7 @@ const sortWorkflowSteps = (steps: WorkflowStepRow[]) =>
 		)
 	})
 
-const getWorkflowSteps = (
-	context: any,
-	tenantId: string,
-	workflowId: string,
-) =>
+const getWorkflowSteps = (context: any, tenantId: string, workflowId: string) =>
 	sortWorkflowSteps(
 		context.db.schemas.orderWorkflowSteps.findMany({
 			where: (row: any) =>
@@ -573,7 +569,11 @@ const getWorkflowSteps = (
 		}) as WorkflowStepRow[],
 	)
 
-const ensureWorkflowSteps = (context: any, tenantId: string, workflowId: string) => {
+const ensureWorkflowSteps = (
+	context: any,
+	tenantId: string,
+	workflowId: string,
+) => {
 	const existingSteps = getWorkflowSteps(context, tenantId, workflowId)
 	const existingStageSet = new Set(existingSteps.map((step) => step.stage))
 	for (const stage of ORDER_WORKFLOW_STAGE_SEQUENCE) {
@@ -681,11 +681,11 @@ const ensurePostedSalesInvoice = ({
 
 	const totalAmount = lines.reduce(
 		(sum: number, line: Record<string, unknown>) => {
-		const lineAmount = Number(
-			line.lineAmount ??
-				Number(line.quantity ?? 0) * Number(line.unitPrice ?? 0),
-		)
-		return sum + lineAmount
+			const lineAmount = Number(
+				line.lineAmount ??
+					Number(line.quantity ?? 0) * Number(line.unitPrice ?? 0),
+			)
+			return sum + lineAmount
 		},
 		0,
 	)
@@ -693,12 +693,13 @@ const ensurePostedSalesInvoice = ({
 		throw new Error('Invoice total must be greater than zero to post')
 	}
 
-	const existingCustLedgerEntries = context.db.schemas.custLedgerEntries.findMany({
-		where: (row: any) =>
-			readTenantId(row) === tenantId &&
-			row.documentNo === invoice.invoiceNo &&
-			row.documentType === 'INVOICE',
-	})
+	const existingCustLedgerEntries =
+		context.db.schemas.custLedgerEntries.findMany({
+			where: (row: any) =>
+				readTenantId(row) === tenantId &&
+				row.documentNo === invoice.invoiceNo &&
+				row.documentType === 'INVOICE',
+		})
 	const existingGlEntries = context.db.schemas.glEntries.findMany({
 		where: (row: any) =>
 			readTenantId(row) === tenantId &&
@@ -707,8 +708,13 @@ const ensurePostedSalesInvoice = ({
 	})
 
 	if (invoice.status === 'POSTED') {
-		if (existingCustLedgerEntries.length === 0 || existingGlEntries.length < 2) {
-			throw new Error('Invoice is POSTED but accounting side effects are incomplete')
+		if (
+			existingCustLedgerEntries.length === 0 ||
+			existingGlEntries.length < 2
+		) {
+			throw new Error(
+				'Invoice is POSTED but accounting side effects are incomplete',
+			)
 		}
 		return {
 			invoice,
@@ -734,12 +740,15 @@ const ensurePostedSalesInvoice = ({
 	let createdCustomerLedgerEntryId: string | null = null
 
 	try {
-		const postedInvoice = context.db.schemas.salesInvoiceHeaders.update(invoice._id, {
-			status: 'POSTED',
-			postingDate,
-			statusReason: undefined,
-			statusUpdatedAt: new Date(),
-		})
+		const postedInvoice = context.db.schemas.salesInvoiceHeaders.update(
+			invoice._id,
+			{
+				status: 'POSTED',
+				postingDate,
+				statusReason: undefined,
+				statusUpdatedAt: new Date(),
+			},
+		)
 		if (!postedInvoice) {
 			throw new Error('Unable to update invoice status')
 		}
@@ -904,7 +913,8 @@ const ensureInvoiceForWorkflow = ({
 			context.db.schemas.salesInvoiceLines.delete(lineId)
 		}
 		if (createdInvoiceId) {
-			const maybeInvoice = context.db.schemas.salesInvoiceHeaders.get(createdInvoiceId)
+			const maybeInvoice =
+				context.db.schemas.salesInvoiceHeaders.get(createdInvoiceId)
 			if (maybeInvoice?.status !== 'POSTED') {
 				context.db.schemas.salesInvoiceHeaders.delete(createdInvoiceId)
 			}
@@ -936,7 +946,8 @@ const ensureShipmentForWorkflow = ({
 	if (!shipment && workflow.shipmentNo) {
 		shipment = context.db.schemas.shipments.findMany({
 			where: (row: any) =>
-				readTenantId(row) === tenantId && row.shipmentNo === workflow.shipmentNo,
+				readTenantId(row) === tenantId &&
+				row.shipmentNo === workflow.shipmentNo,
 			limit: 1,
 		})[0]
 	}
@@ -955,8 +966,7 @@ const ensureShipmentForWorkflow = ({
 	}
 
 	const activeShipmentMethod = context.db.schemas.shipmentMethods.findMany({
-		where: (row: any) =>
-			readTenantId(row) === tenantId && row.active === true,
+		where: (row: any) => readTenantId(row) === tenantId && row.active === true,
 		orderBy: { field: '_updatedAt', direction: 'desc' },
 		limit: 1,
 	})[0]
@@ -1131,19 +1141,23 @@ const executeOrderFulfillmentWorkflow = ({
 			const currentRetryCount = Number(
 				context.db.schemas.orderWorkflows.get(workflow._id)?.retryCount ?? 0,
 			)
-			const failedWorkflow = context.db.schemas.orderWorkflows.update(workflow._id, {
-				status: 'FAILED',
-				currentStage: stage,
-				failedAt: new Date().toISOString(),
-				failureCode: stage,
-				failureMessage: errorMessage,
-				retryCount: currentRetryCount + 1,
-				failureTaskId: escalation.taskId,
-				failureNotificationId: escalation.notificationId,
-				lastStepAt: new Date().toISOString(),
-			})
+			const failedWorkflow = context.db.schemas.orderWorkflows.update(
+				workflow._id,
+				{
+					status: 'FAILED',
+					currentStage: stage,
+					failedAt: new Date().toISOString(),
+					failureCode: stage,
+					failureMessage: errorMessage,
+					retryCount: currentRetryCount + 1,
+					failureTaskId: escalation.taskId,
+					failureNotificationId: escalation.notificationId,
+					lastStepAt: new Date().toISOString(),
+				},
+			)
 			return {
-				workflow: failedWorkflow ?? context.db.schemas.orderWorkflows.get(workflow._id),
+				workflow:
+					failedWorkflow ?? context.db.schemas.orderWorkflows.get(workflow._id),
 				steps: getWorkflowSteps(context, tenantId, workflow._id),
 				completed: false,
 				failed: true,
@@ -1153,15 +1167,18 @@ const executeOrderFulfillmentWorkflow = ({
 		}
 	}
 
-	const completedWorkflow = context.db.schemas.orderWorkflows.update(workflow._id, {
-		status: 'COMPLETED',
-		currentStage: 'DONE',
-		completedAt: new Date().toISOString(),
-		failedAt: undefined,
-		failureCode: undefined,
-		failureMessage: undefined,
-		lastStepAt: new Date().toISOString(),
-	})
+	const completedWorkflow = context.db.schemas.orderWorkflows.update(
+		workflow._id,
+		{
+			status: 'COMPLETED',
+			currentStage: 'DONE',
+			completedAt: new Date().toISOString(),
+			failedAt: undefined,
+			failureCode: undefined,
+			failureMessage: undefined,
+			lastStepAt: new Date().toISOString(),
+		},
+	)
 
 	return {
 		workflow:
@@ -1194,7 +1211,8 @@ const evaluateSlaBreachesInternal = ({
 	const tasks = context.db.schemas.operationTasks.findMany({
 		where: (row: any) => {
 			if (readTenantId(row) !== tenantId) return false
-			if (normalizedModuleId && row.moduleId !== normalizedModuleId) return false
+			if (normalizedModuleId && row.moduleId !== normalizedModuleId)
+				return false
 			if (row.status === 'DONE') return false
 			return Boolean(selectSlaTargetTimestamp(row))
 		},
@@ -1202,12 +1220,13 @@ const evaluateSlaBreachesInternal = ({
 		limit,
 	})
 
-	const existingSlaNotifications = context.db.schemas.moduleNotifications.findMany({
-		where: (row: any) =>
-			readTenantId(row) === tenantId &&
-			typeof row.body === 'string' &&
-			slaTaskMarkerPattern.test(row.body),
-	})
+	const existingSlaNotifications =
+		context.db.schemas.moduleNotifications.findMany({
+			where: (row: any) =>
+				readTenantId(row) === tenantId &&
+				typeof row.body === 'string' &&
+				slaTaskMarkerPattern.test(row.body),
+		})
 	const alreadyNotifiedTaskIds = new Set<string>()
 	for (const notification of existingSlaNotifications) {
 		const match = slaTaskMarkerPattern.exec(notification.body ?? '')
@@ -1237,11 +1256,7 @@ const evaluateSlaBreachesInternal = ({
 			(referenceTimestamp - targetTimestamp) / HOUR_IN_MS,
 		)
 		const nextEscalationLevel: EscalationLevel =
-			nextSlaStatus === 'BREACHED'
-				? hoursOverdue >= 24
-					? 'L2'
-					: 'L1'
-				: 'NONE'
+			nextSlaStatus === 'BREACHED' ? (hoursOverdue >= 24 ? 'L2' : 'L1') : 'NONE'
 
 		const updates: Record<string, unknown> = {
 			slaLastEvaluatedAt: referenceIso,
@@ -1255,7 +1270,10 @@ const evaluateSlaBreachesInternal = ({
 		}
 
 		if (Object.keys(updates).length > 0) {
-			const updated = context.db.schemas.operationTasks.update(task._id, updates)
+			const updated = context.db.schemas.operationTasks.update(
+				task._id,
+				updates,
+			)
 			if (updated) {
 				updatedTaskIds.push(task._id)
 			}
@@ -1536,7 +1554,7 @@ const executeReplenishmentPurchaseProposalJob = ({
 				unitCost,
 				estimatedCost,
 				rankScore,
-				}
+			}
 		})
 		.filter((proposal: PurchaseProposal | null): proposal is PurchaseProposal =>
 			Boolean(proposal),
@@ -1587,7 +1605,10 @@ const executeReplenishmentTransferProposalJob = ({
 		const locationCode = row.locationCode
 		if (!locationCode) continue
 		const perItem = stockByItemLocation.get(row.itemId) ?? new Map()
-		perItem.set(locationCode, (perItem.get(locationCode) ?? 0) + Number(row.remainingQty ?? 0))
+		perItem.set(
+			locationCode,
+			(perItem.get(locationCode) ?? 0) + Number(row.remainingQty ?? 0),
+		)
 		stockByItemLocation.set(row.itemId, perItem)
 	}
 
@@ -2049,12 +2070,15 @@ const executeScheduledJobForReference = ({
 			referenceTimestamp,
 		})
 		const finishedAtIso = new Date().toISOString()
-		const updatedRun = context.db.schemas.scheduledJobRuns.update(runRecord._id, {
-			status: 'SUCCESS',
-			finishedAt: finishedAtIso,
-			errorSummary: undefined,
-			resultJson: toJsonString(result),
-		})
+		const updatedRun = context.db.schemas.scheduledJobRuns.update(
+			runRecord._id,
+			{
+				status: 'SUCCESS',
+				finishedAt: finishedAtIso,
+				errorSummary: undefined,
+				resultJson: toJsonString(result),
+			},
+		)
 		const updatedJob = context.db.schemas.scheduledJobs.update(job._id, {
 			lastRunAt: finishedAtIso,
 			lastRunStatus: 'SUCCESS',
@@ -2090,11 +2114,14 @@ const executeScheduledJobForReference = ({
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown scheduled job error'
 		const finishedAtIso = new Date().toISOString()
-		const updatedRun = context.db.schemas.scheduledJobRuns.update(runRecord._id, {
-			status: 'FAILED',
-			finishedAt: finishedAtIso,
-			errorSummary: errorMessage,
-		})
+		const updatedRun = context.db.schemas.scheduledJobRuns.update(
+			runRecord._id,
+			{
+				status: 'FAILED',
+				finishedAt: finishedAtIso,
+				errorSummary: errorMessage,
+			},
+		)
 		context.db.schemas.scheduledJobs.update(job._id, {
 			lastRunAt: finishedAtIso,
 			lastRunStatus: 'FAILED',
@@ -2720,20 +2747,19 @@ const hubUsersRouter = createRPCRouter({
 			})[0]
 
 			const assignedAt = new Date().toISOString()
-			const assignment =
-				existingAssignment
-					? context.db.schemas.hubUserRoles.update(existingAssignment._id, {
-							active: input.active,
-							assignedAt,
-							assignedByUserId: context.auth.userId,
-						})
-					: context.db.schemas.hubUserRoles.insert({
-							hubUserId: user._id,
-							roleId: role._id,
-							active: input.active,
-							assignedAt,
-							assignedByUserId: context.auth.userId,
-						})
+			const assignment = existingAssignment
+				? context.db.schemas.hubUserRoles.update(existingAssignment._id, {
+						active: input.active,
+						assignedAt,
+						assignedByUserId: context.auth.userId,
+					})
+				: context.db.schemas.hubUserRoles.insert({
+						hubUserId: user._id,
+						roleId: role._id,
+						active: input.active,
+						assignedAt,
+						assignedByUserId: context.auth.userId,
+					})
 
 			if (!assignment?._id) {
 				throw new Error('Unable to persist role assignment')
@@ -2764,14 +2790,18 @@ const hubUsersRouter = createRPCRouter({
 				assignment,
 				user,
 				role,
-				permissions: listEffectivePermissionCodes(context, normalizedUserId).sort(),
+				permissions: listEffectivePermissionCodes(
+					context,
+					normalizedUserId,
+				).sort(),
 			}
 		}),
 	getEffectivePermissions: publicProcedure
 		.input(getEffectivePermissionsInputSchema)
 		.route({
 			method: 'GET',
-			summary: 'Resolve effective permissions for a user from persisted RBAC links',
+			summary:
+				'Resolve effective permissions for a user from persisted RBAC links',
 		})
 		.handler(({ input, context }) => {
 			assertPermission(context, 'hub.rbac.read-effective-permissions', {
@@ -2864,10 +2894,11 @@ const hubRolesRouter = createRPCRouter({
 				),
 			).sort()
 
-			const existingAssignments = context.db.schemas.hubRolePermissions.findMany({
-				where: (row: any) =>
-					readTenantId(row) === tenantId && row.roleId === role._id,
-			})
+			const existingAssignments =
+				context.db.schemas.hubRolePermissions.findMany({
+					where: (row: any) =>
+						readTenantId(row) === tenantId && row.roleId === role._id,
+				})
 			const existingPermissionCodeById = readPermissionCodeById({
 				context,
 				tenantId,
@@ -2885,12 +2916,13 @@ const hubRolesRouter = createRPCRouter({
 				),
 			).sort()
 
-			const targetPermissions = normalizedPermissionCodes.map((permissionCode) =>
-				ensureHubPermission({
-					context,
-					tenantId,
-					permissionCode,
-				}),
+			const targetPermissions = normalizedPermissionCodes.map(
+				(permissionCode) =>
+					ensureHubPermission({
+						context,
+						tenantId,
+						permissionCode,
+					}),
 			)
 			const targetPermissionIdSet = new Set(
 				targetPermissions.map((permission) => permission._id),
@@ -2931,7 +2963,10 @@ const hubRolesRouter = createRPCRouter({
 				entityType: 'hubRole',
 				entityId: role._id,
 				status: 'SUCCESS',
-				before: { roleCode: normalizedRoleCode, permissionCodes: beforePermissionCodes },
+				before: {
+					roleCode: normalizedRoleCode,
+					permissionCodes: beforePermissionCodes,
+				},
 				after: {
 					roleCode: normalizedRoleCode,
 					permissionCodes: normalizedPermissionCodes,
@@ -3000,24 +3035,23 @@ const hubModuleSettingsRouter = createRPCRouter({
 			const nextRevisionNo = Number(existing?.revisionNo ?? 0) + 1
 			const beforeValue = fromJsonString(existing?.valueJson)
 
-			const setting =
-				existing
-					? context.db.schemas.hubModuleSettings.update(existing._id, {
-							valueJson,
-							schemaVersion: input.schemaVersion ?? existing.schemaVersion,
-							revisionNo: nextRevisionNo,
-							updatedByUserId: context.auth.userId,
-							updatedAt: nowIso,
-						})
-					: context.db.schemas.hubModuleSettings.insert({
-							moduleId,
-							settingKey,
-							valueJson,
-							schemaVersion: input.schemaVersion,
-							revisionNo: nextRevisionNo,
-							updatedByUserId: context.auth.userId,
-							updatedAt: nowIso,
-						})
+			const setting = existing
+				? context.db.schemas.hubModuleSettings.update(existing._id, {
+						valueJson,
+						schemaVersion: input.schemaVersion ?? existing.schemaVersion,
+						revisionNo: nextRevisionNo,
+						updatedByUserId: context.auth.userId,
+						updatedAt: nowIso,
+					})
+				: context.db.schemas.hubModuleSettings.insert({
+						moduleId,
+						settingKey,
+						valueJson,
+						schemaVersion: input.schemaVersion,
+						revisionNo: nextRevisionNo,
+						updatedByUserId: context.auth.userId,
+						updatedAt: nowIso,
+					})
 			if (!setting?._id) {
 				throw new Error('Unable to persist module setting')
 			}
@@ -3064,7 +3098,8 @@ const hubModuleSettingsRouter = createRPCRouter({
 		.input(rollbackModuleSettingInputSchema)
 		.route({
 			method: 'POST',
-			summary: 'Rollback module setting to a previous revision and record rollback',
+			summary:
+				'Rollback module setting to a previous revision and record rollback',
 		})
 		.handler(({ input, context }) => {
 			assertPermission(context, 'hub.settings.rollback', {
@@ -3200,7 +3235,8 @@ const hubModuleSettingRevisionsRouter = createRPCRouter({
 				where: (row: any) => {
 					if (readTenantId(row) !== tenantId) return false
 					if (moduleFilter && row.moduleId !== moduleFilter) return false
-					if (settingKeyFilter && row.settingKey !== settingKeyFilter) return false
+					if (settingKeyFilter && row.settingKey !== settingKeyFilter)
+						return false
 					return true
 				},
 				orderBy: { field: '_updatedAt', direction: 'desc' },
@@ -3279,7 +3315,9 @@ const auditLogsRouter = createRPCRouter({
 					}
 					if (
 						normalizedAction &&
-						!String(row.action ?? '').toLowerCase().includes(normalizedAction)
+						!String(row.action ?? '')
+							.toLowerCase()
+							.includes(normalizedAction)
 					) {
 						return false
 					}
@@ -3368,7 +3406,9 @@ const auditLogsRouter = createRPCRouter({
 					}
 					if (
 						normalizedAction &&
-						!String(row.action ?? '').toLowerCase().includes(normalizedAction)
+						!String(row.action ?? '')
+							.toLowerCase()
+							.includes(normalizedAction)
 					) {
 						return false
 					}
@@ -3484,7 +3524,8 @@ const scheduledJobsRouter = createRPCRouter({
 		.input(runScheduledJobNowInputSchema)
 		.route({
 			method: 'POST',
-			summary: 'Execute a specific scheduled job immediately for current window',
+			summary:
+				'Execute a specific scheduled job immediately for current window',
 		})
 		.handler(({ input, context }) => {
 			assertPermission(context, 'hub.scheduler.execute', {
@@ -3538,7 +3579,8 @@ const scheduledJobRunsRouter = createRPCRouter({
 			const items = context.db.schemas.scheduledJobRuns.findMany({
 				where: (row: any) => {
 					if (readTenantId(row) !== tenantId) return false
-					if (normalizedJobCode && row.jobCode !== normalizedJobCode) return false
+					if (normalizedJobCode && row.jobCode !== normalizedJobCode)
+						return false
 					if (input.status && row.status !== input.status) return false
 					return true
 				},
@@ -3671,7 +3713,8 @@ const orderFulfillmentRouter = createRPCRouter({
 		.input(resumeOrderFulfillmentInputSchema)
 		.route({
 			method: 'POST',
-			summary: 'Resume failed/running fulfillment workflow from persisted stage state',
+			summary:
+				'Resume failed/running fulfillment workflow from persisted stage state',
 		})
 		.handler(({ input, context }) => {
 			assertRole(context, 'AGENT', 'hub order fulfillment resume')
@@ -3738,8 +3781,12 @@ const orderFulfillmentRouter = createRPCRouter({
 				throw new Error('Order workflow not found')
 			}
 			const steps = getWorkflowSteps(context, tenantId, workflow._id)
-			const completedSteps = steps.filter((step) => step.status === 'COMPLETED').length
-			const failedSteps = steps.filter((step) => step.status === 'FAILED').length
+			const completedSteps = steps.filter(
+				(step) => step.status === 'COMPLETED',
+			).length
+			const failedSteps = steps.filter(
+				(step) => step.status === 'FAILED',
+			).length
 
 			return {
 				workflowId: workflow._id,

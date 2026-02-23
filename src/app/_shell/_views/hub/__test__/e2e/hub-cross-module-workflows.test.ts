@@ -233,10 +233,11 @@ describe.sequential('cross-module workflows', () => {
 		})
 		expect(received.receiptCount).toBe(1)
 
-		const invoice =
-			await caller.replenishment.purchaseInvoices.createFromOrder({
+		const invoice = await caller.replenishment.purchaseInvoices.createFromOrder(
+			{
 				purchaseOrderId: purchaseOrder.header._id,
-			})
+			},
+		)
 		expect(invoice.lines).toHaveLength(1)
 
 		const posted = await caller.replenishment.purchaseInvoices.postInvoice({
@@ -279,7 +280,9 @@ describe.sequential('cross-module workflows', () => {
 		expect(started.invoiceNo).toBeTruthy()
 		expect(started.shipmentNo).toBeTruthy()
 		expect(started.steps).toHaveLength(3)
-		expect(started.steps.every((step) => step.status === 'COMPLETED')).toBe(true)
+		expect(started.steps.every((step) => step.status === 'COMPLETED')).toBe(
+			true,
+		)
 
 		const restarted = await caller.hub.orderFulfillment.startOrderFulfillment({
 			orderId,

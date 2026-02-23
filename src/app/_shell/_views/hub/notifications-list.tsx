@@ -161,7 +161,8 @@ export default function NotificationsList() {
 	const [settingSchemaVersion, setSettingSchemaVersion] = React.useState('v1')
 	const [settingChangeReason, setSettingChangeReason] = React.useState('')
 	const [rollbackRevisionNo, setRollbackRevisionNo] = React.useState('')
-	const [auditModuleFilter, setAuditModuleFilter] = React.useState<string>('all')
+	const [auditModuleFilter, setAuditModuleFilter] =
+		React.useState<string>('all')
 	const [auditActionFilter, setAuditActionFilter] = React.useState('')
 
 	const { DataGrid, windowSize } = useModuleData<'hub', ModuleNotification>(
@@ -208,7 +209,9 @@ export default function NotificationsList() {
 	const currentSetting = React.useMemo(() => {
 		const items = moduleSettingItems
 		if (normalizedSettingKey) {
-			return items.find((item) => item.settingKey === normalizedSettingKey) ?? null
+			return (
+				items.find((item) => item.settingKey === normalizedSettingKey) ?? null
+			)
 		}
 		return items[0] ?? null
 	}, [moduleSettingItems, normalizedSettingKey])
@@ -349,7 +352,11 @@ export default function NotificationsList() {
 		const normalizedSettingKey =
 			currentSetting?.settingKey ?? (settingKey.trim() || '')
 		const parsedRevisionNo = Number.parseInt(rollbackRevisionNo, 10)
-		if (!moduleId || !normalizedSettingKey || !Number.isFinite(parsedRevisionNo)) {
+		if (
+			!moduleId ||
+			!normalizedSettingKey ||
+			!Number.isFinite(parsedRevisionNo)
+		) {
 			return
 		}
 
@@ -509,7 +516,9 @@ export default function NotificationsList() {
 								/>
 							</div>
 							<div className='space-y-1.5'>
-								<Label htmlFor='hub-setting-schema-version'>Schema Version</Label>
+								<Label htmlFor='hub-setting-schema-version'>
+									Schema Version
+								</Label>
 								<Input
 									id='hub-setting-schema-version'
 									placeholder='v1'
@@ -536,7 +545,9 @@ export default function NotificationsList() {
 						</div>
 
 						<div className='space-y-1.5'>
-							<Label htmlFor='hub-setting-value-json'>Value (JSON preferred)</Label>
+							<Label htmlFor='hub-setting-value-json'>
+								Value (JSON preferred)
+							</Label>
 							<textarea
 								id='hub-setting-value-json'
 								className='min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs outline-none ring-ring/20 transition-shadow focus-visible:ring-3'
@@ -550,9 +561,7 @@ export default function NotificationsList() {
 								id='hub-setting-change-reason'
 								placeholder='Reason for update or rollback'
 								value={settingChangeReason}
-								onChange={(event) =>
-									setSettingChangeReason(event.target.value)
-								}
+								onChange={(event) => setSettingChangeReason(event.target.value)}
 							/>
 						</div>
 
@@ -581,7 +590,9 @@ export default function NotificationsList() {
 								}
 							>
 								<RotateCcw className='mr-1.5 size-3.5' aria-hidden='true' />
-								{rollbackModuleSetting.isPending ? 'Rolling back...' : 'Rollback'}
+								{rollbackModuleSetting.isPending
+									? 'Rolling back...'
+									: 'Rollback'}
 							</Button>
 						</div>
 
@@ -594,7 +605,9 @@ export default function NotificationsList() {
 						<div className='space-y-2'>
 							<p className='font-medium text-sm'>Current setting snapshot</p>
 							{moduleSettingsQuery.isFetching ? (
-								<p className='text-muted-foreground text-sm'>Loading setting...</p>
+								<p className='text-muted-foreground text-sm'>
+									Loading setting...
+								</p>
 							) : currentSetting ? (
 								<div className='rounded-lg border border-border/40 bg-background/30 p-3'>
 									<p className='font-medium text-sm'>
@@ -665,7 +678,9 @@ export default function NotificationsList() {
 								<Label htmlFor='hub-audit-module'>Module</Label>
 								<Select
 									value={auditModuleFilter}
-									onValueChange={(value) => setAuditModuleFilter(value ?? 'all')}
+									onValueChange={(value) =>
+										setAuditModuleFilter(value ?? 'all')
+									}
 								>
 									<SelectTrigger id='hub-audit-module'>
 										<SelectValue placeholder='All modules' />
@@ -719,7 +734,7 @@ export default function NotificationsList() {
 										className='rounded-md border border-border/30 bg-background/40 p-2'
 									>
 										<div className='flex flex-wrap items-center gap-2'>
-											<span className='rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-medium'>
+											<span className='rounded-full border border-border/60 px-2 py-0.5 font-medium text-[10px]'>
 												{record.status}
 											</span>
 											<span className='font-mono text-[11px]'>

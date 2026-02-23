@@ -212,8 +212,7 @@ const calculatePurchaseLineAmount = (line: {
 	quantity: number
 	unitCost: number
 	lineAmount?: number
-}) =>
-	Number((line.lineAmount ?? line.quantity * line.unitCost).toFixed(2))
+}) => Number((line.lineAmount ?? line.quantity * line.unitCost).toFixed(2))
 
 const purchaseHeaderUpdatePayload = (header: {
 	documentType?: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
@@ -366,7 +365,7 @@ const purchaseOrdersRouter = createRPCRouter({
 			method: 'PATCH',
 			summary: 'Update purchase order header and line deltas atomically',
 		})
-			.handler(({ input, context }) => {
+		.handler(({ input, context }) => {
 			assertRole(
 				context,
 				'AGENT',
@@ -389,7 +388,8 @@ const purchaseOrdersRouter = createRPCRouter({
 			const originalLines = context.db.schemas.purchaseLines
 				.findMany({
 					where: (row) =>
-						readTenantId(row) === tenantId && row.documentNo === header.documentNo,
+						readTenantId(row) === tenantId &&
+						row.documentNo === header.documentNo,
 				})
 				.map((line) => ({ ...line }))
 
@@ -497,7 +497,8 @@ const purchaseOrdersRouter = createRPCRouter({
 				})
 				const currentLines = context.db.schemas.purchaseLines.findMany({
 					where: (row) =>
-						readTenantId(row) === tenantId && row.documentNo === header.documentNo,
+						readTenantId(row) === tenantId &&
+						row.documentNo === header.documentNo,
 				})
 				for (const line of currentLines) {
 					context.db.schemas.purchaseLines.delete(line._id)
@@ -515,8 +516,8 @@ const purchaseOrdersRouter = createRPCRouter({
 					})
 				}
 				throw error
-				}
-			}),
+			}
+		}),
 	receive: publicProcedure
 		.input(receivePurchaseOrderInputSchema)
 		.route({
@@ -526,7 +527,9 @@ const purchaseOrdersRouter = createRPCRouter({
 		.handler(({ input, context }) => {
 			assertRole(context, 'MANAGER', 'replenishment purchase receipt')
 			const tenantId = context.auth.tenantId
-			const order = context.db.schemas.purchaseHeaders.get(input.purchaseOrderId)
+			const order = context.db.schemas.purchaseHeaders.get(
+				input.purchaseOrderId,
+			)
 			if (!order || readTenantId(order) !== tenantId) {
 				throw new Error('Purchase order not found')
 			}
@@ -550,12 +553,14 @@ const purchaseOrdersRouter = createRPCRouter({
 					: lines
 							.filter(
 								(line) =>
-									Number(line.quantityReceived ?? 0) < Number(line.quantity ?? 0),
+									Number(line.quantityReceived ?? 0) <
+									Number(line.quantity ?? 0),
 							)
 							.map((line) => ({
 								purchaseLineId: line._id,
 								quantity:
-									Number(line.quantity ?? 0) - Number(line.quantityReceived ?? 0),
+									Number(line.quantity ?? 0) -
+									Number(line.quantityReceived ?? 0),
 							}))
 
 			if (lineReceipts.length === 0) {
@@ -616,7 +621,8 @@ const purchaseOrdersRouter = createRPCRouter({
 
 				const refreshedLines = context.db.schemas.purchaseLines.findMany({
 					where: (row) =>
-						readTenantId(row) === tenantId && row.documentNo === order.documentNo,
+						readTenantId(row) === tenantId &&
+						row.documentNo === order.documentNo,
 					orderBy: { field: 'lineNo', direction: 'asc' },
 				})
 
@@ -655,12 +661,16 @@ const purchaseInvoicesRouter = createRPCRouter({
 			assertRole(context, 'MANAGER', 'replenishment purchase invoice creation')
 			const tenantId = context.auth.tenantId
 
-			const order = context.db.schemas.purchaseHeaders.get(input.purchaseOrderId)
+			const order = context.db.schemas.purchaseHeaders.get(
+				input.purchaseOrderId,
+			)
 			if (!order || readTenantId(order) !== tenantId) {
 				throw new Error('Purchase order not found')
 			}
 			if (order.status !== 'APPROVED' && order.status !== 'COMPLETED') {
-				throw new Error('Only APPROVED or COMPLETED purchase orders can be invoiced')
+				throw new Error(
+					'Only APPROVED or COMPLETED purchase orders can be invoiced',
+				)
 			}
 
 			const lines = context.db.schemas.purchaseLines.findMany({
@@ -675,7 +685,8 @@ const purchaseInvoicesRouter = createRPCRouter({
 			const selectedLineIdSet = new Set(input.lineIds ?? [])
 			const candidateLines = lines.filter((line) => {
 				const outstandingQty =
-					Number(line.quantityReceived ?? 0) - Number(line.quantityInvoiced ?? 0)
+					Number(line.quantityReceived ?? 0) -
+					Number(line.quantityInvoiced ?? 0)
 				if (outstandingQty <= 0) return false
 				if (selectedLineIdSet.size === 0) return true
 				return selectedLineIdSet.has(line._id)
@@ -706,21 +717,24 @@ const purchaseInvoicesRouter = createRPCRouter({
 			const createdLineIds: string[] = []
 
 			try {
-				const createdInvoice = context.db.schemas.purchaseInvoiceHeaders.insert({
-					invoiceNo: '',
-					status: 'DRAFT',
-					vendorId: order.vendorId,
-					purchaseOrderNo: order.documentNo,
-					postingDate: new Date().toISOString(),
-					currency: order.currency ?? 'USD',
-					lineCount: 0,
-					totalAmount: 0,
-				})
+				const createdInvoice = context.db.schemas.purchaseInvoiceHeaders.insert(
+					{
+						invoiceNo: '',
+						status: 'DRAFT',
+						vendorId: order.vendorId,
+						purchaseOrderNo: order.documentNo,
+						postingDate: new Date().toISOString(),
+						currency: order.currency ?? 'USD',
+						lineCount: 0,
+						totalAmount: 0,
+					},
+				)
 				createdInvoiceId = createdInvoice._id
 
 				for (const [index, line] of candidateLines.entries()) {
 					const quantity =
-						Number(line.quantityReceived ?? 0) - Number(line.quantityInvoiced ?? 0)
+						Number(line.quantityReceived ?? 0) -
+						Number(line.quantityInvoiced ?? 0)
 					const unitCost = Number(line.unitCost ?? 0)
 					const lineAmount = Number((quantity * unitCost).toFixed(2))
 
@@ -768,7 +782,9 @@ const purchaseInvoicesRouter = createRPCRouter({
 		.handler(({ input, context }) => {
 			assertRole(context, 'MANAGER', 'replenishment purchase invoice posting')
 			const tenantId = context.auth.tenantId
-			const invoice = context.db.schemas.purchaseInvoiceHeaders.get(input.invoiceId)
+			const invoice = context.db.schemas.purchaseInvoiceHeaders.get(
+				input.invoiceId,
+			)
 			if (!invoice || readTenantId(invoice) !== tenantId) {
 				throw new Error('Purchase invoice not found')
 			}
@@ -793,7 +809,9 @@ const purchaseInvoicesRouter = createRPCRouter({
 				return sum + lineAmount
 			}, 0)
 			if (totalAmount <= 0) {
-				throw new Error('Purchase invoice total must be greater than zero to post')
+				throw new Error(
+					'Purchase invoice total must be greater than zero to post',
+				)
 			}
 
 			const existingVendorLedgerEntries =
@@ -862,13 +880,19 @@ const purchaseInvoicesRouter = createRPCRouter({
 				string,
 				{ quantityReceived: number; quantityInvoiced: number }
 			>()
-			for (const [purchaseLineId, invoiceQty] of invoiceQtyByPurchaseLine.entries()) {
-				const purchaseLine = context.db.schemas.purchaseLines.get(purchaseLineId)
+			for (const [
+				purchaseLineId,
+				invoiceQty,
+			] of invoiceQtyByPurchaseLine.entries()) {
+				const purchaseLine =
+					context.db.schemas.purchaseLines.get(purchaseLineId)
 				if (!purchaseLine || readTenantId(purchaseLine) !== tenantId) {
 					throw new Error('Linked purchase line not found')
 				}
 				if (purchaseLine.documentNo !== invoice.purchaseOrderNo) {
-					throw new Error('Invoice line does not belong to invoice purchase order')
+					throw new Error(
+						'Invoice line does not belong to invoice purchase order',
+					)
 				}
 
 				const quantityReceived = Number(purchaseLine.quantityReceived ?? 0)
@@ -914,18 +938,20 @@ const purchaseInvoicesRouter = createRPCRouter({
 						where: (row) => readTenantId(row) === tenantId,
 					}),
 				)
-				const vendorLedgerEntry = context.db.schemas.vendorLedgerEntries.insert({
-					entryNo: nextVendorEntry,
-					vendorId: invoice.vendorId,
-					postingDate,
-					documentType: 'INVOICE',
-					documentNo: invoice.invoiceNo,
-					description,
-					amount: totalAmount,
-					remainingAmount: totalAmount,
-					open: true,
-					currency: invoice.currency ?? 'USD',
-				})
+				const vendorLedgerEntry = context.db.schemas.vendorLedgerEntries.insert(
+					{
+						entryNo: nextVendorEntry,
+						vendorId: invoice.vendorId,
+						postingDate,
+						documentType: 'INVOICE',
+						documentNo: invoice.invoiceNo,
+						description,
+						amount: totalAmount,
+						remainingAmount: totalAmount,
+						open: true,
+						currency: invoice.currency ?? 'USD',
+					},
+				)
 				createdVendorLedgerEntryId = vendorLedgerEntry._id
 
 				const nextDetailedEntry = nextEntryNo(
@@ -951,12 +977,18 @@ const purchaseInvoicesRouter = createRPCRouter({
 					createdDetailedEntryIds.push(detail._id)
 				}
 
-				for (const [purchaseLineId, qty] of invoiceQtyByPurchaseLine.entries()) {
+				for (const [
+					purchaseLineId,
+					qty,
+				] of invoiceQtyByPurchaseLine.entries()) {
 					const snapshot = purchaseLineSnapshots.get(purchaseLineId)
 					if (!snapshot) continue
-					const updated = context.db.schemas.purchaseLines.update(purchaseLineId, {
-						quantityInvoiced: snapshot.quantityInvoiced + qty,
-					})
+					const updated = context.db.schemas.purchaseLines.update(
+						purchaseLineId,
+						{
+							quantityInvoiced: snapshot.quantityInvoiced + qty,
+						},
+					)
 					if (!updated) {
 						throw new Error('Unable to update purchase line invoiced quantity')
 					}
@@ -978,9 +1010,14 @@ const purchaseInvoicesRouter = createRPCRouter({
 					context.db.schemas.detailedVendorLedgerEntries.delete(detailEntryId)
 				}
 				if (createdVendorLedgerEntryId) {
-					context.db.schemas.vendorLedgerEntries.delete(createdVendorLedgerEntryId)
+					context.db.schemas.vendorLedgerEntries.delete(
+						createdVendorLedgerEntryId,
+					)
 				}
-				for (const [purchaseLineId, snapshot] of purchaseLineSnapshots.entries()) {
+				for (const [
+					purchaseLineId,
+					snapshot,
+				] of purchaseLineSnapshots.entries()) {
 					context.db.schemas.purchaseLines.update(purchaseLineId, {
 						quantityReceived: snapshot.quantityReceived,
 						quantityInvoiced: snapshot.quantityInvoiced,

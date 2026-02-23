@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -7,8 +7,8 @@ import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface SalesOrderHeader {
 	_id: string
@@ -91,7 +91,10 @@ export function SalesOrderCard({
 		{ enabled: !isNew && isOpen },
 	)
 
-	const { update, transitionStatus } = useEntityMutations('market', 'salesOrders')
+	const { update, transitionStatus } = useEntityMutations(
+		'market',
+		'salesOrders',
+	)
 
 	const {
 		create: createLine,
@@ -241,7 +244,6 @@ export function SalesOrderCard({
 			if (!selectedId || isNew) return
 			if (toStatus === 'PENDING_APPROVAL') {
 				await submitForApproval.mutateAsync({ id: selectedId })
-				onClose()
 				return
 			}
 			if (toStatus === 'CANCELED') {
@@ -249,7 +251,6 @@ export function SalesOrderCard({
 					id: selectedId,
 					reason,
 				})
-				onClose()
 				return
 			}
 			await transitionStatus.mutateAsync({
@@ -257,26 +258,21 @@ export function SalesOrderCard({
 				toStatus,
 				reason,
 			})
-			onClose()
 		},
-		[
-			selectedId,
-			isNew,
-			submitForApproval,
-			cancelWithRelease,
-			transitionStatus,
-			onClose,
-		],
+		[selectedId, isNew, submitForApproval, cancelWithRelease, transitionStatus],
 	)
 
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
+	const { requestTransition, reasonDialog } = useStatusTransition({
 		moduleId: 'market',
 		entityId: 'salesOrders',
+		recordId: selectedId,
+		isNew,
 		disabled:
 			transitionStatus.isPending ||
 			submitForApproval.isPending ||
 			cancelWithRelease.isPending,
 		onTransition: handleTransition,
+		onSuccess: onClose,
 	})
 
 	const currentStatus = (resolvedRecord as SalesOrderHeader | undefined)?.status
@@ -500,17 +496,17 @@ export function SalesOrderCard({
 																	<Form.Select.Value placeholder='Select customer' />
 																</Form.Select.Trigger>
 																<Form.Select.Content>
-																{customerOptions.map((customer) => (
-																	<Form.Select.Item
-																		key={customer._id}
-																		value={customer._id}
-																	>
-																		{customer.name ?? 'Unnamed customer'}
-																		{customer.customerNo
-																			? ` (${customer.customerNo})`
-																			: ''}
-																	</Form.Select.Item>
-																))}
+																	{customerOptions.map((customer) => (
+																		<Form.Select.Item
+																			key={customer._id}
+																			value={customer._id}
+																		>
+																			{customer.name ?? 'Unnamed customer'}
+																			{customer.customerNo
+																				? ` (${customer.customerNo})`
+																				: ''}
+																		</Form.Select.Item>
+																	))}
 																</Form.Select.Content>
 															</Form.Select>
 														</Form.Control>

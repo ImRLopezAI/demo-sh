@@ -7,8 +7,8 @@ import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface InvoiceCardProps {
 	selectedId: string | null
@@ -245,9 +245,11 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 		[selectedId, isNew, postInvoice, transitionStatus],
 	)
 
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
+	const { requestTransition, reasonDialog } = useStatusTransition({
 		moduleId: 'ledger',
 		entityId: 'invoices',
+		recordId: selectedId,
+		isNew,
 		disabled: transitionStatus.isPending || postInvoice.isPending,
 		onTransition: handleTransition,
 	})

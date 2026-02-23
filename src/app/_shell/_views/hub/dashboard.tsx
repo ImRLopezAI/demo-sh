@@ -3,8 +3,8 @@ import {
 	AlertTriangle,
 	Bell,
 	CheckCircle2,
-	Clock3,
 	ClipboardList,
+	Clock3,
 	Play,
 	Power,
 	Search,
@@ -171,7 +171,8 @@ export default function Dashboard() {
 
 	const [assignmentUserId, setAssignmentUserId] = React.useState('')
 	const [assignmentRoleCode, setAssignmentRoleCode] = React.useState('VIEWER')
-	const [permissionsLookupUserId, setPermissionsLookupUserId] = React.useState('')
+	const [permissionsLookupUserId, setPermissionsLookupUserId] =
+		React.useState('')
 
 	const hubRolesList = useModuleList('hub', 'roles', { limit: 200 })
 	const normalizedPermissionsLookupUserId = permissionsLookupUserId.trim()
@@ -210,8 +211,11 @@ export default function Dashboard() {
 	const availableRoleCodes = React.useMemo(() => {
 		const roleCodes = new Set<string>(BASE_ROLE_CODES)
 		for (const role of hubRolesList.data?.items ?? []) {
-			if (typeof (role as { roleCode?: unknown }).roleCode !== 'string') continue
-			const normalized = (role as { roleCode: string }).roleCode.trim().toUpperCase()
+			if (typeof (role as { roleCode?: unknown }).roleCode !== 'string')
+				continue
+			const normalized = (role as { roleCode: string }).roleCode
+				.trim()
+				.toUpperCase()
 			if (!normalized) continue
 			roleCodes.add(normalized)
 		}
@@ -721,7 +725,8 @@ export default function Dashboard() {
 									void handleAssignRole(true)
 								}}
 								disabled={
-									assignRoleToUser.isPending || assignmentUserId.trim().length === 0
+									assignRoleToUser.isPending ||
+									assignmentUserId.trim().length === 0
 								}
 							>
 								Grant Role
@@ -732,7 +737,8 @@ export default function Dashboard() {
 									void handleAssignRole(false)
 								}}
 								disabled={
-									assignRoleToUser.isPending || assignmentUserId.trim().length === 0
+									assignRoleToUser.isPending ||
+									assignmentUserId.trim().length === 0
 								}
 							>
 								Deactivate Role
@@ -795,20 +801,23 @@ export default function Dashboard() {
 										</p>
 									) : (
 										<div className='flex flex-wrap gap-2'>
-											{effectivePermissionsQuery.data.roleCodes.map((roleCode) => (
-												<span
-													key={roleCode}
-													className='rounded-full border border-border/60 px-3 py-1 text-xs'
-												>
-													{roleCode}
-												</span>
-											))}
+											{effectivePermissionsQuery.data.roleCodes.map(
+												(roleCode) => (
+													<span
+														key={roleCode}
+														className='rounded-full border border-border/60 px-3 py-1 text-xs'
+													>
+														{roleCode}
+													</span>
+												),
+											)}
 										</div>
 									)}
 								</div>
 								<div className='space-y-2'>
 									<p className='font-medium text-sm'>Permissions</p>
-									{effectivePermissionsQuery.data.permissionCodes.length === 0 ? (
+									{effectivePermissionsQuery.data.permissionCodes.length ===
+									0 ? (
 										<p className='text-muted-foreground text-sm'>
 											No effective permissions.
 										</p>
@@ -816,7 +825,10 @@ export default function Dashboard() {
 										<ul className='max-h-48 space-y-1 overflow-auto rounded-lg border border-border/40 bg-background/30 p-3'>
 											{effectivePermissionsQuery.data.permissionCodes.map(
 												(permissionCode) => (
-													<li key={permissionCode} className='font-mono text-xs'>
+													<li
+														key={permissionCode}
+														className='font-mono text-xs'
+													>
 														{permissionCode}
 													</li>
 												),
@@ -889,14 +901,17 @@ export default function Dashboard() {
 											</div>
 											<p className='mt-1 text-muted-foreground text-xs'>
 												{job.cadenceType} every {job.cadenceInterval}{' '}
-												{job.cadenceType === 'DAILY' ? 'day(s)' : 'hour(s)'} | next
-												:{' '}
+												{job.cadenceType === 'DAILY' ? 'day(s)' : 'hour(s)'} |
+												next :{' '}
 												{job.nextRunAt
 													? new Date(job.nextRunAt).toLocaleString()
 													: 'n/a'}
 											</p>
 											<p className='text-muted-foreground text-xs'>
-												Last run: {job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : 'never'}{' '}
+												Last run:{' '}
+												{job.lastRunAt
+													? new Date(job.lastRunAt).toLocaleString()
+													: 'never'}{' '}
 												({job.lastRunStatus ?? 'IDLE'})
 											</p>
 										</div>
@@ -905,7 +920,10 @@ export default function Dashboard() {
 												size='sm'
 												variant='outline'
 												onClick={() => {
-													void handleToggleScheduledJob(job.jobCode, !job.enabled)
+													void handleToggleScheduledJob(
+														job.jobCode,
+														!job.enabled,
+													)
 												}}
 												disabled={setScheduledJobEnabled.isPending}
 											>
@@ -938,8 +956,11 @@ export default function Dashboard() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className='pt-6'>
-						{scheduledJobRunsQuery.isFetching && scheduledJobRuns.length === 0 ? (
-							<p className='text-muted-foreground text-sm'>Loading run history...</p>
+						{scheduledJobRunsQuery.isFetching &&
+						scheduledJobRuns.length === 0 ? (
+							<p className='text-muted-foreground text-sm'>
+								Loading run history...
+							</p>
 						) : scheduledJobRuns.length === 0 ? (
 							<p className='text-muted-foreground text-sm'>
 								No scheduled runs found.

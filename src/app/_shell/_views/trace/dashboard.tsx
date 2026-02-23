@@ -1,7 +1,7 @@
+import { $rpc } from '@lib/rpc'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Package, PackageCheck, Truck } from 'lucide-react'
 import * as React from 'react'
-import { $rpc } from '@lib/rpc'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -266,12 +266,8 @@ export default function TraceDashboard() {
 										</p>
 									</div>
 									<div className='text-right text-xs'>
-										<p>
-											On-time: {(kpi.onTimeRate * 100).toFixed(1)}%
-										</p>
-										<p>
-											Exceptions: {(kpi.exceptionRate * 100).toFixed(1)}%
-										</p>
+										<p>On-time: {(kpi.onTimeRate * 100).toFixed(1)}%</p>
+										<p>Exceptions: {(kpi.exceptionRate * 100).toFixed(1)}%</p>
 									</div>
 								</li>
 							))}

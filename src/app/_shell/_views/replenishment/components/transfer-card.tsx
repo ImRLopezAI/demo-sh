@@ -5,8 +5,8 @@ import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface TransferHeader {
 	_id: string
@@ -40,7 +40,7 @@ const STATUS_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
 	CANCELED: [],
 }
 
-const TRANSITION_LABELS: Record<TransferStatus, string> = {
+const TRANSITION_LABELS: Record<string, string> = {
 	DRAFT: 'Draft',
 	RELEASED: 'Release',
 	IN_TRANSIT: 'Ship',
@@ -77,10 +77,7 @@ export function TransferCard({
 		TransferLine
 	>('replenishment', 'transferLines', 'overview', { filters: lineFilters })
 
-	const { create, update, transitionStatus } = useEntityMutations(
-		'replenishment',
-		'transfers',
-	)
+	const { create, update } = useEntityMutations('replenishment', 'transfers')
 	const {
 		create: createLine,
 		update: updateLine,
@@ -185,27 +182,15 @@ export function TransferCard({
 	const currentStatus = header?.status ?? 'DRAFT'
 	const availableTransitions = STATUS_TRANSITIONS[currentStatus]
 
-	const handleTransition = React.useCallback(
-		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
-			if (!recordId) return
-			await transitionStatus.mutateAsync({
-				id: recordId,
-				toStatus,
-				reason,
-			})
-			onClose()
-		},
-		[recordId, transitionStatus, onClose],
-	)
-
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
-		moduleId: 'replenishment',
-		entityId: 'transfers',
-		disabled: transitionStatus.isPending,
-		getStatusLabel: (status) =>
-			TRANSITION_LABELS[status as TransferStatus] ?? status,
-		onTransition: handleTransition,
-	})
+	const { requestTransition, reasonDialog, transitionStatus } =
+		useStatusTransition({
+			moduleId: 'replenishment',
+			entityId: 'transfers',
+			recordId,
+			isNew,
+			getStatusLabel: (status) => TRANSITION_LABELS[status] ?? status,
+			onSuccess: onClose,
+		})
 
 	const LinesGrid = useGrid(
 		() => ({

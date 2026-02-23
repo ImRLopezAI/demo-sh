@@ -6,8 +6,8 @@ import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface ShipmentHeader {
 	_id: string
@@ -173,16 +173,18 @@ export function ShipmentCard({
 					| 'EXCEPTION',
 				reason,
 			})
-			onClose()
 		},
-		[selectedId, isNew, transitionWithNotification, onClose],
+		[selectedId, isNew, transitionWithNotification],
 	)
 
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
+	const { requestTransition, reasonDialog } = useStatusTransition({
 		moduleId: 'trace',
 		entityId: 'shipments',
+		recordId: selectedId,
+		isNew,
 		disabled: transitionWithNotification.isPending,
 		onTransition: handleTransition,
+		onSuccess: onClose,
 	})
 
 	const currentStatus = (resolvedRecord as ShipmentHeader | undefined)?.status

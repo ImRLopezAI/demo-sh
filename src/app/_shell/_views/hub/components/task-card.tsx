@@ -4,8 +4,8 @@ import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
-import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useStatusTransition } from '../../_shared/use-status-transition'
 
 interface TaskCardProps {
 	recordId: string | null
@@ -50,10 +50,7 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 		{ enabled: !isNew && !!recordId },
 	)
 
-	const { create, update, transitionStatus } = useEntityMutations(
-		'hub',
-		'operationTasks',
-	)
+	const { create, update } = useEntityMutations('hub', 'operationTasks')
 
 	const [Form, form] = useCreateForm<TaskFormValues>(
 		() => ({
@@ -124,24 +121,13 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 		}
 	}, [record, isNew, form])
 
-	const handleTransition = React.useCallback(
-		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
-			if (!recordId || isNew) return
-			await transitionStatus.mutateAsync({
-				id: recordId,
-				toStatus,
-				reason,
-			})
-		},
-		[recordId, isNew, transitionStatus],
-	)
-
-	const { requestTransition, reasonDialog } = useTransitionWithReason({
-		moduleId: 'hub',
-		entityId: 'operationTasks',
-		disabled: transitionStatus.isPending,
-		onTransition: handleTransition,
-	})
+	const { requestTransition, reasonDialog, transitionStatus } =
+		useStatusTransition({
+			moduleId: 'hub',
+			entityId: 'operationTasks',
+			recordId,
+			isNew,
+		})
 
 	const currentStatus = record?.status ?? 'OPEN'
 	const currentSlaStatus = record?.slaStatus ?? 'ON_TRACK'

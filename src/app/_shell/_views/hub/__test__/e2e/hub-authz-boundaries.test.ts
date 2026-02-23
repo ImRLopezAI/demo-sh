@@ -139,7 +139,9 @@ describe.sequential('uplink authorization boundaries', () => {
 		})
 
 		const viewerCaller = createCaller({ role: 'VIEWER', userId })
-		const checkout = await viewerCaller.market.carts.checkout({ cartId: cart._id })
+		const checkout = await viewerCaller.market.carts.checkout({
+			cartId: cart._id,
+		})
 		expect(checkout.cartStatus).toBe('CHECKED_OUT')
 
 		const successAudit = db.schemas.hubAuditLogs.findMany({
@@ -186,7 +188,9 @@ describe.sequential('uplink authorization boundaries', () => {
 		})
 
 		const agentCaller = createCaller({ role: 'AGENT', userId })
-		const posted = await agentCaller.ledger.invoices.postInvoice({ id: invoice._id })
+		const posted = await agentCaller.ledger.invoices.postInvoice({
+			id: invoice._id,
+		})
 		expect(posted.status).toBe('POSTED')
 	})
 

@@ -317,25 +317,25 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					return row
 				}),
 
-				create: publicProcedure
-					.input(createSchema)
-					.route({ method: 'POST', summary: `Create ${NAME}` })
-					.handler(({ input, context }) => {
-						const table = getTable(context, config.primaryTable)
-						const payload = {
-							...input,
-							tenantId: context.auth.tenantId,
-							createdByUserId: context.auth.userId,
-							updatedByUserId: context.auth.userId,
-						}
-						validateParentRelations({
-							context,
-							tenantId: context.auth.tenantId,
-							payload,
-						})
+			create: publicProcedure
+				.input(createSchema)
+				.route({ method: 'POST', summary: `Create ${NAME}` })
+				.handler(({ input, context }) => {
+					const table = getTable(context, config.primaryTable)
+					const payload = {
+						...input,
+						tenantId: context.auth.tenantId,
+						createdByUserId: context.auth.userId,
+						updatedByUserId: context.auth.userId,
+					}
+					validateParentRelations({
+						context,
+						tenantId: context.auth.tenantId,
+						payload,
+					})
 
-						return table.insert(payload)
-					}),
+					return table.insert(payload)
+				}),
 
 			update: publicProcedure
 				.input(
@@ -345,30 +345,30 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					}),
 				)
 				.route({ method: 'PATCH', summary: `Update ${NAME}` })
-					.handler(({ input, context }) => {
-						const table = getTable(context, config.primaryTable)
-						const existing = table.get(input.id)
+				.handler(({ input, context }) => {
+					const table = getTable(context, config.primaryTable)
+					const existing = table.get(input.id)
 					ensureTenantAccess(
 						existing,
 						context.auth.tenantId,
 						config.primaryTable,
-						)
+					)
 
-						const payload = {
-							...existing,
-							...input.data,
-						}
-						validateParentRelations({
-							context,
-							tenantId: context.auth.tenantId,
-							payload,
-						})
+					const payload = {
+						...existing,
+						...input.data,
+					}
+					validateParentRelations({
+						context,
+						tenantId: context.auth.tenantId,
+						payload,
+					})
 
-						return table.update(input.id, {
-							...input.data,
-							updatedByUserId: context.auth.userId,
-						})
-					}),
+					return table.update(input.id, {
+						...input.data,
+						updatedByUserId: context.auth.userId,
+					})
+				}),
 
 			delete: publicProcedure
 				.input(deleteInputSchema)

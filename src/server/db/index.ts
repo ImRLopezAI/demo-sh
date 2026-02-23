@@ -117,7 +117,10 @@ export const db = defineSchema(
 			seed: false,
 		})
 			.table()
-			.unique('hubRolePermissions_role_permission_uq', ['roleId', 'permissionId'])
+			.unique('hubRolePermissions_role_permission_uq', [
+				'roleId',
+				'permissionId',
+			])
 			.index('hubRolePermissions_roleId_idx', ['roleId'])
 			.index('hubRolePermissions_permissionId_idx', ['permissionId']),
 
@@ -158,7 +161,10 @@ export const db = defineSchema(
 				'revisionNo',
 			])
 			.index('hubModuleSettingsRevisions_settingId_idx', ['settingId'])
-			.index('hubModuleSettingsRevisions_module_key_idx', ['moduleId', 'settingKey']),
+			.index('hubModuleSettingsRevisions_module_key_idx', [
+				'moduleId',
+				'settingKey',
+			]),
 
 		hubAuditLogs: createTable('hubAuditLogs', {
 			schema: {
@@ -199,9 +205,7 @@ export const db = defineSchema(
 				retryLimit: z.number().int().min(0).max(5).default(1),
 				nextRunAt: z.string().optional().meta({ type: 'date' }),
 				lastRunAt: z.string().optional().meta({ type: 'date' }),
-				lastRunStatus: z
-					.enum(['IDLE', 'SUCCESS', 'FAILED'])
-					.default('IDLE'),
+				lastRunStatus: z.enum(['IDLE', 'SUCCESS', 'FAILED']).default('IDLE'),
 				lastRunError: z.string().optional(),
 				configJson: z.string().default('{}'),
 			},
@@ -227,9 +231,7 @@ export const db = defineSchema(
 				finishedAt: z.string().optional().meta({ type: 'date' }),
 				errorSummary: z.string().optional(),
 				attemptNo: z.number().int().min(1).default(1),
-				trigger: z
-					.enum(['SCHEDULED', 'MANUAL', 'RETRY'])
-					.default('SCHEDULED'),
+				trigger: z.enum(['SCHEDULED', 'MANUAL', 'RETRY']).default('SCHEDULED'),
 				resultJson: z.string().optional(),
 			}),
 			seed: false,
@@ -1065,9 +1067,9 @@ export const db = defineSchema(
 						}),
 					}),
 				postingDate: z.string().optional().meta({ type: 'date' }),
-				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
-					'INVOICE',
-				),
+				documentType: z
+					.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO'])
+					.default('INVOICE'),
 				documentNo: z.string(),
 				description: z.string().optional(),
 				amount: z.number().default(0),
@@ -1089,9 +1091,9 @@ export const db = defineSchema(
 				entryNo: z.number().default(0),
 				vendorLedgerEntryId: one('vendorLedgerEntries'),
 				postingDate: z.string().optional().meta({ type: 'date' }),
-				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
-					'INVOICE',
-				),
+				documentType: z
+					.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO'])
+					.default('INVOICE'),
 				documentNo: z.string(),
 				description: z.string().optional(),
 				amount: z.number().default(0),
@@ -1100,10 +1102,9 @@ export const db = defineSchema(
 			seed: false,
 		})
 			.table()
-			.index(
-				'detailedVendorLedgerEntries_vendorLedgerEntryId_idx',
-				['vendorLedgerEntryId'],
-			)
+			.index('detailedVendorLedgerEntries_vendorLedgerEntryId_idx', [
+				'vendorLedgerEntryId',
+			])
 			.index('detailedVendorLedgerEntries_documentNo_idx', ['documentNo']),
 
 		transferHeaders: createTable('transferHeaders', {
@@ -2252,7 +2253,9 @@ export const db = defineSchema(
 				'carrierEventId',
 			])
 			.index('shipmentTrackingEvents_shipmentId_idx', ['shipmentId'])
-			.index('shipmentTrackingEvents_carrierAccountId_idx', ['carrierAccountId'])
+			.index('shipmentTrackingEvents_carrierAccountId_idx', [
+				'carrierAccountId',
+			])
 			.index('shipmentTrackingEvents_occurredAt_idx', ['occurredAt']),
 	}),
 	{
