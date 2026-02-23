@@ -200,6 +200,17 @@ const inventoryReservationsRouter = createTenantScopedCrudRouter({
 	reasonRequiredStatuses: ['RELEASED', 'EXPIRED'],
 })
 
+const releaseReservationInputSchema = z.object({
+	id: z.string(),
+	reason: z.string().trim().min(1),
+})
+
+const reassignReservationInputSchema = z.object({
+	id: z.string(),
+	targetSalesLineId: z.string(),
+	reason: z.string().trim().min(1),
+})
+
 const cartsCrudRouter = createTenantScopedCrudRouter({
 	moduleName: 'market',
 	prefix: 'carts',
@@ -247,16 +258,21 @@ const salesHeaderUpdatePayload = (header: {
 	...(header.currency ? { currency: header.currency } : {}),
 	...(header.externalRef ? { externalRef: header.externalRef } : {}),
 	...(header.promotionCode ? { promotionCode: header.promotionCode } : {}),
-	...(header.taxJurisdiction ? { taxJurisdiction: header.taxJurisdiction } : {}),
+	...(header.taxJurisdiction
+		? { taxJurisdiction: header.taxJurisdiction }
+		: {}),
 })
 
-const resolvePriceRule = (context: any, args: {
-	tenantId: string
-	itemId: string
-	customerId?: string
-	quantity: number
-	currency?: string
-}) => {
+const resolvePriceRule = (
+	context: any,
+	args: {
+		tenantId: string
+		itemId: string
+		customerId?: string
+		quantity: number
+		currency?: string
+	},
+) => {
 	const now = Date.now()
 	const customerId = args.customerId
 	const candidates = context.db.schemas.priceRules.findMany({
@@ -270,7 +286,8 @@ const resolvePriceRule = (context: any, args: {
 				return false
 			}
 			if (Number(row.minQuantity ?? 1) > args.quantity) return false
-			if (args.currency && row.currency && row.currency !== args.currency) return false
+			if (args.currency && row.currency && row.currency !== args.currency)
+				return false
 			return isInWindow(now, row.startsAt, row.endsAt)
 		},
 	})
@@ -278,7 +295,8 @@ const resolvePriceRule = (context: any, args: {
 	return candidates.sort((a: any, b: any) => {
 		const customerScoreA = a.customerId ? 1 : 0
 		const customerScoreB = b.customerId ? 1 : 0
-		if (customerScoreA !== customerScoreB) return customerScoreB - customerScoreA
+		if (customerScoreA !== customerScoreB)
+			return customerScoreB - customerScoreA
 		const priorityA = Number(a.priority ?? 0)
 		const priorityB = Number(b.priority ?? 0)
 		if (priorityA !== priorityB) return priorityB - priorityA
@@ -311,12 +329,15 @@ const resolvePromotion = (
 	return promotion
 }
 
-const resolveTaxPolicy = (context: any, args: {
-	tenantId: string
-	channel: 'MARKET' | 'POS'
-	taxPolicyCode?: string
-	jurisdiction?: string
-}) => {
+const resolveTaxPolicy = (
+	context: any,
+	args: {
+		tenantId: string
+		channel: 'MARKET' | 'POS'
+		taxPolicyCode?: string
+		jurisdiction?: string
+	},
+) => {
 	const now = Date.now()
 	if (args.taxPolicyCode) {
 		const explicit = context.db.schemas.taxPolicies.findMany({
@@ -339,7 +360,8 @@ const resolveTaxPolicy = (context: any, args: {
 			if (readTenantId(row) !== args.tenantId) return false
 			if (!row.active) return false
 			if (!(row.channel === 'ALL' || row.channel === args.channel)) return false
-			if (args.jurisdiction && row.jurisdiction !== args.jurisdiction) return false
+			if (args.jurisdiction && row.jurisdiction !== args.jurisdiction)
+				return false
 			return isInWindow(now, row.startsAt, row.endsAt)
 		},
 	})
@@ -393,9 +415,7 @@ const evaluateCommercialLine = (
 	})
 
 	const baseUnitPrice = roundMoney(
-		Number(
-			priceRule?.unitPrice ?? args.line.unitPrice ?? item.unitPrice ?? 0,
-		),
+		Number(priceRule?.unitPrice ?? args.line.unitPrice ?? item.unitPrice ?? 0),
 	)
 	const directDiscount = Number(args.line.discountPercent ?? 0)
 	const ruleDiscount = Number(priceRule?.discountPercent ?? 0)
@@ -430,7 +450,11 @@ const evaluateCommercialLine = (
 	}
 }
 
-const sumActiveReservations = (context: any, tenantId: string, itemId: string) =>
+const sumActiveReservations = (
+	context: any,
+	tenantId: string,
+	itemId: string,
+) =>
 	context.db.schemas.inventoryReservations
 		.findMany({
 			where: (row: any) =>
@@ -440,11 +464,14 @@ const sumActiveReservations = (context: any, tenantId: string, itemId: string) =
 		})
 		.reduce((sum: number, row: any) => sum + Number(row.quantity ?? 0), 0)
 
-const ensureReservationCapacity = (context: any, args: {
-	tenantId: string
-	itemId: string
-	quantity: number
-}) => {
+const ensureReservationCapacity = (
+	context: any,
+	args: {
+		tenantId: string
+		itemId: string
+		quantity: number
+	},
+) => {
 	const item = context.db.schemas.items.get(args.itemId)
 	if (!item || readTenantId(item) !== args.tenantId) {
 		throw new Error(`Item ${args.itemId} not found`)
@@ -458,20 +485,24 @@ const ensureReservationCapacity = (context: any, args: {
 	}
 }
 
-const reserveOrderLines = (context: any, args: {
-	tenantId: string
-	documentNo: string
-	lines: Array<{ _id: string; itemId: string; quantity: number }>
-}) => {
+const reserveOrderLines = (
+	context: any,
+	args: {
+		tenantId: string
+		documentNo: string
+		lines: Array<{ _id: string; itemId: string; quantity: number }>
+	},
+) => {
 	const createdReservationIds: string[] = []
 	for (const line of args.lines) {
-		const existingReservation = context.db.schemas.inventoryReservations.findMany({
-			where: (row: any) =>
-				readTenantId(row) === args.tenantId &&
-				row.salesLineId === line._id &&
-				row.status === 'ACTIVE',
-			limit: 1,
-		})[0]
+		const existingReservation =
+			context.db.schemas.inventoryReservations.findMany({
+				where: (row: any) =>
+					readTenantId(row) === args.tenantId &&
+					row.salesLineId === line._id &&
+					row.status === 'ACTIVE',
+				limit: 1,
+			})[0]
 		if (existingReservation) continue
 
 		ensureReservationCapacity(context, {
@@ -497,11 +528,14 @@ const reserveOrderLines = (context: any, args: {
 	return createdReservationIds
 }
 
-const releaseOrderReservations = (context: any, args: {
-	tenantId: string
-	documentNo: string
-	reason?: string
-}) => {
+const releaseOrderReservations = (
+	context: any,
+	args: {
+		tenantId: string
+		documentNo: string
+		reason?: string
+	},
+) => {
 	const activeReservations = context.db.schemas.inventoryReservations.findMany({
 		where: (row: any) =>
 			readTenantId(row) === args.tenantId &&
@@ -519,6 +553,19 @@ const releaseOrderReservations = (context: any, args: {
 		})
 	}
 	return activeReservations.length
+}
+
+const updateSalesLineReservedQuantity = (
+	context: any,
+	salesLineId: string,
+	nextReservedQuantity: number,
+) => {
+	const updated = context.db.schemas.salesLines.update(salesLineId, {
+		reservedQuantity: Math.max(0, Number(nextReservedQuantity.toFixed(2))),
+	})
+	if (!updated) {
+		throw new Error('Unable to update reservation quantity for sales line')
+	}
 }
 
 const incrementPromotionUsage = (
@@ -693,7 +740,8 @@ const salesOrdersRouter = createRPCRouter({
 			const originalLines = context.db.schemas.salesLines
 				.findMany({
 					where: (row: any) =>
-						readTenantId(row) === tenantId && row.documentNo === header.documentNo,
+						readTenantId(row) === tenantId &&
+						row.documentNo === header.documentNo,
 				})
 				.map((line: any) => ({ ...line }))
 
@@ -718,12 +766,14 @@ const salesOrdersRouter = createRPCRouter({
 					0,
 				)
 				const nextHeader = context.db.schemas.salesHeaders.get(input.id)
-				const effectiveCustomerId = input.header?.customerId ?? nextHeader?.customerId
+				const effectiveCustomerId =
+					input.header?.customerId ?? nextHeader?.customerId
 				const effectivePromotionCode =
 					input.header?.promotionCode ?? nextHeader?.promotionCode
 				const effectiveTaxJurisdiction =
 					input.header?.taxJurisdiction ?? nextHeader?.taxJurisdiction
-				const effectiveCurrency = input.header?.currency ?? nextHeader?.currency ?? 'USD'
+				const effectiveCurrency =
+					input.header?.currency ?? nextHeader?.currency ?? 'USD'
 
 				for (const lineChange of input.lineChanges) {
 					if (lineChange._delete) {
@@ -801,7 +851,8 @@ const salesOrdersRouter = createRPCRouter({
 				}
 
 				const refreshedHeader = context.db.schemas.salesHeaders.get(input.id)
-				if (!refreshedHeader) throw new Error('Sales order not found after update')
+				if (!refreshedHeader)
+					throw new Error('Sales order not found after update')
 				const lines = context.db.schemas.salesLines.findMany({
 					where: (row: any) =>
 						readTenantId(row) === tenantId &&
@@ -819,7 +870,8 @@ const salesOrdersRouter = createRPCRouter({
 				})
 				const currentLines = context.db.schemas.salesLines.findMany({
 					where: (row: any) =>
-						readTenantId(row) === tenantId && row.documentNo === header.documentNo,
+						readTenantId(row) === tenantId &&
+						row.documentNo === header.documentNo,
 				})
 				for (const line of currentLines) {
 					context.db.schemas.salesLines.delete(line._id)
@@ -876,7 +928,8 @@ const salesOrdersRouter = createRPCRouter({
 
 			const lines = context.db.schemas.salesLines.findMany({
 				where: (row: any) =>
-					readTenantId(row) === tenantId && row.documentNo === header.documentNo,
+					readTenantId(row) === tenantId &&
+					row.documentNo === header.documentNo,
 			})
 			if (lines.length === 0) {
 				throw new Error('Order must include at least one line')
@@ -1025,6 +1078,149 @@ const pricingRouter = createRPCRouter({
 					promotionCode: line.promotion?.code,
 					taxPolicyCode: line.taxPolicy?.code,
 				})),
+			}
+		}),
+})
+
+const reservationsRouter = createRPCRouter({
+	...inventoryReservationsRouter,
+	releaseControlled: publicProcedure
+		.input(releaseReservationInputSchema)
+		.route({
+			method: 'POST',
+			summary:
+				'Release active reservation with idempotent safety and explicit reason',
+		})
+		.handler(({ input, context }) => {
+			assertRole(context, 'MANAGER', 'market reservation controlled release')
+			const tenantId = context.auth.tenantId
+			const reservation = context.db.schemas.inventoryReservations.get(input.id)
+			if (!reservation || readTenantId(reservation) !== tenantId) {
+				throw new Error('Reservation not found')
+			}
+
+			if (reservation.status === 'RELEASED') {
+				return {
+					reservationId: reservation._id,
+					status: reservation.status,
+					idempotent: true,
+				}
+			}
+			if (reservation.status !== 'ACTIVE') {
+				throw new Error(
+					`Only ACTIVE reservations can be released (current: ${reservation.status})`,
+				)
+			}
+
+			const salesLine = context.db.schemas.salesLines.get(
+				reservation.salesLineId,
+			)
+			if (!salesLine || readTenantId(salesLine) !== tenantId) {
+				throw new Error('Sales line not found for reservation')
+			}
+			updateSalesLineReservedQuantity(
+				context,
+				salesLine._id,
+				Number(salesLine.reservedQuantity ?? 0) -
+					Number(reservation.quantity ?? 0),
+			)
+
+			const updated = context.db.schemas.inventoryReservations.update(
+				reservation._id,
+				{
+					status: 'RELEASED',
+					reason: input.reason,
+					releasedAt: new Date().toISOString(),
+				},
+			)
+			if (!updated) throw new Error('Unable to release reservation')
+			return {
+				reservationId: updated._id,
+				status: updated.status,
+				documentNo: updated.documentNo,
+				salesLineId: updated.salesLineId,
+				idempotent: false,
+			}
+		}),
+	reassignControlled: publicProcedure
+		.input(reassignReservationInputSchema)
+		.route({
+			method: 'POST',
+			summary:
+				'Reassign active reservation to another sales line with conflict/idempotency checks',
+		})
+		.handler(({ input, context }) => {
+			assertRole(context, 'MANAGER', 'market reservation controlled reassign')
+			const tenantId = context.auth.tenantId
+			const reservation = context.db.schemas.inventoryReservations.get(input.id)
+			if (!reservation || readTenantId(reservation) !== tenantId) {
+				throw new Error('Reservation not found')
+			}
+			if (reservation.status !== 'ACTIVE') {
+				throw new Error(
+					`Only ACTIVE reservations can be reassigned (current: ${reservation.status})`,
+				)
+			}
+
+			const targetLine = context.db.schemas.salesLines.get(
+				input.targetSalesLineId,
+			)
+			if (!targetLine || readTenantId(targetLine) !== tenantId) {
+				throw new Error('Target sales line not found')
+			}
+			if (targetLine.itemId !== reservation.itemId) {
+				throw new Error(
+					'Reservation reassignment requires target line with the same item',
+				)
+			}
+
+			if (reservation.salesLineId === targetLine._id) {
+				return {
+					reservationId: reservation._id,
+					status: reservation.status,
+					documentNo: reservation.documentNo,
+					salesLineId: reservation.salesLineId,
+					idempotent: true,
+				}
+			}
+
+			const currentLine = context.db.schemas.salesLines.get(
+				reservation.salesLineId,
+			)
+			if (!currentLine || readTenantId(currentLine) !== tenantId) {
+				throw new Error('Current sales line not found for reservation')
+			}
+
+			updateSalesLineReservedQuantity(
+				context,
+				currentLine._id,
+				Number(currentLine.reservedQuantity ?? 0) -
+					Number(reservation.quantity ?? 0),
+			)
+			updateSalesLineReservedQuantity(
+				context,
+				targetLine._id,
+				Number(targetLine.reservedQuantity ?? 0) +
+					Number(reservation.quantity ?? 0),
+			)
+
+			const updated = context.db.schemas.inventoryReservations.update(
+				reservation._id,
+				{
+					salesLineId: targetLine._id,
+					documentNo: targetLine.documentNo,
+					reason: input.reason,
+				},
+			)
+			if (!updated) {
+				throw new Error('Unable to reassign reservation')
+			}
+			return {
+				reservationId: updated._id,
+				status: updated.status,
+				documentNo: updated.documentNo,
+				salesLineId: updated.salesLineId,
+				idempotent: false,
 			}
 		}),
 })
@@ -1201,7 +1397,7 @@ export const marketRouter = createRPCRouter({
 	priceRules: priceRulesRouter,
 	promotions: promotionsRouter,
 	taxPolicies: taxPoliciesRouter,
-	inventoryReservations: inventoryReservationsRouter,
+	inventoryReservations: reservationsRouter,
 	pricing: pricingRouter,
 	carts: cartsRouter,
 	cartLines: cartLinesRouter,

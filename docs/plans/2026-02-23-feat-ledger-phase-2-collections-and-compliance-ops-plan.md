@@ -57,11 +57,11 @@ Ledger backend and tests cover posting and e-invoicing flows, but UI remains cen
 
 ## Acceptance Criteria
 
-- [ ] Credit memo workspace supports full create/post/review lifecycle.
-- [ ] E-invoice operations center shows queue, errors, retries, and outcomes.
-- [ ] Collections cockpit shows aging and follow-up workflows.
-- [ ] Cross-links exist between invoice, e-invoice submission, and ledger entry records.
-- [ ] Integration tests cover retry idempotency and status consistency.
+- [x] Credit memo workspace supports full create/post/review lifecycle.
+- [x] E-invoice operations center shows queue, errors, retries, and outcomes.
+- [x] Collections cockpit shows aging and follow-up workflows.
+- [x] Cross-links exist between invoice, e-invoice submission, and ledger entry records.
+- [x] Integration tests cover retry idempotency and status consistency.
 
 ## Success Metrics
 

@@ -32,5 +32,6 @@ describe('flow nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/flow/dashboard')
 		expect(moduleRoutes).toContain('/flow/payment-journal')
+		expect(moduleRoutes).toContain('/flow/reconciliation-approvals')
 	})
 })

@@ -11,7 +11,7 @@ async function selectFirstOption(trigger: Locator, page: Page) {
 test('hub notifications bulk actions keep selected count in sync @smoke', async ({
 	page,
 }) => {
-	await page.goto('/_shell/hub/notifications')
+	await page.goto('/hub/notifications')
 	await expect(
 		page.getByRole('heading', { name: 'Notifications' }),
 	).toBeVisible()
@@ -33,7 +33,7 @@ test('hub notifications bulk actions keep selected count in sync @smoke', async 
 })
 
 test('market sales order create-with-lines flow works @smoke', async ({ page }) => {
-	await page.goto('/_shell/market/sales-orders')
+	await page.goto('/market/sales-orders')
 	await expect(page.getByRole('heading', { name: 'Sales Orders' })).toBeVisible()
 
 	await page.getByTestId('sales-order-new-button').click()
@@ -52,7 +52,7 @@ test('market sales order create-with-lines flow works @smoke', async ({ page }) 
 test('replenishment purchase order create-with-lines flow works @smoke', async ({
 	page,
 }) => {
-	await page.goto('/_shell/replenishment/purchase-orders')
+	await page.goto('/replenishment/purchase-orders')
 	await expect(
 		page.getByRole('heading', { name: 'Purchase Orders' }),
 	).toBeVisible()

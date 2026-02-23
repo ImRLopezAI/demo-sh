@@ -32,5 +32,6 @@ describe('ledger nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/ledger/dashboard')
 		expect(moduleRoutes).toContain('/ledger/invoices')
+		expect(moduleRoutes).toContain('/ledger/collections-compliance')
 	})
 })

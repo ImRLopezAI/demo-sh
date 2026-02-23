@@ -40,6 +40,11 @@ export const navGroups: NavGroup[] = [
 					{ title: 'Dashboard', href: '/hub/dashboard', icon: LayoutDashboard },
 					{ title: 'Operation Tasks', href: '/hub/tasks', icon: ClipboardList },
 					{ title: 'Notifications', href: '/hub/notifications', icon: Bell },
+					{
+						title: 'Order Fulfillment',
+						href: '/hub/order-fulfillment',
+						icon: ClipboardList,
+					},
 				],
 			},
 		],
@@ -65,6 +70,11 @@ export const navGroups: NavGroup[] = [
 					{ title: 'Items', href: '/market/items', icon: Package },
 					{ title: 'Customers', href: '/market/customers', icon: Users },
 					{ title: 'Carts', href: '/market/carts', icon: ShoppingCart },
+					{
+						title: 'Pricing & Returns',
+						href: '/market/pricing-returns',
+						icon: DollarSign,
+					},
 				],
 			},
 			{
@@ -77,6 +87,11 @@ export const navGroups: NavGroup[] = [
 					{ title: 'Terminals', href: '/pos/terminals', icon: Monitor },
 					{ title: 'Sessions', href: '/pos/sessions', icon: Timer },
 					{ title: 'Terminal', href: '/pos/terminal', icon: Store },
+					{
+						title: 'Shift Controls',
+						href: '/pos/shift-controls',
+						icon: Timer,
+					},
 				],
 			},
 		],
@@ -105,6 +120,11 @@ export const navGroups: NavGroup[] = [
 						href: '/replenishment/transfers',
 						icon: ArrowRightLeft,
 					},
+					{
+						title: 'Planning Workbench',
+						href: '/replenishment/planning-workbench',
+						icon: Warehouse,
+					},
 				],
 			},
 			{
@@ -122,6 +142,11 @@ export const navGroups: NavGroup[] = [
 						title: 'Shipment Methods',
 						href: '/trace/shipment-methods',
 						icon: Boxes,
+					},
+					{
+						title: 'Carrier Ops',
+						href: '/trace/carrier-ops',
+						icon: Truck,
 					},
 				],
 			},
@@ -151,6 +176,11 @@ export const navGroups: NavGroup[] = [
 						href: '/insight/value-entries',
 						icon: DollarSign,
 					},
+					{
+						title: 'Forecast Workbench',
+						href: '/insight/forecast-workbench',
+						icon: BarChart3,
+					},
 				],
 			},
 		],
@@ -175,6 +205,11 @@ export const navGroups: NavGroup[] = [
 						icon: Users,
 					},
 					{ title: 'G/L Entries', href: '/ledger/gl-entries', icon: BookOpen },
+					{
+						title: 'Collections & Compliance',
+						href: '/ledger/collections-compliance',
+						icon: FileText,
+					},
 				],
 			},
 			{
@@ -199,6 +234,11 @@ export const navGroups: NavGroup[] = [
 						icon: Wallet,
 					},
 					{ title: 'G/L Entries', href: '/flow/gl-entries', icon: BookOpen },
+					{
+						title: 'Reconciliation & Approvals',
+						href: '/flow/reconciliation-approvals',
+						icon: ArrowRightLeft,
+					},
 				],
 			},
 			{
@@ -227,6 +267,11 @@ export const navGroups: NavGroup[] = [
 						title: 'Bank Ledger',
 						href: '/payroll/bank-ledger',
 						icon: Landmark,
+					},
+					{
+						title: 'Adjustments & Off-cycle',
+						href: '/payroll/adjustments-offcycle',
+						icon: Wallet,
 					},
 				],
 			},

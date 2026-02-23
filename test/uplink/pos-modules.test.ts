@@ -95,6 +95,121 @@ describe.sequential('pos module', () => {
 		expect(reusedSession.sessionId).toBe(startedSession.sessionId)
 	})
 
+	test('closes shifts with enforced variance controls and manager sign-off policy', async () => {
+		const managerCaller = createCaller({
+			role: 'MANAGER',
+			userId: 'store-manager',
+		})
+		const terminal =
+			db.schemas.terminals.findMany({
+				where: (row) => row.status === 'ONLINE',
+				limit: 1,
+			})[0] ?? db.schemas.terminals.toArray()[0]
+		expect(terminal?._id).toBeDefined()
+		if (!terminal?._id) {
+			throw new Error('Missing terminal')
+		}
+		if (terminal.status !== 'ONLINE') {
+			db.schemas.terminals.update(terminal._id, { status: 'ONLINE' })
+		}
+
+		const session = await managerCaller.pos.sessions.startSession({
+			terminalId: terminal._id,
+			cashierId: 'cashier-shift-close',
+			openingBalance: 100,
+		})
+		expect(session.sessionId).toBeTruthy()
+
+		await expect(
+			managerCaller.pos.sessions.closeShift({
+				sessionId: session.sessionId,
+				closingBalance: 60,
+				approvalVarianceThreshold: 20,
+			}),
+		).rejects.toThrow('Variance reason is required')
+
+		const closed = await managerCaller.pos.sessions.closeShift({
+			sessionId: session.sessionId,
+			closingBalance: 60,
+			varianceReason: 'Cash drop timing difference',
+			managerSignoffUserId: 'store-manager',
+			approvalVarianceThreshold: 20,
+		})
+		expect(closed.status).toBe('CLOSED')
+		expect(closed.managerApprovalRequired).toBe(true)
+		expect(closed.idempotent).toBe(false)
+
+		const retry = await managerCaller.pos.sessions.closeShift({
+			sessionId: session.sessionId,
+			closingBalance: 60,
+			varianceReason: 'Duplicate retry',
+			managerSignoffUserId: 'store-manager',
+			approvalVarianceThreshold: 20,
+		})
+		expect(retry.idempotent).toBe(true)
+	})
+
+	test('governs refund/void commands with idempotency and offline conflict-safe outcomes', async () => {
+		const managerCaller = createCaller({
+			role: 'MANAGER',
+			userId: 'pos-manager',
+		})
+		const session = db.schemas.posSessions.toArray()[0]
+		expect(session?._id).toBeDefined()
+		if (!session?._id) {
+			throw new Error('Missing seeded POS session')
+		}
+
+		const completedTx = await managerCaller.pos.transactions.create({
+			receiptNo: '',
+			posSessionId: session._id,
+			totalAmount: 42,
+			taxAmount: 6,
+			discountAmount: 0,
+			paidAmount: 42,
+			paymentMethod: 'CARD',
+		})
+		await managerCaller.pos.transactions.transitionStatus({
+			id: completedTx._id,
+			toStatus: 'COMPLETED',
+		})
+
+		const firstRefund = await managerCaller.pos.transactions.governTransaction({
+			transactionId: completedTx._id,
+			action: 'REFUND',
+			reason: 'Customer return',
+			idempotencyKey: 'offline-refund-1',
+			offlineOperationId: 'offline-op-1',
+		})
+		expect(firstRefund.idempotent).toBe(false)
+		expect(firstRefund.conflict).toBeNull()
+		expect(firstRefund.status).toBe('REFUNDED')
+
+		const replayRefund = await managerCaller.pos.transactions.governTransaction(
+			{
+				transactionId: completedTx._id,
+				action: 'REFUND',
+				reason: 'Retry same offline op',
+				idempotencyKey: 'offline-refund-1',
+				offlineOperationId: 'offline-op-1',
+			},
+		)
+		expect(replayRefund.idempotent).toBe(true)
+		expect(replayRefund.status).toBe('REFUNDED')
+
+		const conflictingVoid =
+			await managerCaller.pos.transactions.governTransaction({
+				transactionId: completedTx._id,
+				action: 'VOID',
+				reason: 'Late void replay from offline queue',
+				idempotencyKey: 'offline-void-1',
+				offlineOperationId: 'offline-op-2',
+			})
+		expect(conflictingVoid.idempotent).toBe(false)
+		expect(conflictingVoid.conflict?.type).toBe('ALREADY_REFUNDED')
+		expect(conflictingVoid.conflict?.resolution).toBe('SKIP')
+	})
+
 	test('enforces transaction transitions and reason requirements', async () => {
 		const caller = createCaller()
 		const transaction = db.schemas.posTransactions.toArray()[0]

@@ -57,11 +57,11 @@ Flow already supports batch posting and forecasting, but reconciliation and appr
 
 ## Acceptance Criteria
 
-- [ ] Reconciliation console supports open/matched/exception/reconciled workflows.
-- [ ] Maker-checker rules are enforceable and auditable.
-- [ ] Scenario planner supports configurable assumptions and comparison output.
-- [ ] Batch posting honors approval gates for configured thresholds.
-- [ ] Integration tests cover approval races and reconciliation transitions.
+- [x] Reconciliation console supports open/matched/exception/reconciled workflows.
+- [x] Maker-checker rules are enforceable and auditable.
+- [x] Scenario planner supports configurable assumptions and comparison output.
+- [x] Batch posting honors approval gates for configured thresholds.
+- [x] Integration tests cover approval races and reconciliation transitions.
 
 ## Success Metrics
 

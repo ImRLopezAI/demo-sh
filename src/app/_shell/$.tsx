@@ -1,11 +1,21 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { NotFoundComponent } from '@components/layout/errors/not-found'
+import type { ParsedLocation } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import type { ComponentType, LazyExoticComponent } from 'react'
 import { lazy, Suspense } from 'react'
+
+export interface ViewComponentProps {
+	splat: string
+	params: Record<string, string>
+	search: Record<string, unknown>
+	location: ParsedLocation
+}
 
 const VIEW_COMPONENTS = {
 	'hub/dashboard': lazy(() => import('./_views/hub/dashboard')),
 	'hub/tasks': lazy(() => import('./_views/hub/tasks-list')),
 	'hub/notifications': lazy(() => import('./_views/hub/notifications-list')),
+	'hub/order-fulfillment': lazy(() => import('./_views/hub/order-fulfillment')),
 	'market/dashboard': lazy(() => import('./_views/market/dashboard')),
 	'market/sales-orders': lazy(
 		() => import('./_views/market/sales-orders-list'),
@@ -13,6 +23,9 @@ const VIEW_COMPONENTS = {
 	'market/items': lazy(() => import('./_views/market/items-list')),
 	'market/customers': lazy(() => import('./_views/market/customers-list')),
 	'market/carts': lazy(() => import('./_views/market/carts-list')),
+	'market/pricing-returns': lazy(
+		() => import('./_views/market/pricing-returns'),
+	),
 	'insight/dashboard': lazy(() => import('./_views/insight/dashboard')),
 	'insight/item-ledger': lazy(
 		() => import('./_views/insight/item-ledger-list'),
@@ -20,6 +33,9 @@ const VIEW_COMPONENTS = {
 	'insight/locations': lazy(() => import('./_views/insight/locations-list')),
 	'insight/value-entries': lazy(
 		() => import('./_views/insight/value-entries-list'),
+	),
+	'insight/forecast-workbench': lazy(
+		() => import('./_views/insight/forecast-workbench'),
 	),
 	'replenishment/dashboard': lazy(
 		() => import('./_views/replenishment/dashboard'),
@@ -33,17 +49,26 @@ const VIEW_COMPONENTS = {
 	'replenishment/transfers': lazy(
 		() => import('./_views/replenishment/transfers-list'),
 	),
+	'replenishment/planning-workbench': lazy(
+		() => import('./_views/replenishment/planning-workbench'),
+	),
 	'ledger/dashboard': lazy(() => import('./_views/ledger/dashboard')),
 	'ledger/invoices': lazy(() => import('./_views/ledger/invoices-list')),
 	'ledger/customer-ledger': lazy(
 		() => import('./_views/ledger/customer-ledger-list'),
 	),
 	'ledger/gl-entries': lazy(() => import('./_views/ledger/gl-entries-list')),
+	'ledger/collections-compliance': lazy(
+		() => import('./_views/ledger/collections-compliance'),
+	),
 	'flow/dashboard': lazy(() => import('./_views/flow/dashboard')),
 	'flow/bank-accounts': lazy(() => import('./_views/flow/bank-accounts-list')),
 	'flow/bank-ledger': lazy(() => import('./_views/flow/bank-ledger-list')),
 	'flow/payment-journal': lazy(() => import('./_views/flow/payment-journal')),
 	'flow/gl-entries': lazy(() => import('./_views/flow/gl-entries-list')),
+	'flow/reconciliation-approvals': lazy(
+		() => import('./_views/flow/reconciliation-approvals'),
+	),
 	'payroll/dashboard': lazy(() => import('./_views/payroll/dashboard')),
 	'payroll/employees': lazy(() => import('./_views/payroll/employees-list')),
 	'payroll/employee-ledger': lazy(
@@ -56,17 +81,22 @@ const VIEW_COMPONENTS = {
 	'payroll/bank-ledger': lazy(
 		() => import('./_views/payroll/bank-ledger-list'),
 	),
+	'payroll/adjustments-offcycle': lazy(
+		() => import('./_views/payroll/adjustments-offcycle'),
+	),
 	'pos/dashboard': lazy(() => import('./_views/pos/dashboard')),
 	'pos/transactions': lazy(() => import('./_views/pos/transactions-list')),
 	'pos/terminals': lazy(() => import('./_views/pos/terminals-list')),
 	'pos/sessions': lazy(() => import('./_views/pos/sessions-list')),
 	'pos/terminal': lazy(() => import('./_views/pos/terminal-view')),
+	'pos/shift-controls': lazy(() => import('./_views/pos/shift-controls')),
 	'trace/dashboard': lazy(() => import('./_views/trace/dashboard')),
 	'trace/shipments': lazy(() => import('./_views/trace/shipments-list')),
 	'trace/shipment-methods': lazy(
 		() => import('./_views/trace/shipment-methods-list'),
 	),
-} as const satisfies Record<string, LazyExoticComponent<ComponentType>>
+	'trace/carrier-ops': lazy(() => import('./_views/trace/carrier-ops')),
+} as const satisfies Record<string, LazyExoticComponent<ComponentType<any>>>
 
 type ViewRouteKey = keyof typeof VIEW_COMPONENTS
 
@@ -75,10 +105,21 @@ function isViewRouteKey(key: string): key is ViewRouteKey {
 }
 
 export const Route = createFileRoute('/_shell/$')({
+	beforeLoad: ({ params }) => {
+		const { _splat } = params
+		if (!_splat || !isViewRouteKey(_splat)) {
+			throw notFound()
+		}
+	},
+	notFoundComponent: () => <NotFoundComponent />,
 	component: RouteComponent,
 })
 
-function RouteComponent() {
+function RouteComponent(props: {
+	params: Record<string, string>
+	search: Record<string, unknown>
+	location: ParsedLocation
+}) {
 	const { _splat } = Route.useParams()
 	const routeKey = _splat ?? ''
 
@@ -89,11 +130,18 @@ function RouteComponent() {
 			</div>
 		)
 	}
-	const ViewComponent = VIEW_COMPONENTS[routeKey]
+	const ViewComponent = VIEW_COMPONENTS[routeKey] as LazyExoticComponent<
+		ComponentType<ViewComponentProps>
+	>
 
 	return (
 		<Suspense fallback={<ViewSkeleton />}>
-			<ViewComponent />
+			<ViewComponent
+				splat={routeKey}
+				params={props.params}
+				search={props.search}
+				location={props.location}
+			/>
 		</Suspense>
 	)
 }
@@ -103,9 +151,9 @@ function ViewSkeleton() {
 		<div className='space-y-6'>
 			<div className='h-8 w-48 animate-pulse rounded bg-muted' />
 			<div className='grid grid-cols-4 gap-3'>
-				{Array.from({ length: 4 }).map((_, i) => (
+				{['a', 'b', 'c', 'd'].map((placeholderKey) => (
 					<div
-						key={`skeleton-${i}`}
+						key={`skeleton-${placeholderKey}`}
 						className='h-20 animate-pulse rounded-lg bg-muted'
 					/>
 				))}

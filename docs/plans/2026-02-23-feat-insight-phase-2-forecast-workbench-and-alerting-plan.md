@@ -57,11 +57,11 @@ Insight has forecasting logic in backend and basic analytics screens in UI, but 
 
 ## Acceptance Criteria
 
-- [ ] Forecast workbench available from Insight nav.
-- [ ] Workbench supports horizon/location/item inputs and displays risk-ranked outputs.
-- [ ] Slow/obsolete stock segmentation views are available and filterable.
-- [ ] Alert subscription creates actionable Hub notifications with deduplication.
-- [ ] Integration tests cover forecast rendering and alert trigger behavior.
+- [x] Forecast workbench available from Insight nav.
+- [x] Workbench supports horizon/location/item inputs and displays risk-ranked outputs.
+- [x] Slow/obsolete stock segmentation views are available and filterable.
+- [x] Alert subscription creates actionable Hub notifications with deduplication.
+- [x] Integration tests cover forecast rendering and alert trigger behavior.
 
 ## Success Metrics
 
@@ -203,7 +203,7 @@ interface InventoryAlertPolicy {
 
 **Additional Quality Gates**
 
-- [ ] Forecast output includes model assumptions, freshness timestamp, and confidence indicator.
+- [x] Forecast output includes model assumptions, freshness timestamp, and confidence indicator.
 - [ ] Alert generation enforces dedupe/suppression windows and records escalation outcomes.
 - [ ] Segmentation results are reproducible for the same input snapshot and threshold version.
 - [ ] Query endpoints reject over-broad cardinality requests with actionable validation details.

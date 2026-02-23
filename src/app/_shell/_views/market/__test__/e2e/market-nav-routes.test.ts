@@ -32,5 +32,6 @@ describe('market nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/market/dashboard')
 		expect(moduleRoutes).toContain('/market/sales-orders')
+		expect(moduleRoutes).toContain('/market/pricing-returns')
 	})
 })

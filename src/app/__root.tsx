@@ -1,3 +1,4 @@
+import { NotFoundComponent } from '@components/layout/errors/not-found'
 import { Providers } from '@components/layout/providers'
 import type { getContext } from '@lib/rpc/context'
 import {
@@ -33,6 +34,7 @@ const DevToolsRouterPanel = ENABLE_DEVTOOLS
 type RouterContext = ReturnType<typeof getContext>
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+	notFoundComponent: () => <NotFoundComponent />,
 	head: () => ({
 		meta: [
 			{

@@ -28,7 +28,7 @@ const config = defineConfig({
 			router: {
 				routesDirectory: 'app',
 				routeTreeFileFooter: routeComponentPropsFooter,
-				routeFileIgnorePattern: 'components|utils|styles|hooks|_views|_shared',
+				routeFileIgnorePattern: 'components|utils|styles|hooks|_views|_shared|nav-config',
 			},
 		}),
 		routeComponentPropsVitePlugin(),

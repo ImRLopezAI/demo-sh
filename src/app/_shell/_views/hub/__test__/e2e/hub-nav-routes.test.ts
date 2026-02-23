@@ -32,5 +32,6 @@ describe('hub nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/hub/dashboard')
 		expect(moduleRoutes).toContain('/hub/notifications')
+		expect(moduleRoutes).toContain('/hub/order-fulfillment')
 	})
 })

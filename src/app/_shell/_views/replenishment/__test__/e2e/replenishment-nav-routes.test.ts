@@ -28,9 +28,12 @@ const collectHrefs = (): string[] => {
 describe('replenishment nav routes (e2e)', () => {
 	test('contains replenishment route entries', () => {
 		const hrefs = collectHrefs()
-		const moduleRoutes = hrefs.filter((href) => href.startsWith('/replenishment/'))
+		const moduleRoutes = hrefs.filter((href) =>
+			href.startsWith('/replenishment/'),
+		)
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/replenishment/dashboard')
 		expect(moduleRoutes).toContain('/replenishment/purchase-orders')
+		expect(moduleRoutes).toContain('/replenishment/planning-workbench')
 	})
 })

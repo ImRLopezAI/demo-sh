@@ -57,11 +57,11 @@ Replenishment has strong backend planning endpoints and procure-to-pay actions, 
 
 ## Acceptance Criteria
 
-- [ ] Planner can run purchase/transfer proposal generation from UI.
-- [ ] Planner can inspect and action proposal results in one screen.
-- [ ] Supplier scorecards are visible and filterable.
-- [ ] Exception queue supports triage, assignment, and status transitions.
-- [ ] Tests cover proposal idempotency and duplicate-run protections.
+- [x] Planner can run purchase/transfer proposal generation from UI.
+- [x] Planner can inspect and action proposal results in one screen.
+- [x] Supplier scorecards are visible and filterable.
+- [x] Exception queue supports triage, assignment, and status transitions.
+- [x] Tests cover proposal idempotency and duplicate-run protections.
 
 ## Success Metrics
 

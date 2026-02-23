@@ -147,6 +147,84 @@ describe.sequential('insight module', () => {
 		).toBe(true)
 	})
 
+	test('triggers deduplicated hub notifications from forecast alert subscriptions', async () => {
+		const caller = createCaller({ role: 'MANAGER' })
+		const item = db.schemas.items.toArray()[0]
+		const location = db.schemas.locations.toArray()[0]
+		expect(item?._id).toBeDefined()
+		expect(location?.code).toBeDefined()
+		if (!item?._id || !location?.code) {
+			throw new Error('Missing seeded item/location')
+		}
+
+		const nowIso = new Date().toISOString()
+		db.schemas.itemLedgerEntries.insert({
+			entryNo: 0,
+			entryType: 'SALE',
+			itemId: item._id,
+			locationCode: location.code,
+			postingDate: nowIso,
+			quantity: 30,
+			remainingQty: 2,
+			open: false,
+			sourceDocumentType: 'ORDER',
+			sourceDocumentNo: 'SO-INSIGHT-ALERT-1',
+		})
+		db.schemas.itemLedgerEntries.insert({
+			entryNo: 0,
+			entryType: 'SALE',
+			itemId: item._id,
+			locationCode: location.code,
+			postingDate: nowIso,
+			quantity: 20,
+			remainingQty: 1,
+			open: false,
+			sourceDocumentType: 'ORDER',
+			sourceDocumentNo: 'SO-INSIGHT-ALERT-2',
+		})
+
+		await caller.hub.moduleSettings.upsertModuleSetting({
+			moduleId: 'insight',
+			settingKey: 'insight_alert_subscription',
+			value: {
+				stockoutRiskThreshold: 'HIGH',
+				obsoleteDaysThreshold: 45,
+				dedupeMinutes: 120,
+				escalationMinutes: 60,
+			},
+			schemaVersion: 'v2',
+			changeReason: 'Enable test alert policy',
+		})
+
+		const first = await caller.insight.triggerForecastAlerts({
+			horizonDays: 30,
+			locationCode: location.code,
+			itemId: item._id,
+			limit: 10,
+			maxNotifications: 10,
+		})
+		expect(first.created).toBeGreaterThan(0)
+		expect(first.deduped).toBe(0)
+		expect(first.createdNotificationIds.length).toBeGreaterThan(0)
+
+		const second = await caller.insight.triggerForecastAlerts({
+			horizonDays: 30,
+			locationCode: location.code,
+			itemId: item._id,
+			limit: 10,
+			maxNotifications: 10,
+		})
+		expect(second.created).toBe(0)
+		expect(second.deduped).toBeGreaterThan(0)
+
+		const notifications = db.schemas.moduleNotifications.findMany({
+			where: (row) =>
+				row.moduleId === 'insight' &&
+				(row.body?.includes('[insight-alert:') ?? false),
+		})
+		expect(notifications.length).toBeGreaterThan(0)
+	})
+
 	test('keeps 25-row insight pagination within acceptable latency', async () => {
 		const caller = createCaller()
 		const maxDurationMs = 2000

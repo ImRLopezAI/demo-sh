@@ -32,5 +32,6 @@ describe('payroll nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/payroll/dashboard')
 		expect(moduleRoutes).toContain('/payroll/payroll-journal')
+		expect(moduleRoutes).toContain('/payroll/adjustments-offcycle')
 	})
 })

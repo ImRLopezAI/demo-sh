@@ -57,11 +57,11 @@ Payroll backend supports adjustments and statutory report generation, but curren
 
 ## Acceptance Criteria
 
-- [ ] Payroll adjustments can be created and reviewed in UI.
-- [ ] Statutory reports can be generated/tracked/downloaded in UI.
-- [ ] Off-cycle/retro run types are supported with reference links.
-- [ ] Run state machine enforces allowed windows for adjustments.
-- [ ] Integration tests cover retro correction and idempotent payment behavior.
+- [x] Payroll adjustments can be created and reviewed in UI.
+- [x] Statutory reports can be generated/tracked/downloaded in UI.
+- [x] Off-cycle/retro run types are supported with reference links.
+- [x] Run state machine enforces allowed windows for adjustments.
+- [x] Integration tests cover retro correction and idempotent payment behavior.
 
 ## Success Metrics
 

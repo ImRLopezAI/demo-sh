@@ -59,12 +59,12 @@ Hub already exposes advanced orchestration and SLA procedures, but the UI/nav cu
 
 ## Acceptance Criteria
 
-- [ ] New `hub/order-fulfillment` route is available in navigation.
-- [ ] Operators can start and resume workflows from UI.
-- [ ] Stage timeline renders real status from `getOrderFulfillmentStatus`.
-- [ ] Incident timeline correlates task + notification + audit records.
-- [ ] SLA policy updates are versioned and rollback-capable.
-- [ ] E2E coverage validates orchestration UI happy path and failure resume.
+- [x] New `hub/order-fulfillment` route is available in navigation.
+- [x] Operators can start and resume workflows from UI.
+- [x] Stage timeline renders real status from `getOrderFulfillmentStatus`.
+- [x] Incident timeline correlates task + notification + audit records.
+- [x] SLA policy updates are versioned and rollback-capable.
+- [x] E2E coverage validates orchestration UI happy path and failure resume.
 
 ## Success Metrics
 
@@ -219,8 +219,8 @@ type Problem = {
 
 **Additional Quality Gates**
 
-- [ ] Orchestration start/resume endpoints are idempotent and return deterministic conflict responses.
-- [ ] Control-room queries use stable query keys and targeted invalidation only.
+- [x] Orchestration start/resume endpoints are idempotent and return deterministic conflict responses.
+- [x] Control-room queries use stable query keys and targeted invalidation only.
 - [ ] Incident timeline is keyboard-navigable and dialog actions meet ARIA modal requirements.
 - [ ] OpenTelemetry traces exist for each workflow stage transition.
 - [ ] Problem Details responses include correlation identifiers for operator support.

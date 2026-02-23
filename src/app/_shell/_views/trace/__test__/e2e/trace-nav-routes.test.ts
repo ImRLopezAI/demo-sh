@@ -32,5 +32,6 @@ describe('trace nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/trace/dashboard')
 		expect(moduleRoutes).toContain('/trace/shipments')
+		expect(moduleRoutes).toContain('/trace/carrier-ops')
 	})
 })

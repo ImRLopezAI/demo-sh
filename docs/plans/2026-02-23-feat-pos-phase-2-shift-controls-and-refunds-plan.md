@@ -57,11 +57,11 @@ POS terminal and offline queue behavior are present, but critical end-of-shift a
 
 ## Acceptance Criteria
 
-- [ ] Shift reconciliation flow exists with variance + reason capture.
-- [ ] Refund/void center supports receipt lookup and approval controls.
-- [ ] Device health dashboard surfaces terminal and peripheral status.
-- [ ] Offline queue remains safe for replay with refund edge cases.
-- [ ] Integration tests cover shift-close, refund governance, and offline conflict paths.
+- [x] Shift reconciliation flow exists with variance + reason capture.
+- [x] Refund/void center supports receipt lookup and approval controls.
+- [x] Device health dashboard surfaces terminal and peripheral status.
+- [x] Offline queue remains safe for replay with refund edge cases.
+- [x] Integration tests cover shift-close, refund governance, and offline conflict paths.
 
 ## Success Metrics
 
@@ -209,11 +209,11 @@ interface ReplayConflict {
 
 **Additional Quality Gates**
 
-- [ ] Shift close requires variance reason and manager sign-off for policy-defined thresholds.
-- [ ] Refund/void commands are idempotent and conflict-safe with offline replay operations.
-- [ ] Device health dashboard distinguishes transient vs persistent degradation states.
-- [ ] Audit trail links every high-risk action to session, actor, terminal, and timestamp.
-- [ ] Operational errors expose machine-readable causes and remediation hints.
+- [x] Shift close requires variance reason and manager sign-off for policy-defined thresholds.
+- [x] Refund/void commands are idempotent and conflict-safe with offline replay operations.
+- [x] Device health dashboard distinguishes transient vs persistent degradation states.
+- [x] Audit trail links every high-risk action to session, actor, terminal, and timestamp.
+- [x] Operational errors expose machine-readable causes and remediation hints.
 
 ### References
 

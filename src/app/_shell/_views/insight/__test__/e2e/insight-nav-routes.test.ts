@@ -32,5 +32,6 @@ describe('insight nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/insight/dashboard')
 		expect(moduleRoutes).toContain('/insight/item-ledger')
+		expect(moduleRoutes).toContain('/insight/forecast-workbench')
 	})
 })

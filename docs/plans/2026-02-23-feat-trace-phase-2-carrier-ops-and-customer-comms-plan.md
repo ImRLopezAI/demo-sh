@@ -57,11 +57,11 @@ Trace backend includes carrier operations and timeline APIs, but UI currently em
 
 ## Acceptance Criteria
 
-- [ ] Carrier account and label/rate operations are available from UI.
-- [ ] Shipment timeline shows normalized event chain and triage actions.
-- [ ] Customer communication templates can be configured and triggered.
-- [ ] Duplicate events/messages are prevented through idempotency controls.
-- [ ] Integration tests cover carrier event ingestion and timeline consistency.
+- [x] Carrier account and label/rate operations are available from UI.
+- [x] Shipment timeline shows normalized event chain and triage actions.
+- [x] Customer communication templates can be configured and triggered.
+- [x] Duplicate events/messages are prevented through idempotency controls.
+- [x] Integration tests cover carrier event ingestion and timeline consistency.
 
 ## Success Metrics
 

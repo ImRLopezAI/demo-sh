@@ -57,11 +57,11 @@ Market supports order/cart workflows, but high-value pricing controls and return
 
 ## Acceptance Criteria
 
-- [ ] Pricing simulation screen supports line and cart-level previews.
-- [ ] Reservation monitor shows active/stale/conflicting reservations.
-- [ ] Operators can perform controlled reservation release/reassignment.
-- [ ] Return workflow links to ledger credit memo references.
-- [ ] Integration tests cover pricing parity and reservation concurrency.
+- [x] Pricing simulation screen supports line and cart-level previews.
+- [x] Reservation monitor shows active/stale/conflicting reservations.
+- [x] Operators can perform controlled reservation release/reassignment.
+- [x] Return workflow links to ledger credit memo references.
+- [x] Integration tests cover pricing parity and reservation concurrency.
 
 ## Success Metrics
 
@@ -211,7 +211,7 @@ type ReservationMutationInput = {
 **Additional Quality Gates**
 
 - [ ] Simulation and checkout totals match within configured rounding policy for all supported tax regimes.
-- [ ] Reservation release/reassign actions are idempotent and conflict-safe under concurrent execution.
+- [x] Reservation release/reassign actions are idempotent and conflict-safe under concurrent execution.
 - [ ] Return records include immutable linkage to source order/line and optional Ledger credit memo reference.
 - [ ] Problem Details responses include machine-readable `type`, `status`, and `correlationId` fields.
 - [ ] Operational UI actions are keyboard accessible and focus-safe for modal confirmation flows.

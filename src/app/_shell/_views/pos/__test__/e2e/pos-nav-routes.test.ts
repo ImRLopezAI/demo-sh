@@ -32,5 +32,6 @@ describe('pos nav routes (e2e)', () => {
 		expect(moduleRoutes.length).toBeGreaterThan(0)
 		expect(moduleRoutes).toContain('/pos/dashboard')
 		expect(moduleRoutes).toContain('/pos/terminal')
+		expect(moduleRoutes).toContain('/pos/shift-controls')
 	})
 })

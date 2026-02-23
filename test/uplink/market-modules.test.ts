@@ -190,7 +190,9 @@ describe.sequential('market module', () => {
 		expect(result.header.documentNo).toBeTruthy()
 		expect(result.lines).toHaveLength(2)
 		expect(
-			result.lines.every((line) => line.documentNo === result.header.documentNo),
+			result.lines.every(
+				(line) => line.documentNo === result.header.documentNo,
+			),
 		).toBe(true)
 	})
 
@@ -353,7 +355,9 @@ describe.sequential('market module', () => {
 
 		expect(updated.header.currency).toBe('EUR')
 		expect(updated.lines).toHaveLength(2)
-		expect(updated.lines.some((line) => line._id === secondLine._id)).toBe(false)
+		expect(updated.lines.some((line) => line._id === secondLine._id)).toBe(
+			false,
+		)
 		expect(
 			updated.lines.some(
 				(line) => line._id === firstLine._id && line.quantity === 3,
@@ -557,6 +561,94 @@ describe.sequential('market module', () => {
 		})
 		expect(releasedReservations).toHaveLength(1)
 		expect(releasedReservations[0].status).toBe('RELEASED')
+	})
+
+	test('supports controlled reservation release/reassignment with idempotent safety', async () => {
+		const caller = createCaller({ role: 'MANAGER' })
+		const customer = db.schemas.customers.toArray()[0]
+		const item = db.schemas.items.toArray()[0]
+		expect(customer?._id).toBeDefined()
+		expect(item?._id).toBeDefined()
+		if (!customer?._id || !item?._id) {
+			throw new Error('Missing seeded customer or item')
+		}
+
+		const sourceOrder = await caller.market.salesOrders.createWithLines({
+			header: {
+				documentType: 'ORDER',
+				customerId: customer._id,
+				orderDate: new Date().toISOString(),
+				currency: 'USD',
+			},
+			lines: [
+				{
+					itemId: item._id,
+					quantity: 2,
+					unitPrice: 50,
+					discountPercent: 0,
+				},
+			],
+		})
+		const submitted = await caller.market.salesOrders.submitForApproval({
+			id: sourceOrder.header._id,
+		})
+		expect(submitted.reservations).toHaveLength(1)
+		const reservationId = submitted.reservations[0]._id
+
+		const targetOrder = await caller.market.salesOrders.createWithLines({
+			header: {
+				documentType: 'ORDER',
+				customerId: customer._id,
+				orderDate: new Date().toISOString(),
+				currency: 'USD',
+			},
+			lines: [
+				{
+					itemId: item._id,
+					quantity: 1,
+					unitPrice: 45,
+					discountPercent: 0,
+				},
+			],
+		})
+		const targetLine = targetOrder.lines[0]
+		expect(targetLine?._id).toBeDefined()
+		if (!targetLine?._id) {
+			throw new Error('Missing target sales line')
+		}
+
+		const reassigned =
+			await caller.market.inventoryReservations.reassignControlled({
+				id: reservationId,
+				targetSalesLineId: targetLine._id,
+				reason: 'Reassign stale lock to prioritized order',
+			})
+		expect(reassigned.idempotent).toBe(false)
+		expect(reassigned.salesLineId).toBe(targetLine._id)
+		expect(reassigned.documentNo).toBe(targetLine.documentNo)
+
+		const reassignedRetry =
+			await caller.market.inventoryReservations.reassignControlled({
+				id: reservationId,
+				targetSalesLineId: targetLine._id,
+				reason: 'Retry same reassignment',
+			})
+		expect(reassignedRetry.idempotent).toBe(true)
+
+		const released =
+			await caller.market.inventoryReservations.releaseControlled({
+				id: reservationId,
+				reason: 'Manual release after order merge',
+			})
+		expect(released.idempotent).toBe(false)
+		expect(released.status).toBe('RELEASED')
+
+		const releasedRetry =
+			await caller.market.inventoryReservations.releaseControlled({
+				id: reservationId,
+				reason: 'Duplicate release',
+			})
+		expect(releasedRetry.idempotent).toBe(true)
 	})
 
 	test('enforces oversell prevention when submitting orders for approval', async () => {
@@ -826,7 +918,10 @@ describe.sequential('market module', () => {
 		const caller = createCaller()
 		const maxDurationMs = 2000
 		const startedAt = Date.now()
-		const result = await caller.market.salesOrders.list({ limit: 25, offset: 0 })
+		const result = await caller.market.salesOrders.list({
+			limit: 25,
+			offset: 0,
+		})
 		const durationMs = Date.now() - startedAt
 
 		expect(Array.isArray(result.items)).toBe(true)

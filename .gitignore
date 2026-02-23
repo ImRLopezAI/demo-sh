@@ -11,3 +11,10 @@ count.txt
 .output
 .vinxi
 todos.json
+
+# Ignore all log files
+*.log
+playwright-report
+coverage
+coverage-ssr
+test-results

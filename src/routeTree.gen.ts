@@ -299,6 +299,7 @@ function wrapComponent(route, Component) {
       params: match.params,
       search: match.search,
       context: match.context,
+      location: state.location,
       router,
       state,
     }
