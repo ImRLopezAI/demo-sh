@@ -1,5 +1,13 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	BANK_ACCOUNT_TRANSITIONS,
+	BANK_ACCOUNT_REASON_REQUIRED,
+	RECONCILIATION_TRANSITIONS,
+	RECONCILIATION_REASON_REQUIRED,
+	JOURNAL_LINE_TRANSITIONS,
+	JOURNAL_LINE_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,12 +17,8 @@ const bankAccountsRouter = createTenantScopedCrudRouter({
 	primaryTable: 'bankAccounts',
 	viewTables: { overview: 'bankAccounts' },
 	statusField: 'status',
-	transitions: {
-		ACTIVE: ['INACTIVE', 'BLOCKED'],
-		INACTIVE: ['ACTIVE', 'BLOCKED'],
-		BLOCKED: ['ACTIVE', 'INACTIVE'],
-	},
-	reasonRequiredStatuses: ['BLOCKED'],
+	transitions: BANK_ACCOUNT_TRANSITIONS,
+	reasonRequiredStatuses: BANK_ACCOUNT_REASON_REQUIRED,
 	statusRoleRequirements: {
 		BLOCKED: 'MANAGER',
 	},
@@ -26,12 +30,8 @@ const bankLedgerEntriesRouter = createTenantScopedCrudRouter({
 	primaryTable: 'bankAccountLedgerEntries',
 	viewTables: { overview: 'bankAccountLedgerEntries' },
 	statusField: 'reconciliationStatus',
-	transitions: {
-		OPEN: ['MATCHED', 'EXCEPTION'],
-		MATCHED: ['RECONCILED', 'EXCEPTION'],
-		EXCEPTION: ['MATCHED'],
-	},
-	reasonRequiredStatuses: ['EXCEPTION'],
+	transitions: RECONCILIATION_TRANSITIONS,
+	reasonRequiredStatuses: RECONCILIATION_REASON_REQUIRED,
 	statusRoleRequirements: {
 		RECONCILED: 'MANAGER',
 	},
@@ -43,11 +43,8 @@ const journalLinesCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'genJournalLines',
 	viewTables: { overview: 'genJournalLines' },
 	statusField: 'status',
-	transitions: {
-		OPEN: ['APPROVED', 'POSTED', 'VOIDED'],
-		APPROVED: ['POSTED', 'VOIDED'],
-	},
-	reasonRequiredStatuses: ['VOIDED'],
+	transitions: JOURNAL_LINE_TRANSITIONS,
+	reasonRequiredStatuses: JOURNAL_LINE_REASON_REQUIRED,
 	statusRoleRequirements: {
 		POSTED: 'MANAGER',
 		VOIDED: 'MANAGER',

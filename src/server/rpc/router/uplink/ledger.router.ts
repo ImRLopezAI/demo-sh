@@ -1,5 +1,11 @@
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
+import {
+	SALES_INVOICE_TRANSITIONS,
+	SALES_INVOICE_REASON_REQUIRED,
+	POSTING_TRANSITIONS,
+	POSTING_REASON_REQUIRED,
+} from '@server/db/constants'
 import { assertPermission, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 
@@ -9,12 +15,8 @@ const invoicesCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'salesInvoiceHeaders',
 	viewTables: { overview: 'salesInvoiceHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: [],
-		POSTED: ['REVERSED'],
-		REVERSED: [],
-	},
-	reasonRequiredStatuses: ['REVERSED'],
+	transitions: SALES_INVOICE_TRANSITIONS,
+	reasonRequiredStatuses: SALES_INVOICE_REASON_REQUIRED,
 	statusRoleRequirements: {
 		REVERSED: 'MANAGER',
 	},
@@ -44,12 +46,8 @@ const creditMemosCrudRouter = createTenantScopedCrudRouter({
 	primaryTable: 'salesCreditMemoHeaders',
 	viewTables: { overview: 'salesCreditMemoHeaders' },
 	statusField: 'status',
-	transitions: {
-		DRAFT: ['POSTED', 'CANCELED'],
-		POSTED: ['CANCELED'],
-		CANCELED: [],
-	},
-	reasonRequiredStatuses: ['CANCELED'],
+	transitions: POSTING_TRANSITIONS,
+	reasonRequiredStatuses: POSTING_REASON_REQUIRED,
 	statusRoleRequirements: {
 		POSTED: 'MANAGER',
 		CANCELED: 'MANAGER',
@@ -658,7 +656,9 @@ const eInvoicingRouter = createRPCRouter({
 					document.eInvoiceStatus === 'ACCEPTED')
 			) {
 				if (!latestSubmission) {
-					throw new Error('Document indicates submitted state without submission')
+					throw new Error(
+						'Document indicates submitted state without submission',
+					)
 				}
 				return {
 					submissionId: latestSubmission._id,
@@ -684,9 +684,7 @@ const eInvoicingRouter = createRPCRouter({
 				submissionId: createdSubmission._id,
 				eventType: latestSubmission ? 'RETRIED' : 'SUBMITTED',
 				eventAt: new Date().toISOString(),
-				message: latestSubmission
-					? 'Submission retried'
-					: 'Submission created',
+				message: latestSubmission ? 'Submission retried' : 'Submission created',
 			})
 			document.update({
 				eInvoiceStatus: 'SUBMITTED',
@@ -766,7 +764,10 @@ const eInvoicingRouter = createRPCRouter({
 			const rejectedSubmission = context.db.schemas.eInvoiceSubmissions.get(
 				input.submissionId,
 			)
-			if (!rejectedSubmission || readTenantId(rejectedSubmission) !== tenantId) {
+			if (
+				!rejectedSubmission ||
+				readTenantId(rejectedSubmission) !== tenantId
+			) {
 				throw new Error('E-invoice submission not found')
 			}
 			if (rejectedSubmission.status !== 'REJECTED') {
