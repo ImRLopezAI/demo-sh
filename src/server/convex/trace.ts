@@ -17,14 +17,12 @@ export const shipments = zodTable('shipments', (_zid) => ({
 	trackingNo: z.string().optional(),
 	statusReason: z.string().optional(),
 	statusUpdatedAt: z.number().optional(),
-	lineCount: z.number().default(0),
 }))
 
 export const shipmentLines = zodTable('shipmentLines', (zid) => ({
 	shipmentNo: zid('shipments'),
 	lineNo: z.number().default(0),
 	itemId: zid('items'),
-	itemDescription: z.string().optional(),
 	description: z.string().optional(),
 	quantity: z.number().default(0),
 	quantityShipped: z.number().default(0),

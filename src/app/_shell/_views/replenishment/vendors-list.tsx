@@ -1,5 +1,8 @@
+import { Plus } from 'lucide-react'
 import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
+import { PageHeader } from '../_shared/page-header'
 import { VendorCard } from './components/vendor-card'
 
 interface Vendor {
@@ -30,49 +33,76 @@ export default function VendorsList() {
 	const handleEdit = React.useCallback((row: Vendor) => {
 		setSelectedId(row._id)
 	}, [])
+	const handleNew = React.useCallback(() => {
+		setSelectedId('new')
+	}, [])
 
 	return (
-		<>
-			<DataGrid variant='lined' height={Math.max(windowSize.height - 200, 380)}>
-				<DataGrid.Header>
-					<DataGrid.Toolbar filter sort search export />
-				</DataGrid.Header>
-				<DataGrid.Columns>
-					<DataGrid.Column<Vendor>
-						accessorKey='vendorNo'
-						title='Vendor No.'
-						handleEdit={handleEdit}
-					/>
-					<DataGrid.Column<Vendor> accessorKey='name' title='Name' />
-					<DataGrid.Column<Vendor>
-						accessorKey='contactName'
-						title='Contact Name'
-					/>
-					<DataGrid.Column<Vendor> accessorKey='email' title='Email' />
-					<DataGrid.Column<Vendor> accessorKey='phone' title='Phone' />
-					<DataGrid.Column<Vendor> accessorKey='city' title='City' />
-					<DataGrid.Column<Vendor> accessorKey='country' title='Country' />
-					<DataGrid.Column<Vendor> accessorKey='currency' title='Currency' />
-					<DataGrid.Column<Vendor>
-						accessorKey='blocked'
-						title='Blocked'
-						cellVariant='checkbox'
-					/>
-					<DataGrid.Column<Vendor>
-						accessorKey='purchaseOrderCount'
-						title='PO Count'
-						cellVariant='number'
-					/>
-					<DataGrid.Column<Vendor>
-						accessorKey='totalBalance'
-						title='Total Balance'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.totalBalance)}
-					/>
-				</DataGrid.Columns>
-			</DataGrid>
+		<div className='space-y-8 pb-8'>
+			<PageHeader
+				title='Vendors'
+				description='Manage vendor master records and purchasing details'
+				actions={
+					<Button
+						size='sm'
+						onClick={handleNew}
+						className='shadow-sm transition-all hover:shadow-md'
+					>
+						<Plus className='mr-1.5 size-4' aria-hidden='true' />
+						New Vendor
+					</Button>
+				}
+			/>
 
-			<VendorCard recordId={selectedId} onClose={() => setSelectedId(null)} />
-		</>
+			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+				<DataGrid
+					variant='flat'
+					height={Math.max(windowSize.height - 240, 400)}
+				>
+					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
+						<DataGrid.Toolbar filter sort search export />
+					</DataGrid.Header>
+					<DataGrid.Columns>
+						<DataGrid.Column<Vendor>
+							accessorKey='vendorNo'
+							title='Vendor No.'
+							handleEdit={handleEdit}
+						/>
+						<DataGrid.Column<Vendor> accessorKey='name' title='Name' />
+						<DataGrid.Column<Vendor>
+							accessorKey='contactName'
+							title='Contact Name'
+						/>
+						<DataGrid.Column<Vendor> accessorKey='email' title='Email' />
+						<DataGrid.Column<Vendor> accessorKey='phone' title='Phone' />
+						<DataGrid.Column<Vendor> accessorKey='city' title='City' />
+						<DataGrid.Column<Vendor> accessorKey='country' title='Country' />
+						<DataGrid.Column<Vendor> accessorKey='currency' title='Currency' />
+						<DataGrid.Column<Vendor>
+							accessorKey='blocked'
+							title='Blocked'
+							cellVariant='checkbox'
+						/>
+						<DataGrid.Column<Vendor>
+							accessorKey='purchaseOrderCount'
+							title='PO Count'
+							cellVariant='number'
+						/>
+						<DataGrid.Column<Vendor>
+							accessorKey='totalBalance'
+							title='Total Balance'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.totalBalance)}
+						/>
+					</DataGrid.Columns>
+				</DataGrid>
+			</div>
+
+			<VendorCard
+				recordId={selectedId}
+				onClose={() => setSelectedId(null)}
+				onCreated={(id) => setSelectedId(id)}
+			/>
+		</div>
 	)
 }

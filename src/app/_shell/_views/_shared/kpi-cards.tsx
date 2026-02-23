@@ -25,32 +25,40 @@ export function KpiCards({
 	return (
 		<div
 			className={cn(
-				'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4',
+				'grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4',
 				className,
 			)}
 		>
 			{cards.length === 0 && (
-				<p className='col-span-full text-center text-muted-foreground text-sm'>
+				<p className='col-span-full py-8 text-center text-muted-foreground text-sm'>
 					No data available
 				</p>
 			)}
 			{cards.map((card) => (
-				<Card key={card.title} size='sm' className='relative'>
-					<CardHeader>
+				<Card
+					key={card.title}
+					size='sm'
+					className='group relative overflow-hidden border-border/50 bg-background/50 shadow-sm backdrop-blur-xl transition-all duration-300 hover:shadow-md'
+				>
+					<div className='absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
+					<CardHeader className='pb-2'>
 						<div className='flex items-center justify-between'>
-							<CardDescription>{card.title}</CardDescription>
+							<CardDescription className='font-medium text-muted-foreground/80'>
+								{card.title}
+							</CardDescription>
 							{card.icon && (
-								<card.icon
-									className='size-4 text-muted-foreground'
-									aria-hidden='true'
-								/>
+								<div className='rounded-lg bg-primary/10 p-2 text-primary'>
+									<card.icon className='size-4' aria-hidden='true' />
+								</div>
 							)}
 						</div>
-						<CardTitle className='text-lg tabular-nums'>{card.value}</CardTitle>
+						<CardTitle className='mt-2 text-2xl tabular-nums tracking-tight'>
+							{card.value}
+						</CardTitle>
 					</CardHeader>
 					{card.description && (
 						<CardContent>
-							<p className='text-muted-foreground text-xs'>
+							<p className='text-muted-foreground text-sm'>
 								{card.description}
 							</p>
 						</CardContent>

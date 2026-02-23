@@ -4,6 +4,7 @@ import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface EmployeeCardProps {
@@ -153,19 +154,37 @@ export function EmployeeCard({
 		}
 	}, [record, isNew, form])
 
-	const handleTransition = async (toStatus: string) => {
-		if (!recordId || isNew) return
-		await transitionStatus.mutateAsync({
-			id: recordId,
+	const handleTransition = React.useCallback(
+		async ({
 			toStatus,
-		})
-	}
+			reason,
+		}: {
+			toStatus: string
+			reason?: string
+		}) => {
+			if (!recordId || isNew) return
+			await transitionStatus.mutateAsync({
+				id: recordId,
+				toStatus,
+				reason,
+			})
+		},
+		[recordId, isNew, transitionStatus],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'payroll',
+		entityId: 'employees',
+		disabled: transitionStatus.isPending,
+		onTransition: handleTransition,
+	})
 
 	const currentStatus = record?.status ?? 'ACTIVE'
 	const transitions = STATUS_TRANSITIONS[currentStatus] ?? []
 
 	return (
-		<RecordDialog
+		<>
+			<RecordDialog
 			open={open}
 			onOpenChange={onOpenChange}
 			title={isNew ? 'New Employee' : `Employee ${record?.employeeNo ?? ''}`}
@@ -524,7 +543,9 @@ export function EmployeeCard({
 														<Button
 															key={transition.to}
 															variant='outline'
-															onClick={() => handleTransition(transition.to)}
+															onClick={() => {
+																void requestTransition(transition.to)
+															}}
 															disabled={transitionStatus.isPending}
 														>
 															{transition.label}
@@ -547,6 +568,8 @@ export function EmployeeCard({
 					)}
 				</Form>
 			)}
-		</RecordDialog>
+			</RecordDialog>
+			{reasonDialog}
+		</>
 	)
 }

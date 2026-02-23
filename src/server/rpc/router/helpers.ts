@@ -5,11 +5,19 @@ import {
 	type RpcContextType,
 } from '@server/rpc/init'
 import z from 'zod'
+import { type AuthRole, assertRole } from './authz'
 
 type TableNames = keyof RpcContextType['db']['schemas']
 
 type TransitionMap = Record<string, string[]>
 type ViewTableMap = Record<string, string>
+type ParentRelationConstraint = {
+	childField: string
+	parentTable: TableNames
+	parentField?: string
+	required?: boolean
+	errorMessage?: string
+}
 
 /** Generic table interface for the dynamic CRUD helper — avoids uncallable union signatures */
 interface GenericTable {
@@ -37,9 +45,11 @@ export interface CrudRouterConfig {
 	prefix?: string
 	primaryTable: TableNames
 	viewTables: ViewTableMap
+	parentRelations?: ParentRelationConstraint[]
 	statusField?: string
 	transitions?: TransitionMap
 	reasonRequiredStatuses?: string[]
+	statusRoleRequirements?: Partial<Record<string, AuthRole>>
 	createSchema?: z.ZodObject<any>
 	updateSchema?: z.ZodObject<any>
 }
@@ -94,6 +104,12 @@ function resolveSchemas(config: CrudRouterConfig) {
 
 const queryOptsSchema = z.object({
 	with: z.record(z.string(), z.boolean()).optional(),
+	filters: z
+		.record(
+			z.string(),
+			z.union([z.string(), z.number(), z.boolean(), z.null()]),
+		)
+		.optional(),
 	orderBy: z
 		.object({
 			field: z.string(),
@@ -105,6 +121,21 @@ const queryOptsSchema = z.object({
 
 export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 	const { createSchema, updateSchema } = resolveSchemas(config)
+	const matchesFilters = (
+		row: Record<string, any>,
+		filters: Record<string, string | number | boolean | null> | undefined,
+	) => {
+		if (!filters) return true
+		for (const [key, value] of Object.entries(filters)) {
+			const rowValue = row[key]
+			if (value === null) {
+				if (rowValue !== null && rowValue !== undefined) return false
+				continue
+			}
+			if (rowValue !== value) return false
+		}
+		return true
+	}
 
 	const listInputSchema = z
 		.object({
@@ -143,6 +174,47 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 
 	const NAME = config.prefix ?? config.moduleName
 
+	const validateParentRelations = ({
+		context,
+		tenantId,
+		payload,
+	}: {
+		context: RpcContextType
+		tenantId: string
+		payload: Record<string, unknown>
+	}) => {
+		for (const relation of config.parentRelations ?? []) {
+			const value = payload[relation.childField]
+			const required = relation.required ?? true
+			if (value === undefined || value === null || value === '') {
+				if (required) {
+					throw new Error(
+						relation.errorMessage ??
+							`${NAME} requires "${relation.childField}" to reference a parent record`,
+					)
+				}
+				continue
+			}
+
+			const parentTable = getTable(context, relation.parentTable)
+			const parentField = relation.parentField ?? '_id'
+			const parentRecord = parentTable.findMany({
+				where: (row) =>
+					(row.tenantId ?? 'demo-tenant') === tenantId &&
+					row[parentField] === value,
+				limit: 1,
+				columns: { _id: true },
+			})[0]
+
+			if (!parentRecord) {
+				throw new Error(
+					relation.errorMessage ??
+						`Invalid "${relation.childField}": parent not found`,
+				)
+			}
+		}
+	}
+
 	return createRPCRouter(
 		{
 			list: publicProcedure
@@ -156,6 +228,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					const items = table.findMany({
 						where: (row) => {
 							if ((row.tenantId ?? 'demo-tenant') !== tenantId) return false
+							if (!matchesFilters(row, input.filters)) return false
 							if (search) {
 								return Object.values(row).some((v: any) => {
 									if (v == null) return false
@@ -194,6 +267,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					const items = table.findMany({
 						where: (row) => {
 							if ((row.tenantId ?? 'demo-tenant') !== tenantId) return false
+							if (!matchesFilters(row, input.filters)) return false
 							if (search) {
 								return Object.values(row).some((v: any) => {
 									if (v == null) return false
@@ -243,20 +317,25 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					return row
 				}),
 
-			create: publicProcedure
-				.input(createSchema)
-				.route({ method: 'POST', summary: `Create ${NAME}` })
-				.handler(({ input, context }) => {
-					const table = getTable(context, config.primaryTable)
-					const payload = {
-						...input,
-						tenantId: context.auth.tenantId,
-						createdByUserId: context.auth.userId,
-						updatedByUserId: context.auth.userId,
-					}
+				create: publicProcedure
+					.input(createSchema)
+					.route({ method: 'POST', summary: `Create ${NAME}` })
+					.handler(({ input, context }) => {
+						const table = getTable(context, config.primaryTable)
+						const payload = {
+							...input,
+							tenantId: context.auth.tenantId,
+							createdByUserId: context.auth.userId,
+							updatedByUserId: context.auth.userId,
+						}
+						validateParentRelations({
+							context,
+							tenantId: context.auth.tenantId,
+							payload,
+						})
 
-					return table.insert(payload)
-				}),
+						return table.insert(payload)
+					}),
 
 			update: publicProcedure
 				.input(
@@ -266,20 +345,30 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					}),
 				)
 				.route({ method: 'PATCH', summary: `Update ${NAME}` })
-				.handler(({ input, context }) => {
-					const table = getTable(context, config.primaryTable)
-					const existing = table.get(input.id)
+					.handler(({ input, context }) => {
+						const table = getTable(context, config.primaryTable)
+						const existing = table.get(input.id)
 					ensureTenantAccess(
 						existing,
 						context.auth.tenantId,
 						config.primaryTable,
-					)
+						)
 
-					return table.update(input.id, {
-						...input.data,
-						updatedByUserId: context.auth.userId,
-					})
-				}),
+						const payload = {
+							...existing,
+							...input.data,
+						}
+						validateParentRelations({
+							context,
+							tenantId: context.auth.tenantId,
+							payload,
+						})
+
+						return table.update(input.id, {
+							...input.data,
+							updatedByUserId: context.auth.userId,
+						})
+					}),
 
 			delete: publicProcedure
 				.input(deleteInputSchema)
@@ -304,6 +393,15 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.handler(({ input, context }) => {
 					if (!config.statusField) {
 						throw new Error(`${NAME} does not have workflow status configured`)
+					}
+					assertRole(context, 'AGENT', `${NAME} status transition`)
+					const requiredRole = config.statusRoleRequirements?.[input.toStatus]
+					if (requiredRole) {
+						assertRole(
+							context,
+							requiredRole,
+							`${NAME} transition to "${input.toStatus}"`,
+						)
 					}
 
 					const table = getTable(context, config.primaryTable)

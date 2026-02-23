@@ -24,9 +24,11 @@ interface VendorRecord {
 export function VendorCard({
 	recordId,
 	onClose,
+	onCreated,
 }: {
 	recordId: string | null
 	onClose: () => void
+	onCreated?: (id: string) => void
 }) {
 	const isNew = recordId === 'new'
 	const open = recordId !== null
@@ -38,7 +40,7 @@ export function VendorCard({
 		{ enabled: open && !isNew },
 	)
 
-	const { update } = useEntityMutations('replenishment', 'vendors')
+	const { create, update } = useEntityMutations('replenishment', 'vendors')
 
 	const vendor = record as unknown as VendorRecord | undefined
 
@@ -71,26 +73,47 @@ export function VendorCard({
 				purchaseOrderCount: vendor?.purchaseOrderCount ?? 0,
 				totalBalance: vendor?.totalBalance ?? 0,
 			},
-			onSubmit: (data) => {
-				if (!recordId || isNew) return
-				update.mutate({
+			onSubmit: async (data) => {
+				if (isNew) {
+					const created = await create.mutateAsync({
+						vendorNo: '',
+						name: data.name,
+						contactName: data.contactName || undefined,
+						email: data.email || undefined,
+						phone: data.phone || undefined,
+						blocked: data.blocked,
+						address: data.address || undefined,
+						city: data.city || undefined,
+						country: data.country || undefined,
+						currency: data.currency || 'USD',
+					})
+					if (onCreated && created?._id) {
+						onCreated(created._id)
+					} else {
+						onClose()
+					}
+					return
+				}
+
+				if (!recordId) return
+				await update.mutateAsync({
 					id: recordId,
 					data: {
 						name: data.name,
-						contactName: data.contactName,
-						email: data.email,
-						phone: data.phone,
+						contactName: data.contactName || undefined,
+						email: data.email || undefined,
+						phone: data.phone || undefined,
 						blocked: data.blocked,
-						address: data.address,
-						city: data.city,
-						country: data.country,
+						address: data.address || undefined,
+						city: data.city || undefined,
+						country: data.country || undefined,
 						currency: data.currency,
 					},
 				})
 				onClose()
 			},
 		}),
-		[vendor, recordId],
+		[vendor, recordId, isNew, create, update, onClose, onCreated],
 	)
 
 	React.useEffect(() => {
@@ -109,8 +132,23 @@ export function VendorCard({
 				purchaseOrderCount: vendor.purchaseOrderCount,
 				totalBalance: vendor.totalBalance,
 			})
+		} else if (isNew) {
+			form.reset({
+				vendorNo: '',
+				name: '',
+				contactName: '',
+				email: '',
+				phone: '',
+				blocked: false,
+				address: '',
+				city: '',
+				country: '',
+				currency: 'USD',
+				purchaseOrderCount: 0,
+				totalBalance: 0,
+			})
 		}
-	}, [vendor, form])
+	}, [vendor, form, isNew])
 
 	return (
 		<RecordDialog

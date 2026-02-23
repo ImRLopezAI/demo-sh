@@ -10,7 +10,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const recordDialogVariants = cva(
-	'flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 max-sm:rounded-none sm:rounded-md md:h-[90dvh]',
+	'flex h-dvh w-full flex-col gap-0 overflow-hidden border border-border/50 bg-background/95 p-0 shadow-2xl backdrop-blur-xl max-sm:rounded-none sm:rounded-xl md:h-[90dvh]',
 	{
 		variants: {
 			size: {
@@ -49,20 +49,24 @@ export function RecordDialog({
 				showCloseButton
 				className={cn(recordDialogVariants({ size, className }))}
 			>
-				<DialogHeader className='shrink-0 border-b px-6 py-4'>
-					<div className='flex items-start justify-between gap-4'>
-						<div className='min-w-0'>
-							<DialogTitle className='text-balance'>{title}</DialogTitle>
+				<DialogHeader className='shrink-0 border-border/50 border-b bg-muted/10 px-8 py-6'>
+					<div className='flex items-start justify-between gap-6'>
+						<div className='min-w-0 space-y-1.5'>
+							<DialogTitle className='text-balance font-semibold text-foreground text-xl tracking-tight'>
+								{title}
+							</DialogTitle>
 							{description && (
-								<DialogDescription>{description}</DialogDescription>
+								<DialogDescription className='text-muted-foreground text-sm leading-relaxed'>
+									{description}
+								</DialogDescription>
 							)}
 						</div>
 						{footer && (
-							<div className='flex shrink-0 items-center gap-2'>{footer}</div>
+							<div className='flex shrink-0 items-center gap-3'>{footer}</div>
 						)}
 					</div>
 				</DialogHeader>
-				<div className='flex-1 overflow-auto px-6 py-4'>{children}</div>
+				<div className='flex-1 overflow-auto px-8 py-6'>{children}</div>
 			</DialogContent>
 		</Dialog>
 	)

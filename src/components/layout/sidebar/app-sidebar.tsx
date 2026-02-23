@@ -110,7 +110,11 @@ function AppSidebarRoot({
 
 	return (
 		<AppSidebarContext value={{ items, pathname, navigate }}>
-			<Sidebar collapsible='icon' {...props}>
+			<Sidebar
+				collapsible='icon'
+				className='border-border/50 border-r bg-background/50 backdrop-blur-xl'
+				{...props}
+			>
 				{header}
 				<ScrollArea className='h-full'>
 					<SidebarContent>

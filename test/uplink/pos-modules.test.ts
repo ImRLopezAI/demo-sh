@@ -54,6 +54,47 @@ describe.sequential('pos module', () => {
 		expect(Array.isArray(sessions.items)).toBe(true)
 	})
 
+	test('starts a session through API and reuses open session idempotently', async () => {
+		const caller = createCaller()
+		const terminal =
+			db.schemas.terminals.findMany({
+				where: (row) => row.status === 'ONLINE',
+				limit: 1,
+			})[0] ?? db.schemas.terminals.toArray()[0]
+		expect(terminal?._id).toBeDefined()
+		if (!terminal?._id) {
+			throw new Error('Missing POS terminal')
+		}
+		if (terminal.status !== 'ONLINE') {
+			db.schemas.terminals.update(terminal._id, { status: 'ONLINE' })
+		}
+
+		const startedSession = await caller.pos.sessions.startSession({
+			terminalId: terminal._id,
+			cashierId: 'cashier-api',
+			openingBalance: 150,
+		})
+		expect(startedSession.status).toBe('OPEN')
+		expect(startedSession.idempotent).toBe(false)
+		expect(startedSession.sessionId).toBeTruthy()
+		expect(startedSession.sessionNo).toBeTruthy()
+
+		const startedSessionRow = db.schemas.posSessions.get(
+			startedSession.sessionId,
+		)
+		expect(startedSessionRow?.terminalId).toBe(terminal._id)
+		expect(startedSessionRow?.openingBalance).toBe(150)
+
+		const reusedSession = await caller.pos.sessions.startSession({
+			terminalId: terminal._id,
+			cashierId: 'cashier-api',
+			openingBalance: 150,
+			reuseOpenSession: true,
+		})
+		expect(reusedSession.idempotent).toBe(true)
+		expect(reusedSession.sessionId).toBe(startedSession.sessionId)
+	})
+
 	test('enforces transaction transitions and reason requirements', async () => {
 		const caller = createCaller()
 		const transaction = db.schemas.posTransactions.toArray()[0]
@@ -76,6 +117,73 @@ describe.sequential('pos module', () => {
 		).rejects.toThrow('A reason is required')
 	})
 
+	test('supports checkout flow using created transaction _id for lines and completion', async () => {
+		const caller = createCaller()
+		const session = db.schemas.posSessions.toArray()[0]
+		const item = db.schemas.items.toArray()[0]
+		expect(session?._id).toBeDefined()
+		expect(item?._id).toBeDefined()
+		const sessionId = session?._id
+		const itemId = item?._id
+		if (!sessionId || !itemId) {
+			throw new Error('Missing seeded POS session or item')
+		}
+
+		const transaction = await caller.pos.transactions.create({
+			receiptNo: '',
+			posSessionId: sessionId,
+			totalAmount: 120,
+			taxAmount: 16,
+			discountAmount: 0,
+			paidAmount: 120,
+			paymentMethod: 'CARD',
+		})
+		expect(transaction._id).toBeDefined()
+
+		const line = await caller.pos.transactionLines.create({
+			transactionId: transaction._id,
+			itemId,
+			quantity: 2,
+			unitPrice: 60,
+			lineAmount: 120,
+			discountPercent: 0,
+		})
+		expect(line.transactionId).toBe(transaction._id)
+
+		const completed = await caller.pos.transactions.transitionStatus({
+			id: transaction._id,
+			toStatus: 'COMPLETED',
+		})
+		expect(completed?.status).toBe('COMPLETED')
+
+		const scopedLines = await caller.pos.transactionLines.list({
+			limit: 50,
+			offset: 0,
+			filters: { transactionId: transaction._id },
+		})
+		expect(scopedLines.items.some((row) => row._id === line._id)).toBe(true)
+	})
+
+	test('rejects transaction line create when transaction parent is invalid', async () => {
+		const caller = createCaller()
+		const item = db.schemas.items.toArray()[0]
+		expect(item?._id).toBeDefined()
+		if (!item?._id) {
+			throw new Error('Missing seeded item')
+		}
+
+		await expect(
+			caller.pos.transactionLines.create({
+				transactionId: 'txn-not-found',
+				itemId: item._id,
+				quantity: 1,
+				unitPrice: 10,
+				lineAmount: 10,
+				discountPercent: 0,
+			}),
+		).rejects.toThrow('parent not found')
+	})
+
 	test('supports valid terminal transition', async () => {
 		const caller = createCaller()
 		const terminal = db.schemas.terminals.toArray()[0]
@@ -89,5 +197,17 @@ describe.sequential('pos module', () => {
 		})
 
 		expect(updated?.status).toBe('OFFLINE')
+	})
+
+	test('keeps 25-row pos pagination within acceptable latency', async () => {
+		const caller = createCaller()
+		const maxDurationMs = 2000
+		const startedAt = Date.now()
+		const result = await caller.pos.transactions.list({ limit: 25, offset: 0 })
+		const durationMs = Date.now() - startedAt
+
+		expect(Array.isArray(result.items)).toBe(true)
+		expect(result.items.length).toBeLessThanOrEqual(25)
+		expect(durationMs).toBeLessThan(maxDurationMs)
 	})
 })

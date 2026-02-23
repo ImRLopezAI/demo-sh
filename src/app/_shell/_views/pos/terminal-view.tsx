@@ -20,8 +20,19 @@ interface CatalogItem {
 }
 
 export default function PosTerminalView() {
-	const { state, dispatch, totals, addItem, completeSale, voidTransaction } =
-		usePosTerminal()
+	const {
+		state,
+		dispatch,
+		totals,
+		addItem,
+		completeSale,
+		voidTransaction,
+		isOnline,
+		pendingSyncCount,
+		isSyncingQueue,
+		lastSyncError,
+		syncOfflineQueueNow,
+	} = usePosTerminal()
 	const [customerDialogOpen, setCustomerDialogOpen] = React.useState(false)
 
 	const { data: itemsData, isLoading: itemsLoading } = useModuleList(
@@ -34,7 +45,15 @@ export default function PosTerminalView() {
 
 	return (
 		<div className='-m-4 flex h-[calc(100dvh-3rem)] flex-col md:-m-6'>
-			<TerminalHeader session={state.session} customer={state.customer} />
+			<TerminalHeader
+				session={state.session}
+				customer={state.customer}
+				isOnline={isOnline}
+				pendingSyncCount={pendingSyncCount}
+				isSyncingQueue={isSyncingQueue}
+				lastSyncError={lastSyncError}
+				onSyncNow={syncOfflineQueueNow}
+			/>
 
 			<div className='flex flex-1 overflow-hidden'>
 				<TransactionJournal

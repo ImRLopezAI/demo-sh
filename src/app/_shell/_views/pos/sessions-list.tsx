@@ -22,75 +22,84 @@ interface PosSession {
 export default function SessionsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData('pos', 'posSessions')
+	const { DataGrid, windowSize } = useModuleData<'pos', PosSession>(
+		'pos',
+		'sessions',
+		'all',
+	)
 
-	const handleEdit = React.useCallback((row) => {
+	const handleEdit = React.useCallback((row: PosSession) => {
 		setSelectedId(row._id)
 	}, [])
 
 	return (
-		<div className='space-y-4'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Sessions'
 				description='View and manage POS terminal sessions.'
 			/>
 
-			<DataGrid variant='card' height={Math.max(windowSize.height - 190, 390)}>
-				<DataGrid.Header>
-					<DataGrid.Toolbar filter sort search export />
-				</DataGrid.Header>
-				<DataGrid.Columns>
-					<DataGrid.Column<PosSession>
-						accessorKey='sessionNo'
-						title='Session No.'
-						handleEdit={handleEdit}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='terminalName'
-						title='Terminal'
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='status'
-						title='Status'
-						cell={({ row }) => <StatusBadge status={row.original.status} />}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='openedAt'
-						title='Opened'
-						cellVariant='date'
-						formatter={(v, f) => f.date(v.openedAt, { format: 'Pp' })}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='closedAt'
-						title='Closed'
-						cellVariant='date'
-						formatter={(v, f) => f.date(v.closedAt, { format: 'Pp' })}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='openingBalance'
-						title='Opening Bal.'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.openingBalance)}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='closingBalance'
-						title='Closing Bal.'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.closingBalance)}
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='transactionCount'
-						title='Transactions'
-						cellVariant='number'
-					/>
-					<DataGrid.Column<PosSession>
-						accessorKey='totalSales'
-						title='Total Sales'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.totalSales)}
-					/>
-				</DataGrid.Columns>
-			</DataGrid>
+			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+				<DataGrid
+					variant='flat'
+					height={Math.max(windowSize.height - 240, 400)}
+				>
+					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
+						<DataGrid.Toolbar filter sort search export />
+					</DataGrid.Header>
+					<DataGrid.Columns>
+						<DataGrid.Column<PosSession>
+							accessorKey='sessionNo'
+							title='Session No.'
+							handleEdit={handleEdit}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='terminalName'
+							title='Terminal'
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='status'
+							title='Status'
+							cell={({ row }) => <StatusBadge status={row.original.status} />}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='openedAt'
+							title='Opened'
+							cellVariant='date'
+							formatter={(v, f) => f.date(v.openedAt, { format: 'Pp' })}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='closedAt'
+							title='Closed'
+							cellVariant='date'
+							formatter={(v, f) => f.date(v.closedAt, { format: 'Pp' })}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='openingBalance'
+							title='Opening Bal.'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.openingBalance)}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='closingBalance'
+							title='Closing Bal.'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.closingBalance)}
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='transactionCount'
+							title='Transactions'
+							cellVariant='number'
+						/>
+						<DataGrid.Column<PosSession>
+							accessorKey='totalSales'
+							title='Total Sales'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.totalSales)}
+						/>
+					</DataGrid.Columns>
+				</DataGrid>
+			</div>
 
 			<SessionCard
 				selectedId={selectedId}

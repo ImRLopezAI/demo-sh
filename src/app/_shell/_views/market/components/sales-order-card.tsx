@@ -1,13 +1,68 @@
 import * as React from 'react'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
+import { FormSection } from '../../_shared/form-section'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
+interface SalesOrderHeader {
+	_id: string
+	documentNo: string
+	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
+	status:
+		| 'DRAFT'
+		| 'PENDING_APPROVAL'
+		| 'APPROVED'
+		| 'REJECTED'
+		| 'COMPLETED'
+		| 'CANCELED'
+	customerId: string
+	orderDate: string
+	currency: string
+	externalRef: string
+	lineCount: number
+	totalAmount: number
+}
 
+interface SalesLine {
+	_id: string
+	documentNo: string
+	lineNo: number
+	itemId: string
+	description: string
+	quantity: number
+	unitPrice: number
+	discountPercent: number
+	lineAmount: number
+}
+
+interface CustomerOption {
+	_id: string
+	customerNo?: string
+	name?: string
+}
+
+interface ItemOption {
+	_id: string
+	itemNo?: string
+	description?: string
+	unitPrice?: number
+}
+
+interface SalesOrderCreateInput {
+	documentNo: string
+	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
+	status: 'DRAFT'
+	customerId: string
+	orderDate: string
+	currency: string
+	externalRef: string
+}
 
 const DOCUMENT_TYPES = ['ORDER', 'RETURN_ORDER', 'QUOTE'] as const
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -20,30 +75,77 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
 export function SalesOrderCard({
 	selectedId,
 	onClose,
+	onCreated,
 }: {
 	selectedId: string | null
 	onClose: () => void
+	onCreated?: (id: string) => void
 }) {
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
 		'market',
-		'salesHeaders',
+		'salesOrders',
 		selectedId,
 		{ enabled: !isNew && isOpen },
 	)
 
-	const { create, update, transitionStatus } = useEntityMutations(
-		'market',
-		'salesHeaders',
-	)
+	const { update, transitionStatus } = useEntityMutations('market', 'salesOrders')
+
+	const {
+		create: createLine,
+		update: updateLine,
+		remove: removeLine,
+	} = useEntityMutations('market', 'salesLines')
+	const queryClient = useQueryClient()
+
+	const invalidateSalesOrderQueries = React.useCallback(() => {
+		queryClient.invalidateQueries({
+			queryKey: $rpc.market.salesOrders.key(),
+		})
+		queryClient.invalidateQueries({
+			queryKey: $rpc.market.salesLines.key(),
+		})
+	}, [queryClient])
+
+	const createWithLines = useMutation({
+		...$rpc.market.salesOrders.createWithLines.mutationOptions({
+			onSuccess: invalidateSalesOrderQueries,
+		}),
+	})
+	const submitForApproval = useMutation({
+		...$rpc.market.salesOrders.submitForApproval.mutationOptions({
+			onSuccess: invalidateSalesOrderQueries,
+		}),
+	})
+	const cancelWithRelease = useMutation({
+		...$rpc.market.salesOrders.cancelWithRelease.mutationOptions({
+			onSuccess: invalidateSalesOrderQueries,
+		}),
+	})
 
 	const { data: customersList } = useModuleList('market', 'customers', {
 		limit: 100,
 	})
 
-	const { items: allLines, isLoading: linesLoading } = useModuleData('market', 'salesLines')
+	const { data: itemsList } = useModuleList('market', 'items', {
+		limit: 100,
+	})
+	const customerOptions = (customersList?.items ?? []) as CustomerOption[]
+	const itemOptions = (itemsList?.items ?? []) as ItemOption[]
+	const lineFilters = React.useMemo(
+		() => ({
+			documentNo:
+				(record as SalesOrderHeader | undefined)?.documentNo ?? '__none__',
+		}),
+		[(record as SalesOrderHeader | undefined)?.documentNo],
+	)
+
+	const { items: allLines, isLoading: linesLoading } = useModuleData<
+		'market',
+		SalesLine
+	>('market', 'salesLines', 'overview', { filters: lineFilters })
 
 	const newRecordDefaults = React.useMemo(
 		() => ({
@@ -62,36 +164,120 @@ export function SalesOrderCard({
 		() => (isNew ? newRecordDefaults : record),
 		[isNew, newRecordDefaults, record],
 	)
+	const [draftLines, setDraftLines] = React.useState<SalesLine[]>([])
 
-	const [Form, form] = useCreateForm(
+	const [Form, form] = useCreateForm<SalesOrderCreateInput>(
 		() => ({
-			defaultValues: (resolvedRecord ?? {}) as Record<string, unknown>,
+			defaultValues: (resolvedRecord ?? {}) as SalesOrderCreateInput,
 			onSubmit: async (data) => {
 				if (isNew) {
-					await create.mutateAsync(data)
+					if (draftLines.length === 0) {
+						throw new Error('Add at least one order line before saving')
+					}
+
+					const created = await createWithLines.mutateAsync({
+						header: {
+							documentType: data.documentType,
+							status: 'DRAFT',
+							customerId: data.customerId,
+							orderDate: data.orderDate,
+							currency: data.currency,
+							externalRef: data.externalRef || undefined,
+						},
+						lines: draftLines.map((line, index) => ({
+							lineNo: line.lineNo || index + 1,
+							itemId: line.itemId,
+							quantity: line.quantity,
+							unitPrice: line.unitPrice,
+							discountPercent: line.discountPercent,
+							lineAmount: line.lineAmount,
+						})),
+					})
+
+					const createdOrder = created.header
+					if (onCreated && createdOrder?._id) {
+						onCreated(createdOrder._id)
+					} else {
+						onClose()
+					}
 				} else if (selectedId) {
-					await update.mutateAsync({ id: selectedId, data })
+					await update.mutateAsync({
+						id: selectedId,
+						data: data as unknown as Record<string, unknown>,
+					})
+					onClose()
 				}
-				onClose()
 			},
 		}),
-		[resolvedRecord, isNew, selectedId],
+		[
+			resolvedRecord,
+			isNew,
+			selectedId,
+			draftLines,
+			createWithLines,
+			update,
+			onCreated,
+			onClose,
+		],
 	)
 
 	React.useEffect(() => {
 		if (!isOpen) return
-		form.reset((resolvedRecord ?? {}) as Record<string, unknown>)
+		form.reset((resolvedRecord ?? {}) as SalesOrderCreateInput)
 	}, [resolvedRecord, form, isOpen])
+	React.useEffect(() => {
+		if (isNew && isOpen) {
+			setDraftLines([])
+		}
+	}, [isNew, isOpen])
 
+	const lines = React.useMemo(() => {
+		if (isNew) return draftLines
+		return allLines
+	}, [allLines, isNew, draftLines])
 
-	const handleTransition = async (newStatus: string) => {
-		if (!selectedId || isNew) return
-		await transitionStatus.mutateAsync({
-			id: selectedId,
-			toStatus: newStatus,
-		})
-		onClose()
-	}
+	const handleTransition = React.useCallback(
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
+			if (!selectedId || isNew) return
+			if (toStatus === 'PENDING_APPROVAL') {
+				await submitForApproval.mutateAsync({ id: selectedId })
+				onClose()
+				return
+			}
+			if (toStatus === 'CANCELED') {
+				await cancelWithRelease.mutateAsync({
+					id: selectedId,
+					reason,
+				})
+				onClose()
+				return
+			}
+			await transitionStatus.mutateAsync({
+				id: selectedId,
+				toStatus,
+				reason,
+			})
+			onClose()
+		},
+		[
+			selectedId,
+			isNew,
+			submitForApproval,
+			cancelWithRelease,
+			transitionStatus,
+			onClose,
+		],
+	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'market',
+		entityId: 'salesOrders',
+		disabled:
+			transitionStatus.isPending ||
+			submitForApproval.isPending ||
+			cancelWithRelease.isPending,
+		onTransition: handleTransition,
+	})
 
 	const currentStatus = (resolvedRecord as SalesOrderHeader | undefined)?.status
 	const nextStatuses = currentStatus
@@ -100,248 +286,348 @@ export function SalesOrderCard({
 
 	const LinesGrid = useGrid(
 		() => ({
-			data: allLines,
+			data: lines,
 			isLoading: linesLoading,
-			readOnly: true,
+			readOnly: false,
 			enableSearch: false,
+			onRowAdd: async () => {
+				const firstItem = itemOptions[0]
+				if (!firstItem) return null
+				if (isNew) {
+					setDraftLines((prev) => [
+						...prev,
+						{
+							_id: crypto.randomUUID(),
+							documentNo: '',
+							lineNo: prev.length + 1,
+							itemId: firstItem._id,
+							description: firstItem.description ?? '',
+							quantity: 1,
+							unitPrice: firstItem.unitPrice ?? 0,
+							discountPercent: 0,
+							lineAmount: firstItem.unitPrice ?? 0,
+						},
+					])
+					return null
+				}
+				const documentNo = (resolvedRecord as SalesOrderHeader | undefined)
+					?.documentNo
+				if (!documentNo) return null
+				await createLine.mutateAsync({
+					documentNo,
+					itemId: firstItem._id,
+					quantity: 1,
+					unitPrice: firstItem.unitPrice ?? 0,
+					discountPercent: 0,
+					lineAmount: firstItem.unitPrice ?? 0,
+				})
+				return null
+			},
+			onRowUpdate: async (row: SalesLine) => {
+				if (isNew) {
+					setDraftLines((prev) =>
+						prev.map((line) =>
+							line._id === row._id ? { ...line, ...row } : line,
+						),
+					)
+					return
+				}
+				await updateLine.mutateAsync({
+					id: row._id,
+					data: row as unknown as Record<string, unknown>,
+				})
+			},
+			onRowDelete: async (row: SalesLine) => {
+				if (isNew) {
+					setDraftLines((prev) => prev.filter((line) => line._id !== row._id))
+					return
+				}
+				await removeLine.mutateAsync({ id: row._id })
+			},
 		}),
-		[allLines, linesLoading],
+		[
+			lines,
+			linesLoading,
+			resolvedRecord,
+			createLine,
+			updateLine,
+			removeLine,
+			itemOptions,
+			isNew,
+		],
 	)
 
 	const dialogTitle = isNew
 		? 'New Sales Order'
-		: `Sales Order ${(resolvedRecord )?.documentNo ?? ''}`
+		: `Sales Order ${(resolvedRecord as SalesOrderHeader | undefined)?.documentNo ?? ''}`
 
 	return (
-		<RecordDialog
-			open={isOpen}
-			onOpenChange={(open) => !open && onClose()}
-			title={dialogTitle}
-			description='Sales order header and line details'
-			footer={
-				<>
-					{currentStatus && <StatusBadge status={currentStatus} />}
-					{!isNew &&
-						nextStatuses.map((status) => (
-							<Button
-								key={status}
-								variant='outline'
-								size='sm'
-								onClick={() => handleTransition(status)}
-								disabled={transitionStatus.isPending}
-							>
-								{status.replace(/_/g, ' ')}
-							</Button>
-						))}
-					<Button variant='outline' size='sm' onClick={onClose}>
-						Cancel
-					</Button>
-					<Button size='sm' onClick={() => form.submit()}>
-						Save
-					</Button>
-				</>
-			}
-		>
-			{recordLoading && !isNew ? (
-				<div className='space-y-3'>
-					{Array.from({ length: 4 }).map((_, i) => (
-						<div
-							key={`skeleton-${i}`}
-							className='h-8 rounded bg-muted motion-safe:animate-pulse'
-						/>
-					))}
-				</div>
-			) : (
-				<div className='space-y-6'>
-					<Form>
-						{() => (
-							<div className='grid grid-cols-2 gap-4 lg:grid-cols-3'>
-								<Form.Field
-									name='documentNo'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Document No.</Form.Label>
-											<Form.Control>
-												<Form.Input
-													{...field}
-													value={(field.value as string) ?? ''}
-													readOnly
-													placeholder='Auto-generated\u2026'
-													autoComplete='off'
-												/>
-											</Form.Control>
-										</Form.Item>
-									)}
+		<>
+			<RecordDialog
+				open={isOpen}
+				onOpenChange={(open) => !open && onClose()}
+				title={dialogTitle}
+				description='Sales order header and line details'
+				footer={
+					<>
+						{currentStatus && <StatusBadge status={currentStatus} />}
+						{!isNew &&
+							nextStatuses.map((status) => (
+								<Button
+									key={status}
+									variant='outline'
+									size='sm'
+									onClick={() => {
+										void requestTransition(status)
+									}}
+									disabled={transitionStatus.isPending}
+									className='shadow-sm transition-all hover:shadow-md'
+								>
+									{status.replace(/_/g, ' ')}
+								</Button>
+							))}
+						<Button
+							variant='outline'
+							size='sm'
+							onClick={onClose}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							Cancel
+						</Button>
+						<Button
+							size='sm'
+							onClick={() => form.submit()}
+							data-testid='sales-order-save-button'
+							disabled={
+								createWithLines.isPending ||
+								update.isPending ||
+								submitForApproval.isPending ||
+								cancelWithRelease.isPending
+							}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							Save
+						</Button>
+					</>
+				}
+			>
+				{recordLoading && !isNew ? (
+					<div className='space-y-4'>
+						{['skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4'].map(
+							(skeletonKey) => (
+								<div
+									key={skeletonKey}
+									className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 								/>
-								<Form.Field
-									name='documentType'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Document Type</Form.Label>
-											<Form.Control>
-												<Form.Select
-													value={field.value as string}
-													onValueChange={field.onChange}
-												>
-													<Form.Select.Trigger className='w-full'>
-														<Form.Select.Value />
-													</Form.Select.Trigger>
-													<Form.Select.Content>
-														{DOCUMENT_TYPES.map((type) => (
-															<Form.Select.Item key={type} value={type}>
-																{type.replace(/_/g, ' ')}
-															</Form.Select.Item>
-														))}
-													</Form.Select.Content>
-												</Form.Select>
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-								<Form.Field
-									name='status'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Status</Form.Label>
-											<Form.Control>
-												<StatusBadge status={field.value as string} />
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-								<Form.Field
-									name='customerId'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Customer</Form.Label>
-											<Form.Control>
-												<Form.Combo
-													value={field.value as string}
-													onValueChange={field.onChange}
-												>
-													<Form.Combo.Input
-														showClear
-														placeholder='Search customers\u2026'
-													/>
-													<Form.Combo.Content>
-														<Form.Combo.List>
-															{(customersList?.items ?? []).map(
-																(c: Record<string, unknown>) => (
-																	<Form.Combo.Item
-																		key={c._id as string}
-																		value={c._id as string}
-																	>
-																		{c.customerNo as string} -{' '}
-																		{c.name as string}
-																	</Form.Combo.Item>
-																),
-															)}
-															<Form.Combo.Empty>
-																No customers found
-															</Form.Combo.Empty>
-														</Form.Combo.List>
-													</Form.Combo.Content>
-												</Form.Combo>
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-								<Form.Field
-									name='orderDate'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Order Date</Form.Label>
-											<Form.Control>
-												<Form.DatePicker
-													value={field.value as string}
-													onValueChange={(date) =>
-														field.onChange(date?.toISOString() ?? '')
-													}
-													placeholder='Select date\u2026'
-												/>
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-								<Form.Field
-									name='currency'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Currency</Form.Label>
-											<Form.Control>
-												<Form.Input
-													{...field}
-													value={(field.value as string) ?? ''}
-													placeholder='USD\u2026'
-													autoComplete='off'
-												/>
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-								<Form.Field
-									name='externalRef'
-									render={({ field }) => (
-										<Form.Item className='col-span-2 lg:col-span-3'>
-											<Form.Label>External Reference</Form.Label>
-											<Form.Control>
-												<Form.Input
-													{...field}
-													value={(field.value as string) ?? ''}
-													placeholder='External ref\u2026'
-													autoComplete='off'
-												/>
-											</Form.Control>
-										</Form.Item>
-									)}
-								/>
-							</div>
+							),
 						)}
-					</Form>
+					</div>
+				) : (
+					<div className='space-y-8 pt-2'>
+						<Form>
+							{() => (
+								<>
+									<FormSection title='Header'>
+										<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+											<Form.Field
+												name='documentNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Document No.</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																readOnly
+																placeholder='Auto-generated\u2026'
+																autoComplete='off'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='documentType'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Document Type</Form.Label>
+														<Form.Control>
+															<Form.Select
+																value={field.value as string}
+																onValueChange={field.onChange}
+															>
+																<Form.Select.Trigger className='w-full bg-background/50'>
+																	<Form.Select.Value />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	{DOCUMENT_TYPES.map((type) => (
+																		<Form.Select.Item key={type} value={type}>
+																			{type.replace(/_/g, ' ')}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='status'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Status</Form.Label>
+														<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3'>
+															<StatusBadge status={field.value as string} />
+														</div>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='customerId'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Customer</Form.Label>
+														<Form.Control>
+															<Form.Select
+																value={field.value as string}
+																onValueChange={field.onChange}
+															>
+																<Form.Select.Trigger
+																	className='w-full bg-background/50'
+																	data-testid='sales-order-customer-select'
+																>
+																	<Form.Select.Value placeholder='Select customer' />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																{customerOptions.map((customer) => (
+																	<Form.Select.Item
+																		key={customer._id}
+																		value={customer._id}
+																	>
+																		{customer.name ?? 'Unnamed customer'}
+																		{customer.customerNo
+																			? ` (${customer.customerNo})`
+																			: ''}
+																	</Form.Select.Item>
+																))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='orderDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Order Date</Form.Label>
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value as string}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select date\u2026'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='currency'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Currency</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='USD\u2026'
+																autoComplete='off'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='externalRef'
+												render={({ field }) => (
+													<Form.Item className='col-span-1 md:col-span-2 lg:col-span-3'>
+														<Form.Label>External Reference</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='External ref\u2026'
+																autoComplete='off'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+										</div>
+									</FormSection>
 
-					{!isNew && (
-						<div className='space-y-3'>
-							<h3 className='font-medium text-sm'>Order Lines</h3>
-							<LinesGrid variant='compact' height={300}>
-								<LinesGrid.Columns>
-									<LinesGrid.Column
-										accessorKey='lineNo'
-										title='Line No.'
-										cellVariant='number'
-									/>
-									<LinesGrid.Column
-										accessorKey='itemDescription'
-										title='Item'
-									/>
-									<LinesGrid.Column
-										accessorKey='quantity'
-										title='Quantity'
-										cellVariant='number'
-									/>
-									<LinesGrid.Column
-										accessorKey='unitPrice'
-										title='Unit Price'
-										cellVariant='number'
-										formatter={(v, f) => f.currency(v.unitPrice)}
-									/>
-									<LinesGrid.Column
-										accessorKey='discountPercent'
-										title='Discount %'
-										cellVariant='number'
-										formatter={(v, f) => f.percent(v.discountPercent)}
-									/>
-									<LinesGrid.Column
-										accessorKey='lineAmount'
-										title='Line Amount'
-										cellVariant='number'
-										formatter={(v, f) => f.currency(v.lineAmount)}
-									/>
-								</LinesGrid.Columns>
-							</LinesGrid>
-						</div>
-					)}
-				</div>
-			)}
-		</RecordDialog>
+									<FormSection title='Order Lines'>
+										<div className='overflow-hidden rounded-lg border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+											<LinesGrid variant='compact' height={300}>
+												<LinesGrid.Columns>
+													<LinesGrid.Column
+														accessorKey='lineNo'
+														title='Line No.'
+														cellVariant='number'
+													/>
+													<LinesGrid.Column
+														accessorKey='itemId'
+														title='Item'
+														cellVariant='select'
+														opts={{
+															options: itemOptions.map((item) => ({
+																value: item._id,
+																label: `${item.itemNo ?? item._id} - ${
+																	item.description ?? ''
+																}`,
+															})),
+														}}
+													/>
+													<LinesGrid.Column
+														accessorKey='quantity'
+														title='Quantity'
+														cellVariant='number'
+													/>
+													<LinesGrid.Column
+														accessorKey='unitPrice'
+														title='Unit Price'
+														cellVariant='number'
+														formatter={(v, f) => f.currency(v.unitPrice)}
+													/>
+													<LinesGrid.Column
+														accessorKey='discountPercent'
+														title='Discount %'
+														cellVariant='number'
+														formatter={(v, f) => f.percent(v.discountPercent)}
+													/>
+													<LinesGrid.Column
+														accessorKey='lineAmount'
+														title='Line Amount'
+														cellVariant='number'
+														formatter={(v, f) => f.currency(v.lineAmount)}
+													/>
+												</LinesGrid.Columns>
+											</LinesGrid>
+										</div>
+									</FormSection>
+								</>
+							)}
+						</Form>
+					</div>
+				)}
+			</RecordDialog>
+			{reasonDialog}
+		</>
 	)
 }

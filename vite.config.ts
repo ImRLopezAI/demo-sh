@@ -17,7 +17,7 @@ const config = defineConfig({
 	plugins: [
 		devtools(),
 		nitro({
-			preset: 'bun',
+			preset: 'vercel',
 		}),
 		// this is the plugin that enables path aliases
 		viteTsConfigPaths({

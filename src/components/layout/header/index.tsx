@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator'
 
 export function SiteHeader() {
 	return (
-		<header className='sticky top-0 z-50 flex h-[var(--header-height)] shrink-0 items-center border-border border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/70'>
+		<header className='sticky top-0 z-50 flex h-[var(--header-height)] shrink-0 items-center border-border/50 border-b bg-background/50 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40'>
 			<div className='mx-auto flex w-full max-w-[1680px] items-center gap-2 px-4 lg:gap-3 lg:px-6'>
 				<Link
 					to='/'

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import {
 	ArrowRight,
@@ -41,7 +41,7 @@ const heroModules: { icon: LucideIcon; name: string }[] = [
 	{ icon: LayoutDashboard, name: 'hub' },
 	{ icon: Landmark, name: 'flow' },
 	{ icon: Wallet, name: 'payroll' },
-]
+] as const
 
 interface ServiceModule {
 	icon: LucideIcon
@@ -255,7 +255,8 @@ function Hero() {
 				<div className='flex w-full flex-col gap-4 lg:w-[480px]'>
 					<div className='grid grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
 						{heroModules.map((mod) => (
-							<div
+							<Link
+								to={`/${mod.name}/dashboard`}	
 								key={mod.name}
 								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5'
 							>
@@ -263,7 +264,7 @@ function Hero() {
 								<span className='font-medium text-[13px] text-white'>
 									{mod.name}
 								</span>
-							</div>
+							</Link>
 						))}
 					</div>
 

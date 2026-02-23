@@ -10,6 +10,7 @@ interface RpcContext {
 export async function createRpcContext(ctx: RpcContext) {
 	const tenantId = ctx.headers.get('x-tenant-id') ?? 'demo-tenant'
 	const userId = ctx.headers.get('x-user-id') ?? 'demo-user'
+	const role = ctx.headers.get('x-user-role') ?? 'ADMIN'
 
 	return {
 		db,
@@ -18,6 +19,7 @@ export async function createRpcContext(ctx: RpcContext) {
 		auth: {
 			tenantId,
 			userId,
+			role,
 		},
 	}
 }

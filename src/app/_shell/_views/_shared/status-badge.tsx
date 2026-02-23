@@ -19,6 +19,7 @@ const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
 	RECEIVED: 'success',
 	ONLINE: 'success',
 	CLOSED: 'success',
+	ON_TRACK: 'success',
 
 	PENDING_APPROVAL: 'warning',
 	IN_PROGRESS: 'warning',
@@ -31,6 +32,8 @@ const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
 	HIGH: 'warning',
 	CRITICAL: 'warning',
 	EXPRESS: 'warning',
+	AT_RISK: 'warning',
+	L1: 'warning',
 
 	OPEN: 'info',
 	MATCHED: 'info',
@@ -45,6 +48,8 @@ const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
 	EXCEPTION: 'destructive',
 	REFUNDED: 'destructive',
 	INACTIVE: 'destructive',
+	BREACHED: 'destructive',
+	L2: 'destructive',
 
 	DRAFT: 'outline',
 	PLANNED: 'outline',
@@ -59,9 +64,19 @@ const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
 	UNREAD: 'secondary',
 }
 
-export function StatusBadge({ status }: { status?: string | null }) {
+export function StatusBadge({
+	status,
+	className,
+}: {
+	status?: string | null
+	className?: string
+}) {
 	if (!status) return null
 	const variant = STATUS_VARIANT_MAP[status] ?? 'secondary'
 	const label = status.replace(/_/g, ' ')
-	return <Badge variant={variant}>{label}</Badge>
+	return (
+		<Badge variant={variant} className={className}>
+			{label}
+		</Badge>
+	)
 }

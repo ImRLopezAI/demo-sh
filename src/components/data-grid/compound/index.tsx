@@ -67,6 +67,7 @@ interface DataGridCompositeProps {
 
 interface DataGridHeaderSlotProps {
 	children?: React.ReactNode
+	className?: string
 }
 
 interface DataGridColumnsSlotProps<TData extends object = object> {
@@ -154,7 +155,7 @@ type DataGridColumnProps<TData extends object, TValue = unknown> = ColumnDef<
 	TValue
 > & {
 	id?: string
-	accessorKey?: keyof TData | (string & {})
+	accessorKey?: keyof TData | string
 	accessorFn?: (row: TData, index: number) => TValue
 	title?: string
 	cellVariant?: CellVariantValue
@@ -669,7 +670,7 @@ export function useGrid<TData extends object>(
 			const resolvedEnableSearch = config.enableSearch ?? true
 			const hasRowContextMenu = Boolean(slots.rowContextMenu?.length)
 			const { table, ...dataGridProps } = useDataGrid({
-				readOnly: true,
+				readOnly: gridConfig.readOnly ?? true,
 				...gridConfig,
 				enableSearch: resolvedEnableSearch,
 				withSelect: resolvedWithSelect,

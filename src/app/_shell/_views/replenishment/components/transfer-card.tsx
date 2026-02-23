@@ -5,6 +5,7 @@ import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { RecordDialog } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
+import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface TransferHeader {
@@ -33,7 +34,7 @@ type TransferStatus = TransferHeader['status']
 
 const STATUS_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
 	DRAFT: ['RELEASED'],
-	RELEASED: ['IN_TRANSIT'],
+	RELEASED: ['IN_TRANSIT', 'CANCELED'],
 	IN_TRANSIT: ['RECEIVED'],
 	RECEIVED: [],
 	CANCELED: [],
@@ -50,9 +51,11 @@ const TRANSITION_LABELS: Record<TransferStatus, string> = {
 export function TransferCard({
 	recordId,
 	onClose,
+	onCreated,
 }: {
 	recordId: string | null
 	onClose: () => void
+	onCreated?: (id: string) => void
 }) {
 	const isNew = recordId === 'new'
 	const open = recordId !== null
@@ -63,26 +66,34 @@ export function TransferCard({
 		recordId,
 		{ enabled: open && !isNew },
 	)
-
-	const { items: lines, isLoading: linesLoading } = useModuleData<
-		'replenishment',
-		TransferLine
-	>(
-		'replenishment',
-		'transferLines',
-		recordId && !isNew ? recordId : '__none__',
+	const header = record as unknown as TransferHeader | undefined
+	const lineFilters = React.useMemo(
+		() => ({ transferNo: header?.transferNo ?? '__none__' }),
+		[header?.transferNo],
 	)
 
-	const { update, transitionStatus } = useEntityMutations(
+	const { items: linesFromApi, isLoading: linesLoading } = useModuleData<
+		'replenishment',
+		TransferLine
+	>('replenishment', 'transferLines', 'overview', { filters: lineFilters })
+
+	const { create, update, transitionStatus } = useEntityMutations(
 		'replenishment',
 		'transfers',
 	)
+	const {
+		create: createLine,
+		update: updateLine,
+		remove: removeLine,
+	} = useEntityMutations('replenishment', 'transferLines')
 
 	const { data: locationsList } = useModuleList('insight', 'locations', {
 		limit: 100,
 	})
-
-	const header = record as unknown as TransferHeader | undefined
+	const { data: itemsList } = useModuleList('market', 'items', {
+		limit: 100,
+	})
+	const [draftLines, setDraftLines] = React.useState<TransferLine[]>([])
 
 	const [Form, form] = useCreateForm<{
 		transferNo: string
@@ -99,13 +110,46 @@ export function TransferCard({
 				shipmentDate: header?.shipmentDate ?? '',
 				receiptDate: header?.receiptDate ?? '',
 			},
-			onSubmit: (data) => {
-				if (!recordId || isNew) return
-				update.mutate({ id: recordId, data })
+			onSubmit: async (data) => {
+				if (isNew) {
+					const createdTransfer = await create.mutateAsync(data)
+					const transferNo = createdTransfer?.transferNo as string | undefined
+					if (transferNo && draftLines.length > 0) {
+						for (const [index, line] of draftLines.entries()) {
+							await createLine.mutateAsync({
+								transferNo,
+								lineNo: line.lineNo || index + 1,
+								itemId: line.itemId,
+								quantity: line.quantity,
+								quantityShipped: line.quantityShipped,
+								quantityReceived: line.quantityReceived,
+							})
+						}
+					}
+					if (onCreated && createdTransfer?._id) {
+						onCreated(createdTransfer._id)
+					} else {
+						onClose()
+					}
+					return
+				}
+
+				if (!recordId) return
+				await update.mutateAsync({ id: recordId, data })
 				onClose()
 			},
 		}),
-		[header, recordId],
+		[
+			header,
+			recordId,
+			isNew,
+			create,
+			update,
+			createLine,
+			draftLines,
+			onClose,
+			onCreated,
+		],
 	)
 
 	React.useEffect(() => {
@@ -117,235 +161,340 @@ export function TransferCard({
 				shipmentDate: header.shipmentDate,
 				receiptDate: header.receiptDate,
 			})
+		} else if (isNew) {
+			form.reset({
+				transferNo: '',
+				fromLocationCode: '',
+				toLocationCode: '',
+				shipmentDate: new Date().toISOString(),
+				receiptDate: '',
+			})
 		}
-	}, [header, form])
+	}, [header, form, isNew])
+	React.useEffect(() => {
+		if (isNew && open) {
+			setDraftLines([])
+		}
+	}, [isNew, open])
+
+	const lines = React.useMemo(() => {
+		if (isNew) return draftLines
+		return header ? linesFromApi : []
+	}, [isNew, draftLines, header, linesFromApi])
 
 	const currentStatus = header?.status ?? 'DRAFT'
 	const availableTransitions = STATUS_TRANSITIONS[currentStatus]
 
 	const handleTransition = React.useCallback(
-		(nextStatus: TransferStatus) => {
+		async ({ toStatus, reason }: { toStatus: string; reason?: string }) => {
 			if (!recordId) return
-			transitionStatus.mutate(
-				{ id: recordId, toStatus: nextStatus },
-				{ onSuccess: () => onClose() },
-			)
+			await transitionStatus.mutateAsync({
+				id: recordId,
+				toStatus,
+				reason,
+			})
+			onClose()
 		},
 		[recordId, transitionStatus, onClose],
 	)
+
+	const { requestTransition, reasonDialog } = useTransitionWithReason({
+		moduleId: 'replenishment',
+		entityId: 'transfers',
+		disabled: transitionStatus.isPending,
+		getStatusLabel: (status) =>
+			TRANSITION_LABELS[status as TransferStatus] ?? status,
+		onTransition: handleTransition,
+	})
 
 	const LinesGrid = useGrid(
 		() => ({
 			data: lines,
 			isLoading: linesLoading,
-			readOnly: true,
+			readOnly: false,
 			enableSearch: false,
+			onRowAdd: async () => {
+				const firstItem = itemsList?.items?.[0]
+				if (!firstItem) return null
+				if (isNew) {
+					setDraftLines((prev) => [
+						...prev,
+						{
+							_id: crypto.randomUUID(),
+							transferNo: '',
+							lineNo: prev.length + 1,
+							itemId: firstItem._id as string,
+							description: (firstItem.description as string | undefined) ?? '',
+							quantity: 1,
+							quantityShipped: 0,
+							quantityReceived: 0,
+						},
+					])
+					return null
+				}
+
+				const transferNo = header?.transferNo
+				if (!transferNo) return null
+				await createLine.mutateAsync({
+					transferNo,
+					itemId: firstItem._id as string,
+					quantity: 1,
+					quantityShipped: 0,
+					quantityReceived: 0,
+				})
+				return null
+			},
+			onRowUpdate: async (row: TransferLine) => {
+				if (isNew) {
+					setDraftLines((prev) =>
+						prev.map((line) =>
+							line._id === row._id ? { ...line, ...row } : line,
+						),
+					)
+					return
+				}
+				await updateLine.mutateAsync({
+					id: row._id,
+					data: row as unknown as Record<string, unknown>,
+				})
+			},
+			onRowDelete: async (row: TransferLine) => {
+				if (isNew) {
+					setDraftLines((prev) => prev.filter((line) => line._id !== row._id))
+					return
+				}
+				await removeLine.mutateAsync({ id: row._id })
+			},
 		}),
-		[lines, linesLoading],
+		[
+			lines,
+			linesLoading,
+			isNew,
+			header,
+			itemsList?.items,
+			createLine,
+			updateLine,
+			removeLine,
+		],
 	)
 
 	return (
-		<RecordDialog
-			open={open}
-			onOpenChange={(next) => {
-				if (!next) onClose()
-			}}
-			title={isNew ? 'New Transfer' : `Transfer ${header?.transferNo ?? ''}`}
-			description='Manage transfer header and lines.'
-			footer={
-				<>
-					{availableTransitions.map((nextStatus) => (
-						<Button
-							key={nextStatus}
-							variant='outline'
-							size='sm'
-							onClick={() => handleTransition(nextStatus)}
-							disabled={transitionStatus.isPending}
-						>
-							{TRANSITION_LABELS[nextStatus]}
+		<>
+			<RecordDialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next) onClose()
+				}}
+				title={isNew ? 'New Transfer' : `Transfer ${header?.transferNo ?? ''}`}
+				description='Manage transfer header and lines.'
+				footer={
+					<>
+						{!isNew &&
+							availableTransitions.map((nextStatus) => (
+								<Button
+									key={nextStatus}
+									variant='outline'
+									size='sm'
+									onClick={() => {
+										void requestTransition(nextStatus)
+									}}
+									disabled={transitionStatus.isPending}
+								>
+									{TRANSITION_LABELS[nextStatus]}
+								</Button>
+							))}
+						<Button variant='outline' size='sm' onClick={onClose}>
+							Cancel
 						</Button>
-					))}
-					<Button variant='outline' size='sm' onClick={onClose}>
-						Cancel
-					</Button>
-					<Button size='sm' onClick={() => form.submit()}>
-						Save
-					</Button>
-				</>
-			}
-		>
-			<div className='space-y-6'>
-				<Form>
-					{() => (
-						<Form.Group className='grid grid-cols-3 gap-4'>
-							<Form.Item>
-								<Form.Label>Transfer No.</Form.Label>
+						<Button size='sm' onClick={() => form.submit()}>
+							Save
+						</Button>
+					</>
+				}
+			>
+				<div className='space-y-6'>
+					<Form>
+						{() => (
+							<Form.Group className='grid grid-cols-3 gap-4'>
+								<Form.Item>
+									<Form.Label>Transfer No.</Form.Label>
+									<Form.Field
+										name='transferNo'
+										render={({ field }) => (
+											<Form.Control>
+												<Form.Input {...field} readOnly autoComplete='off' />
+											</Form.Control>
+										)}
+									/>
+								</Form.Item>
+
+								<Form.Item>
+									<Form.Label>Status</Form.Label>
+									<div className='flex h-7 items-center'>
+										<StatusBadge status={currentStatus} />
+									</div>
+								</Form.Item>
+
 								<Form.Field
-									name='transferNo'
+									name='fromLocationCode'
 									render={({ field }) => (
-										<Form.Control>
-											<Form.Input {...field} readOnly autoComplete='off' />
-										</Form.Control>
+										<Form.Item>
+											<Form.Label>From Location</Form.Label>
+											<Form.Control>
+												<Form.Combo
+													value={field.value}
+													onValueChange={field.onChange}
+												>
+													<Form.Combo.Input
+														showClear
+														placeholder='Search locations\u2026'
+													/>
+													<Form.Combo.Content>
+														<Form.Combo.List>
+															{(locationsList?.items ?? []).map(
+																(l: Record<string, unknown>) => (
+																	<Form.Combo.Item
+																		key={l._id as string}
+																		value={l.code as string}
+																	>
+																		{l.code as string} - {l.name as string}
+																	</Form.Combo.Item>
+																),
+															)}
+															<Form.Combo.Empty>
+																No locations found
+															</Form.Combo.Empty>
+														</Form.Combo.List>
+													</Form.Combo.Content>
+												</Form.Combo>
+											</Form.Control>
+										</Form.Item>
 									)}
 								/>
-							</Form.Item>
 
-							<Form.Item>
-								<Form.Label>Status</Form.Label>
-								<div className='flex h-7 items-center'>
-									<StatusBadge status={currentStatus} />
-								</div>
-							</Form.Item>
+								<Form.Field
+									name='toLocationCode'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>To Location</Form.Label>
+											<Form.Control>
+												<Form.Combo
+													value={field.value}
+													onValueChange={field.onChange}
+												>
+													<Form.Combo.Input
+														showClear
+														placeholder='Search locations\u2026'
+													/>
+													<Form.Combo.Content>
+														<Form.Combo.List>
+															{(locationsList?.items ?? []).map(
+																(l: Record<string, unknown>) => (
+																	<Form.Combo.Item
+																		key={l._id as string}
+																		value={l.code as string}
+																	>
+																		{l.code as string} - {l.name as string}
+																	</Form.Combo.Item>
+																),
+															)}
+															<Form.Combo.Empty>
+																No locations found
+															</Form.Combo.Empty>
+														</Form.Combo.List>
+													</Form.Combo.Content>
+												</Form.Combo>
+											</Form.Control>
+										</Form.Item>
+									)}
+								/>
 
-							<Form.Field
-								name='fromLocationCode'
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>From Location</Form.Label>
-										<Form.Control>
-											<Form.Combo
-												value={field.value}
-												onValueChange={field.onChange}
-											>
-												<Form.Combo.Input
-													showClear
-													placeholder='Search locations\u2026'
+								<Form.Item>
+									<Form.Label>Shipment Date</Form.Label>
+									<Form.Field
+										name='shipmentDate'
+										render={({ field }) => (
+											<Form.Control>
+												<Form.DatePicker
+													value={field.value}
+													onValueChange={(date) =>
+														field.onChange(date?.toISOString() ?? '')
+													}
+													placeholder='Select shipment date'
 												/>
-												<Form.Combo.Content>
-													<Form.Combo.List>
-														{(locationsList?.items ?? []).map(
-															(l: Record<string, unknown>) => (
-																<Form.Combo.Item
-																	key={l._id as string}
-																	value={l.code as string}
-																>
-																	{l.code as string} - {l.name as string}
-																</Form.Combo.Item>
-															),
-														)}
-														<Form.Combo.Empty>
-															No locations found
-														</Form.Combo.Empty>
-													</Form.Combo.List>
-												</Form.Combo.Content>
-											</Form.Combo>
-										</Form.Control>
-									</Form.Item>
-								)}
-							/>
+											</Form.Control>
+										)}
+									/>
+								</Form.Item>
 
-							<Form.Field
-								name='toLocationCode'
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>To Location</Form.Label>
-										<Form.Control>
-											<Form.Combo
-												value={field.value}
-												onValueChange={field.onChange}
-											>
-												<Form.Combo.Input
-													showClear
-													placeholder='Search locations\u2026'
+								<Form.Item>
+									<Form.Label>Receipt Date</Form.Label>
+									<Form.Field
+										name='receiptDate'
+										render={({ field }) => (
+											<Form.Control>
+												<Form.DatePicker
+													value={field.value}
+													onValueChange={(date) =>
+														field.onChange(date?.toISOString() ?? '')
+													}
+													placeholder='Select receipt date'
 												/>
-												<Form.Combo.Content>
-													<Form.Combo.List>
-														{(locationsList?.items ?? []).map(
-															(l: Record<string, unknown>) => (
-																<Form.Combo.Item
-																	key={l._id as string}
-																	value={l.code as string}
-																>
-																	{l.code as string} - {l.name as string}
-																</Form.Combo.Item>
-															),
-														)}
-														<Form.Combo.Empty>
-															No locations found
-														</Form.Combo.Empty>
-													</Form.Combo.List>
-												</Form.Combo.Content>
-											</Form.Combo>
-										</Form.Control>
-									</Form.Item>
-								)}
-							/>
+											</Form.Control>
+										)}
+									/>
+								</Form.Item>
+							</Form.Group>
+						)}
+					</Form>
 
-							<Form.Item>
-								<Form.Label>Shipment Date</Form.Label>
-								<Form.Field
-									name='shipmentDate'
-									render={({ field }) => (
-										<Form.Control>
-											<Form.DatePicker
-												value={field.value}
-												onValueChange={(date) =>
-													field.onChange(date?.toISOString() ?? '')
-												}
-												placeholder='Select shipment date'
-											/>
-										</Form.Control>
-									)}
+					<div className='space-y-2'>
+						<h3 className='font-medium text-sm'>Transfer Lines</h3>
+						<LinesGrid variant='compact' height={280}>
+							<LinesGrid.Columns>
+								<LinesGrid.Column<TransferLine>
+									accessorKey='lineNo'
+									title='Line No.'
+									cellVariant='number'
 								/>
-							</Form.Item>
-
-							<Form.Item>
-								<Form.Label>Receipt Date</Form.Label>
-								<Form.Field
-									name='receiptDate'
-									render={({ field }) => (
-										<Form.Control>
-											<Form.DatePicker
-												value={field.value}
-												onValueChange={(date) =>
-													field.onChange(date?.toISOString() ?? '')
-												}
-												placeholder='Select receipt date'
-											/>
-										</Form.Control>
-									)}
+								<LinesGrid.Column<TransferLine>
+									accessorKey='itemId'
+									title='Item'
+									cellVariant='select'
+									opts={{
+										options: (itemsList?.items ?? []).map((item) => ({
+											value: item._id as string,
+											label: `${item.itemNo as string} - ${
+												item.description as string
+											}`,
+										})),
+									}}
 								/>
-							</Form.Item>
-						</Form.Group>
-					)}
-				</Form>
-
-				<div className='space-y-2'>
-					<h3 className='font-medium text-sm'>Transfer Lines</h3>
-					<LinesGrid variant='compact' height={280}>
-						<LinesGrid.Columns>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='lineNo'
-								title='Line No.'
-								cellVariant='number'
-							/>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='itemId'
-								title='Item'
-							/>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='description'
-								title='Description'
-							/>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='quantity'
-								title='Quantity'
-								cellVariant='number'
-							/>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='quantityShipped'
-								title='Qty Shipped'
-								cellVariant='number'
-							/>
-							<LinesGrid.Column<TransferLine>
-								accessorKey='quantityReceived'
-								title='Qty Received'
-								cellVariant='number'
-							/>
-						</LinesGrid.Columns>
-					</LinesGrid>
+								<LinesGrid.Column<TransferLine>
+									accessorKey='description'
+									title='Description'
+								/>
+								<LinesGrid.Column<TransferLine>
+									accessorKey='quantity'
+									title='Quantity'
+									cellVariant='number'
+								/>
+								<LinesGrid.Column<TransferLine>
+									accessorKey='quantityShipped'
+									title='Qty Shipped'
+									cellVariant='number'
+								/>
+								<LinesGrid.Column<TransferLine>
+									accessorKey='quantityReceived'
+									title='Qty Received'
+									cellVariant='number'
+								/>
+							</LinesGrid.Columns>
+						</LinesGrid>
+					</div>
 				</div>
-			</div>
-		</RecordDialog>
+			</RecordDialog>
+			{reasonDialog}
+		</>
 	)
 }

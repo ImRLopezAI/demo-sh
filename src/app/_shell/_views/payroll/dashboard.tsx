@@ -24,11 +24,27 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
+interface Employee {
+	id: string
+	employeeNo: string
+	firstName: string
+	lastName: string
+	email?: string | null
+	department?: string | null
+	jobTitle?: string | null
+	employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACTOR' | 'TEMPORARY'
+	status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED'
+	hireDate?: string | null
+	baseSalary: number
+	payFrequency: 'WEEKLY' | 'BIWEEKLY' | 'SEMI_MONTHLY' | 'MONTHLY'
+	outstandingAmount: number
+}
+
 export default function PayrollDashboard() {
-	const { items: employees, isLoading: employeesLoading } = useModuleData(
+	const { items: employees, isLoading: employeesLoading } = useModuleData<
 		'payroll',
-		'employees',
-	)
+		Employee
+	>('payroll', 'employees', 'overview')
 
 	const totalEmployees = employees.length
 	const activeEmployees = employees.filter(
@@ -115,7 +131,7 @@ export default function PayrollDashboard() {
 	)
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Payroll Dashboard'
 				description='Workforce composition, compensation exposure, and hiring velocity.'
@@ -125,7 +141,7 @@ export default function PayrollDashboard() {
 
 			<DashboardSectionGrid>
 				<DashboardTrendChart
-					className='xl:col-span-2'
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'
 					title='Hiring Trend'
 					description='Employees hired per month'
 					data={monthlyHiringTrend}
@@ -133,6 +149,7 @@ export default function PayrollDashboard() {
 					metricLabel='Hires'
 				/>
 				<DashboardDistributionChart
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 					title='Employee Status Mix'
 					description='Distribution by employment status'
 					data={employeeStatusMix}
@@ -140,6 +157,7 @@ export default function PayrollDashboard() {
 			</DashboardSectionGrid>
 
 			<DashboardStatsPanel
+				className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 				title='Workforce Statistics'
 				description='Critical staffing and cost structure indicators'
 				items={[
@@ -166,39 +184,42 @@ export default function PayrollDashboard() {
 				]}
 			/>
 
-			<Card>
-				<CardHeader className='border-b'>
+			<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md'>
+				<CardHeader className='border-border/50 border-b bg-muted/20'>
 					<CardTitle>Recent Employees</CardTitle>
 					<CardDescription>
 						Latest employee records by hire date
 					</CardDescription>
 				</CardHeader>
-				<CardContent className='pt-4'>
+				<CardContent className='pt-6'>
 					{employeesLoading ? (
-						<div className='space-y-2' role='status' aria-label='Loading'>
+						<div className='space-y-3' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={`skeleton-${i}`}
-									className='h-8 rounded bg-muted motion-safe:animate-pulse'
+									className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 								/>
 							))}
 						</div>
 					) : recentEmployees.length === 0 ? (
-						<p className='py-4 text-center text-muted-foreground text-sm'>
-							No employees found.
-						</p>
+						<div className='flex flex-col items-center justify-center py-8 text-center'>
+							<Users className='mb-3 h-8 w-8 text-muted-foreground/50' />
+							<p className='text-muted-foreground text-sm'>
+								No employees found.
+							</p>
+						</div>
 					) : (
-						<ul className='divide-y'>
+						<ul className='space-y-3'>
 							{recentEmployees.map((employee) => (
 								<li
-									key={employee._id}
-									className='flex items-center justify-between gap-2 py-2'
+									key={employee.id}
+									className='flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 								>
 									<div className='min-w-0 flex-1'>
 										<p className='truncate font-medium text-sm'>
 											{employee.firstName} {employee.lastName}
 										</p>
-										<p className='text-muted-foreground text-xs'>
+										<p className='mt-0.5 text-muted-foreground text-xs'>
 											{employee.employeeNo} &middot;{' '}
 											{employee.department ?? 'No department'}
 										</p>

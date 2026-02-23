@@ -13,21 +13,17 @@ export const terminals = zodTable('terminals', (_zid) => ({
 	locationCode: z.string().optional(),
 	status: z.enum(TERMINAL_STATUS).default('ONLINE'),
 	lastHeartbeat: z.number().optional(),
-	sessionCount: z.number().default(0),
 }))
 
 export const posSessions = zodTable('posSessions', (zid) => ({
 	sessionNo: z.string(),
 	terminalId: zid('terminals'),
-	terminalName: z.string().optional(),
 	cashierId: z.string().optional(),
 	status: z.enum(POS_SESSION_STATUS).default('OPEN'),
 	openedAt: z.number().optional(),
 	closedAt: z.number().optional(),
 	openingBalance: z.number().default(0),
 	closingBalance: z.number().default(0),
-	transactionCount: z.number().default(0),
-	totalSales: z.number().default(0),
 }))
 
 export const posTransactions = zodTable('posTransactions', (zid) => ({
@@ -35,7 +31,6 @@ export const posTransactions = zodTable('posTransactions', (zid) => ({
 	posSessionId: zid('posSessions'),
 	status: z.enum(POS_TRANSACTION_STATUS).default('OPEN'),
 	customerId: z.string().optional(),
-	customerName: z.string().optional(),
 	totalAmount: z.number().default(0),
 	taxAmount: z.number().default(0),
 	discountAmount: z.number().default(0),
@@ -44,7 +39,6 @@ export const posTransactions = zodTable('posTransactions', (zid) => ({
 	transactionAt: z.number().optional(),
 	statusReason: z.string().optional(),
 	statusUpdatedAt: z.number().optional(),
-	lineCount: z.number().default(0),
 }))
 
 export const posTransactionLines = zodTable('posTransactionLines', (zid) => ({

@@ -18,55 +18,65 @@ interface Terminal {
 export default function TerminalsList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData('pos', 'terminals')
+	const { DataGrid, windowSize } = useModuleData<'pos', Terminal>(
+		'pos',
+		'terminals',
+		'all',
+	)
 
-	const handleEdit = React.useCallback((row) => {
+	const handleEdit = React.useCallback((row: Terminal) => {
 		setSelectedId(row._id)
 	}, [])
 
 	return (
-		<div className='space-y-4'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Terminals'
 				description='Manage POS terminals and their status.'
 				actions={
-					<Button size='sm' onClick={() => setSelectedId('new')}>
+					<Button
+						size='sm'
+						onClick={() => setSelectedId('new')}
+						className='shadow-sm transition-all hover:shadow-md'
+					>
 						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
 						New Terminal
 					</Button>
 				}
 			/>
 
-			<DataGrid
-				variant='compact'
-				height={Math.max(windowSize.height - 210, 360)}
-			>
-				<DataGrid.Header>
-					<DataGrid.Toolbar filter sort search export />
-				</DataGrid.Header>
-				<DataGrid.Columns>
-					<DataGrid.Column<Terminal>
-						accessorKey='terminalCode'
-						title='Terminal Code'
-						handleEdit={handleEdit}
-					/>
-					<DataGrid.Column<Terminal> accessorKey='name' title='Name' />
-					<DataGrid.Column<Terminal>
-						accessorKey='locationCode'
-						title='Location'
-					/>
-					<DataGrid.Column<Terminal>
-						accessorKey='status'
-						title='Status'
-						cell={({ row }) => <StatusBadge status={row.original.status} />}
-					/>
-					<DataGrid.Column<Terminal>
-						accessorKey='sessionCount'
-						title='Sessions'
-						cellVariant='number'
-					/>
-				</DataGrid.Columns>
-			</DataGrid>
+			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+				<DataGrid
+					variant='flat'
+					height={Math.max(windowSize.height - 240, 400)}
+				>
+					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
+						<DataGrid.Toolbar filter sort search export />
+					</DataGrid.Header>
+					<DataGrid.Columns>
+						<DataGrid.Column<Terminal>
+							accessorKey='terminalCode'
+							title='Terminal Code'
+							handleEdit={handleEdit}
+						/>
+						<DataGrid.Column<Terminal> accessorKey='name' title='Name' />
+						<DataGrid.Column<Terminal>
+							accessorKey='locationCode'
+							title='Location'
+						/>
+						<DataGrid.Column<Terminal>
+							accessorKey='status'
+							title='Status'
+							cell={({ row }) => <StatusBadge status={row.original.status} />}
+						/>
+						<DataGrid.Column<Terminal>
+							accessorKey='sessionCount'
+							title='Sessions'
+							cellVariant='number'
+						/>
+					</DataGrid.Columns>
+				</DataGrid>
+			</div>
 
 			<TerminalCard
 				selectedId={selectedId}

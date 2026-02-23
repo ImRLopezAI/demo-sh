@@ -24,7 +24,7 @@ import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface PurchaseOrder {
-	id: string
+	_id: string
 	documentNo: string
 	documentType: 'ORDER' | 'RETURN_ORDER' | 'QUOTE'
 	status:
@@ -43,16 +43,23 @@ interface PurchaseOrder {
 }
 
 interface Vendor {
-	id: string
+	_id: string
 	vendorNo: string
 	name: string
 	blocked: boolean
 }
 
 interface Transfer {
-	id: string
+	_id: string
 	transferNo: string
 	status: 'DRAFT' | 'RELEASED' | 'IN_TRANSIT' | 'RECEIVED' | 'CANCELED'
+}
+
+interface PurchaseLineBalance {
+	_id: string
+	quantity: number
+	quantityReceived: number
+	quantityInvoiced: number
 }
 
 export default function Dashboard() {
@@ -72,6 +79,12 @@ export default function Dashboard() {
 		'replenishment',
 		Transfer
 	>('replenishment', 'transfers', 'all')
+	const { items: purchaseLines, isLoading: purchaseLinesLoading } =
+		useModuleData<'replenishment', PurchaseLineBalance>(
+			'replenishment',
+			'purchaseLines',
+			'all',
+		)
 
 	const totalPOs = purchaseOrders.length
 	const pendingApproval = purchaseOrders.filter(
@@ -86,6 +99,20 @@ export default function Dashboard() {
 	const averagePOValue = average(
 		purchaseOrders.map((order) => order.totalAmount ?? 0),
 	)
+	const totalOrderedQty = purchaseLines.reduce(
+		(sum, line) => sum + Number(line.quantity ?? 0),
+		0,
+	)
+	const totalReceivedQty = purchaseLines.reduce(
+		(sum, line) => sum + Number(line.quantityReceived ?? 0),
+		0,
+	)
+	const totalInvoicedQty = purchaseLines.reduce(
+		(sum, line) => sum + Number(line.quantityInvoiced ?? 0),
+		0,
+	)
+	const openReceiptQty = Math.max(0, totalOrderedQty - totalReceivedQty)
+	const openInvoiceQty = Math.max(0, totalReceivedQty - totalInvoicedQty)
 	const urgentReceipts = purchaseOrders.filter((order) => {
 		if (order.status === 'COMPLETED' || order.status === 'CANCELED')
 			return false
@@ -145,10 +172,19 @@ export default function Dashboard() {
 		[purchaseOrders],
 	)
 
-	const isLoading = purchaseOrdersLoading || vendorsLoading || transfersLoading
+	const vendorNameById = React.useMemo(
+		() => new Map(vendors.map((vendor) => [vendor._id, vendor.name])),
+		[vendors],
+	)
+
+	const isLoading =
+		purchaseOrdersLoading ||
+		vendorsLoading ||
+		transfersLoading ||
+		purchaseLinesLoading
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Replenishment Dashboard'
 				description='Purchase velocity, supplier quality, and transfer execution insights.'
@@ -157,7 +193,7 @@ export default function Dashboard() {
 
 			<DashboardSectionGrid>
 				<DashboardTrendChart
-					className='xl:col-span-2'
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'
 					title='Purchase Order Trend'
 					description='Purchase orders created per month'
 					data={monthlyPurchaseOrderVolume}
@@ -165,6 +201,7 @@ export default function Dashboard() {
 					metricLabel='Purchase Orders'
 				/>
 				<DashboardDistributionChart
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 					title='PO Status Mix'
 					description='Distribution by purchase order state'
 					data={purchaseOrderStatusMix}
@@ -172,6 +209,7 @@ export default function Dashboard() {
 			</DashboardSectionGrid>
 
 			<DashboardStatsPanel
+				className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 				title='Replenishment Statistics'
 				description='Signals for demand planning and supply continuity'
 				items={[
@@ -195,20 +233,40 @@ export default function Dashboard() {
 						value: urgentReceipts.toLocaleString(),
 						description: 'Open orders with near-term expected receipts',
 					},
+					{
+						label: 'Received Quantity',
+						value: totalReceivedQty.toLocaleString(),
+						description: `${formatPercent(totalReceivedQty, totalOrderedQty)} of ordered units`,
+					},
+					{
+						label: 'Invoiced Quantity',
+						value: totalInvoicedQty.toLocaleString(),
+						description: `${formatPercent(totalInvoicedQty, totalReceivedQty)} of received units`,
+					},
+					{
+						label: 'Open Receipt Balance',
+						value: openReceiptQty.toLocaleString(),
+						description: 'Ordered quantity still pending receipt',
+					},
+					{
+						label: 'Open Invoice Balance',
+						value: openInvoiceQty.toLocaleString(),
+						description: 'Received quantity not yet invoiced',
+					},
 				]}
 			/>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Recent Purchase Orders</CardTitle>
+			<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md'>
+				<CardHeader className='border-border/50 border-b pb-4'>
+					<CardTitle className='text-xl'>Recent Purchase Orders</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className='pt-6'>
 					{isLoading ? (
-						<div className='space-y-2' role='status' aria-label='Loading'>
+						<div className='space-y-3' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, index) => (
 								<div
 									key={`skeleton-${index}`}
-									className='h-8 rounded bg-muted motion-safe:animate-pulse'
+									className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 								/>
 							))}
 						</div>
@@ -217,18 +275,18 @@ export default function Dashboard() {
 							No purchase orders found.
 						</p>
 					) : (
-						<ul className='space-y-1'>
+						<ul className='space-y-2'>
 							{recentPurchaseOrders.map((order) => (
 								<li
-									key={order.id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50'
+									key={order._id}
+									className='flex items-center justify-between rounded-lg border border-border/40 bg-background/30 p-3 text-sm transition-colors hover:bg-muted/50'
 								>
 									<div className='flex min-w-0 items-center gap-3'>
 										<span className='truncate font-medium'>
 											{order.documentNo}
 										</span>
 										<span className='truncate text-muted-foreground text-xs'>
-											{order.vendorId}
+											{vendorNameById.get(order.vendorId) ?? order.vendorId}
 										</span>
 									</div>
 									<div className='flex shrink-0 items-center gap-3'>

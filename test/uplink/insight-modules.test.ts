@@ -52,6 +52,24 @@ describe.sequential('insight module', () => {
 		expect(Array.isArray(valueEntries.items)).toBe(true)
 	})
 
+	test('supports location creation workflow', async () => {
+		const caller = createCaller()
+		const createdLocation = await caller.insight.locations.create({
+			code: '',
+			name: 'New Regional Warehouse',
+			type: 'WAREHOUSE',
+			address: '1200 Atlantic Ave',
+			city: 'Miami',
+			country: 'US',
+			active: true,
+		})
+
+		expect(createdLocation._id).toBeDefined()
+		expect(createdLocation.code).toBeTruthy()
+		expect(createdLocation.name).toBe('New Regional Warehouse')
+		expect(createdLocation.active).toBe(true)
+	})
+
 	test('exposes insight kpis endpoints', async () => {
 		const caller = createCaller()
 
@@ -75,5 +93,72 @@ describe.sequential('insight module', () => {
 
 		expect(response.tableName).toBe('valueEntries')
 		expect(Array.isArray(response.items)).toBe(true)
+	})
+
+	test('returns validated forecasting signals for decision support', async () => {
+		const caller = createCaller()
+		const item = db.schemas.items.toArray()[0]
+		const location = db.schemas.locations.toArray()[0]
+		expect(item?._id).toBeDefined()
+		expect(location?.code).toBeDefined()
+
+		const nowIso = new Date().toISOString()
+		db.schemas.itemLedgerEntries.insert({
+			entryNo: 0,
+			entryType: 'SALE',
+			itemId: item?._id,
+			locationCode: location?.code,
+			postingDate: nowIso,
+			quantity: 4,
+			remainingQty: 12,
+			open: false,
+			sourceDocumentType: 'ORDER',
+			sourceDocumentNo: 'SO-INSIGHT-1',
+		})
+		db.schemas.itemLedgerEntries.insert({
+			entryNo: 0,
+			entryType: 'SALE',
+			itemId: item?._id,
+			locationCode: location?.code,
+			postingDate: nowIso,
+			quantity: 6,
+			remainingQty: 6,
+			open: false,
+			sourceDocumentType: 'ORDER',
+			sourceDocumentNo: 'SO-INSIGHT-2',
+		})
+
+		const forecast = await caller.insight.forecastDemand({
+			horizonDays: 30,
+			locationCode: location?.code,
+			itemId: item?._id,
+			limit: 10,
+		})
+		expect(forecast.horizonDays).toBe(30)
+		expect(Array.isArray(forecast.signals)).toBe(true)
+		expect(forecast.signalCount).toBeGreaterThan(0)
+		expect(forecast.signals[0]?.itemId).toBe(item?._id)
+		expect(forecast.signals[0]?.locationCode).toBe(location?.code)
+		expect(typeof forecast.signals[0]?.avgDailyDemand).toBe('number')
+		expect(
+			['LOW', 'MEDIUM', 'HIGH'].includes(
+				forecast.signals[0]?.stockoutRisk as string,
+			),
+		).toBe(true)
+	})
+
+	test('keeps 25-row insight pagination within acceptable latency', async () => {
+		const caller = createCaller()
+		const maxDurationMs = 2000
+		const startedAt = Date.now()
+		const result = await caller.insight.itemLedgerEntries.list({
+			limit: 25,
+			offset: 0,
+		})
+		const durationMs = Date.now() - startedAt
+
+		expect(Array.isArray(result.items)).toBe(true)
+		expect(result.items.length).toBeLessThanOrEqual(25)
+		expect(durationMs).toBeLessThan(maxDurationMs)
 	})
 })

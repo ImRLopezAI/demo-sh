@@ -18,8 +18,6 @@ export const bankAccounts = zodTable('bankAccounts', (_zid) => ({
 	currency: z.string().default('USD'),
 	status: z.enum(BANK_ACCOUNT_STATUS).default('ACTIVE'),
 	lastSyncAt: z.number().optional(),
-	entryCount: z.number().default(0),
-	currentBalance: z.number().default(0),
 }))
 
 export const bankAccountLedgerEntries = zodTable(
@@ -27,7 +25,6 @@ export const bankAccountLedgerEntries = zodTable(
 	(zid) => ({
 		entryNo: z.number().default(0),
 		bankAccountId: zid('bankAccounts'),
-		bankAccountName: z.string().optional(),
 		postingDate: z.string().optional(),
 		documentType: z.enum(BANK_LEDGER_DOCUMENT_TYPE).default('PAYMENT'),
 		documentNo: z.string().optional(),

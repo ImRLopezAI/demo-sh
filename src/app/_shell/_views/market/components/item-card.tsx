@@ -88,30 +88,39 @@ export function ItemCard({
 			description='Item details, pricing, and inventory'
 			footer={
 				<>
-					<Button variant='outline' size='sm' onClick={onClose}>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={onClose}
+						className='shadow-sm transition-all hover:shadow-md'
+					>
 						Cancel
 					</Button>
-					<Button size='sm' onClick={() => form.submit()}>
+					<Button
+						size='sm'
+						onClick={() => form.submit()}
+						className='shadow-sm transition-all hover:shadow-md'
+					>
 						Save
 					</Button>
 				</>
 			}
 		>
 			{recordLoading && !isNew ? (
-				<div className='space-y-3'>
+				<div className='space-y-4'>
 					{Array.from({ length: 4 }).map((_, i) => (
 						<div
 							key={`skeleton-${i}`}
-							className='h-8 rounded bg-muted motion-safe:animate-pulse'
+							className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 						/>
 					))}
 				</div>
 			) : (
 				<Form>
 					{() => (
-						<div className='space-y-8 pt-1'>
+						<div className='space-y-8 pt-2'>
 							<FormSection title='General'>
-								<div className='grid grid-cols-2 gap-4'>
+								<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
 									<Form.Field
 										name='itemNo'
 										render={({ field }) => (
@@ -124,6 +133,7 @@ export function ItemCard({
 														readOnly={!isNew}
 														placeholder='Auto-generated\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -140,6 +150,7 @@ export function ItemCard({
 														value={(field.value as string) ?? ''}
 														placeholder='Item description\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -155,7 +166,7 @@ export function ItemCard({
 														value={field.value as string}
 														onValueChange={field.onChange}
 													>
-														<Form.Select.Trigger className='w-full'>
+														<Form.Select.Trigger className='w-full bg-background/50'>
 															<Form.Select.Value />
 														</Form.Select.Trigger>
 														<Form.Select.Content>
@@ -181,6 +192,7 @@ export function ItemCard({
 														value={(field.value as string) ?? ''}
 														placeholder='PCS, KG, etc.\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -197,6 +209,7 @@ export function ItemCard({
 														value={(field.value as string) ?? ''}
 														placeholder='Barcode\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -205,14 +218,14 @@ export function ItemCard({
 									<Form.Field
 										name='blocked'
 										render={({ field }) => (
-											<Form.Item className='flex flex-row items-center gap-3'>
+											<Form.Item className='flex flex-row items-center gap-3 rounded-lg border border-border/40 bg-background/30 p-4 shadow-sm'>
 												<Form.Control>
 													<Form.Switch
 														checked={field.value as boolean}
 														onCheckedChange={field.onChange}
 													/>
 												</Form.Control>
-												<Form.Label>Blocked</Form.Label>
+												<Form.Label className='font-medium'>Blocked</Form.Label>
 											</Form.Item>
 										)}
 									/>
@@ -220,7 +233,7 @@ export function ItemCard({
 							</FormSection>
 
 							<FormSection title='Pricing'>
-								<div className='grid grid-cols-2 gap-4'>
+								<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
 									<Form.Field
 										name='unitPrice'
 										render={({ field }) => (
@@ -233,6 +246,7 @@ export function ItemCard({
 														type='number'
 														placeholder='0.00\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -250,6 +264,7 @@ export function ItemCard({
 														type='number'
 														placeholder='0.00\u2026'
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 											</Form.Item>
@@ -259,7 +274,7 @@ export function ItemCard({
 							</FormSection>
 
 							<FormSection title='Inventory'>
-								<div className='grid grid-cols-2 gap-4 lg:grid-cols-3'>
+								<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
 									<Form.Field
 										name='inventory'
 										render={({ field }) => (
@@ -272,6 +287,7 @@ export function ItemCard({
 														type='number'
 														readOnly
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 												<Form.Description>
@@ -292,6 +308,7 @@ export function ItemCard({
 														type='number'
 														readOnly
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 												<Form.Description>Flow field</Form.Description>
@@ -310,6 +327,7 @@ export function ItemCard({
 														type='number'
 														readOnly
 														autoComplete='off'
+														className='bg-background/50'
 													/>
 												</Form.Control>
 												<Form.Description>Flow field</Form.Description>

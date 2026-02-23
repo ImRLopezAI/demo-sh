@@ -18,15 +18,39 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
+interface PosTransaction {
+	id: string
+	receiptNo: string
+	posSessionId: string
+	status: 'OPEN' | 'COMPLETED' | 'VOIDED' | 'REFUNDED'
+	customerId: string
+	totalAmount: number
+	taxAmount: number
+	discountAmount: number
+	paidAmount: number
+	paymentMethod: 'CASH' | 'CARD' | 'MOBILE' | 'MIXED'
+	transactionAt: string
+	lineCount: number
+}
+
+interface Terminal {
+	id: string
+	terminalCode: string
+	name: string
+	locationCode: string
+	status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE'
+	sessionCount: number
+}
+
 export default function PosDashboard() {
-	const { items: transactions, isLoading: transactionsLoading } = useModuleData(
+	const { items: transactions, isLoading: transactionsLoading } = useModuleData<
 		'pos',
-		'posTransactions',
-	)
-	const { items: terminals, isLoading: terminalsLoading } = useModuleData(
+		PosTransaction
+	>('pos', 'transactions', 'all')
+	const { items: terminals, isLoading: terminalsLoading } = useModuleData<
 		'pos',
-		'terminals',
-	)
+		Terminal
+	>('pos', 'terminals', 'all')
 
 	const totalTransactions = transactions.length
 	const completedTransactions = transactions.filter(
@@ -108,8 +132,8 @@ export default function PosDashboard() {
 			[...transactions]
 				.sort(
 					(a, b) =>
-						new Date(b.transactionAt ?? '').getTime() -
-						new Date(a.transactionAt ?? '').getTime(),
+						new Date(b.transactionAt).getTime() -
+						new Date(a.transactionAt).getTime(),
 				)
 				.slice(0, 10),
 		[transactions],
@@ -118,7 +142,7 @@ export default function PosDashboard() {
 	const isLoading = transactionsLoading || terminalsLoading
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='POS Dashboard'
 				description='Checkout velocity, payment mix, and terminal activity in one view.'
@@ -128,7 +152,7 @@ export default function PosDashboard() {
 
 			<DashboardSectionGrid>
 				<DashboardTrendChart
-					className='xl:col-span-2'
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'
 					title='Transaction Volume Trend'
 					description='Transactions processed per month'
 					data={monthlyTransactionVolume}
@@ -136,6 +160,7 @@ export default function PosDashboard() {
 					metricLabel='Transactions'
 				/>
 				<DashboardDistributionChart
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 					title='Transaction Status Mix'
 					description='Distribution of current transaction states'
 					data={transactionStatusMix}
@@ -143,6 +168,7 @@ export default function PosDashboard() {
 			</DashboardSectionGrid>
 
 			<DashboardStatsPanel
+				className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 				title='POS Statistics'
 				description='Signals that impact checkout quality and conversion'
 				items={[
@@ -169,11 +195,11 @@ export default function PosDashboard() {
 				]}
 			/>
 
-			<Card>
-				<CardHeader>
+			<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md'>
+				<CardHeader className='border-border/50 border-b bg-muted/20'>
 					<CardTitle>Recent Transactions</CardTitle>
 				</CardHeader>
-				<CardContent>
+				<CardContent className='pt-4'>
 					{isLoading ? (
 						<div className='space-y-2' role='status' aria-label='Loading'>
 							{Array.from({ length: 5 }).map((_, i) => (
@@ -188,11 +214,11 @@ export default function PosDashboard() {
 							No transactions found.
 						</p>
 					) : (
-						<ul className='space-y-1'>
+						<ul className='space-y-2'>
 							{recentTransactions.map((transaction) => (
 								<li
-									key={transaction._id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
+									key={transaction.id}
+									className='flex items-center justify-between rounded-lg border border-border/40 bg-background/30 p-3 text-sm transition-colors hover:bg-muted/50'
 								>
 									<div className='flex min-w-0 items-center gap-3'>
 										<span className='truncate font-medium'>

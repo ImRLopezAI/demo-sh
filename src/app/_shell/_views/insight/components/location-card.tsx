@@ -86,14 +86,15 @@ export function LocationCard({
 	open: boolean
 	onOpenChange: (open: boolean) => void
 }) {
+	const isNew = locationId === 'new'
 	const { data: record, isLoading } = useEntityRecord(
 		'insight',
 		'locations',
 		locationId,
-		{ enabled: open },
+		{ enabled: open && !!locationId && !isNew },
 	)
 
-	const { update } = useEntityMutations('insight', 'locations')
+	const { create, update } = useEntityMutations('insight', 'locations')
 
 	const [Form, form] = useCreateForm<LocationFormValues>(
 		() => ({
@@ -109,16 +110,20 @@ export function LocationCard({
 				active: true,
 			},
 			onSubmit: async (data) => {
-				if (!locationId) return
-				await update.mutateAsync({ id: locationId, data })
+				if (isNew) {
+					await create.mutateAsync(data)
+				} else {
+					if (!locationId) return
+					await update.mutateAsync({ id: locationId, data })
+				}
 				onOpenChange(false)
 			},
 		}),
-		[locationId],
+		[locationId, isNew, create, update, onOpenChange],
 	)
 
 	React.useEffect(() => {
-		if (record) {
+		if (record && !isNew) {
 			form.reset({
 				code: record.code ?? '',
 				name: record.name ?? '',
@@ -130,8 +135,20 @@ export function LocationCard({
 				longitude: toAmericanLongitude(record.longitude),
 				active: record.active ?? true,
 			})
+		} else if (isNew) {
+			form.reset({
+				code: '',
+				name: '',
+				type: 'WAREHOUSE',
+				address: '',
+				city: '',
+				country: '',
+				latitude: undefined,
+				longitude: undefined,
+				active: true,
+			})
 		}
-	}, [record, form])
+	}, [record, form, isNew])
 
 	const latitude = toAmericanLatitude(form.watch('latitude'))
 	const longitude = toAmericanLongitude(form.watch('longitude'))
@@ -157,8 +174,12 @@ export function LocationCard({
 		<RecordDialog
 			open={open}
 			onOpenChange={onOpenChange}
-			title='Location Details'
-			description='View and edit location information.'
+			title={isNew ? 'New Location' : 'Location Details'}
+			description={
+				isNew
+					? 'Create a new location for inventory tracking.'
+					: 'View and edit location information.'
+			}
 			size='md'
 			footer={
 				<>
@@ -184,7 +205,12 @@ export function LocationCard({
 								<Form.Item>
 									<Form.Label>Code</Form.Label>
 									<Form.Control>
-										<Form.Input {...field} readOnly />
+										<Form.Input
+											{...field}
+											readOnly={!isNew}
+											placeholder={isNew ? 'Auto-generated...' : undefined}
+											className='bg-background/50'
+										/>
 									</Form.Control>
 									<Form.Message />
 								</Form.Item>
@@ -197,7 +223,7 @@ export function LocationCard({
 								<Form.Item>
 									<Form.Label>Name</Form.Label>
 									<Form.Control>
-										<Form.Input {...field} />
+										<Form.Input {...field} className='bg-background/50' />
 									</Form.Control>
 									<Form.Message />
 								</Form.Item>
@@ -239,7 +265,7 @@ export function LocationCard({
 								<Form.Item>
 									<Form.Label>Address</Form.Label>
 									<Form.Control>
-										<Form.Input {...field} />
+										<Form.Input {...field} className='bg-background/50' />
 									</Form.Control>
 									<Form.Message />
 								</Form.Item>
@@ -252,7 +278,7 @@ export function LocationCard({
 								<Form.Item>
 									<Form.Label>City</Form.Label>
 									<Form.Control>
-										<Form.Input {...field} />
+										<Form.Input {...field} className='bg-background/50' />
 									</Form.Control>
 									<Form.Message />
 								</Form.Item>
@@ -265,7 +291,7 @@ export function LocationCard({
 								<Form.Item>
 									<Form.Label>Country</Form.Label>
 									<Form.Control>
-										<Form.Input {...field} />
+										<Form.Input {...field} className='bg-background/50' />
 									</Form.Control>
 									<Form.Message />
 								</Form.Item>
@@ -280,6 +306,7 @@ export function LocationCard({
 									<Form.Control>
 										<Form.Input
 											{...field}
+											className='bg-background/50'
 											type='number'
 											step='any'
 											min={AMERICAS_COORDINATE_BOUNDS.latitude.min}
@@ -309,6 +336,7 @@ export function LocationCard({
 									<Form.Control>
 										<Form.Input
 											{...field}
+											className='bg-background/50'
 											type='number'
 											step='any'
 											min={AMERICAS_COORDINATE_BOUNDS.longitude.min}

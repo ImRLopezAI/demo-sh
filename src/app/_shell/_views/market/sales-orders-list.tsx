@@ -6,79 +6,103 @@ import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
+interface SalesOrder {
+	_id: string
+	documentNo: string
+	documentType: string
+	status: string
+	customerId: string
+	customerName: string
+	orderDate: string
+	currency: string
+	lineCount: number
+	totalAmount: number
+}
 
 export default function SalesOrdersList() {
 	const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-	const { DataGrid, windowSize } = useModuleData(
+	const { DataGrid, windowSize } = useModuleData<'market', SalesOrder>(
 		'market',
-		'salesHeaders'
+		'salesOrders',
+		'all',
 	)
 
 	const handleEdit = React.useCallback(
-		(row) => setSelectedId(row._id),
+		(row: SalesOrder) => setSelectedId(row._id),
 		[],
 	)
 	const handleNew = () => setSelectedId('new')
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Sales Orders'
 				description='Manage customer orders, quotes, and returns'
 				actions={
-					<Button size='sm' onClick={handleNew}>
-						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+					<Button
+						size='sm'
+						onClick={handleNew}
+						data-testid='sales-order-new-button'
+						className='shadow-sm transition-all hover:shadow-md'
+					>
+						<Plus className='mr-1.5 size-4' aria-hidden='true' />
 						New Order
 					</Button>
 				}
 			/>
 
-			<DataGrid variant='lined' height={Math.max(windowSize.height - 190, 390)}>
-				<DataGrid.Header>
-					<DataGrid.Toolbar filter sort search export />
-				</DataGrid.Header>
-				<DataGrid.Columns>
-					<DataGrid.Column
-						accessorKey='documentNo'
-						title='Document No.'
-						handleEdit={handleEdit}
-					/>
-					<DataGrid.Column
-						accessorKey='documentType'
-						title='Type'
-						cellVariant='select'
-					/>
-					<DataGrid.Column
-						accessorKey='status'
-						title='Status'
-						cell={({ row }) => <StatusBadge status={row.original.status} />}
-					/>
-					<DataGrid.Column accessorKey='customerName' title='Customer' />
-					<DataGrid.Column
-						accessorKey='orderDate'
-						title='Order Date'
-						cellVariant='date'
-						formatter={(v, f) => f.date(v.orderDate, { format: 'P' })}
-					/>
-					<DataGrid.Column accessorKey='currency' title='Currency' />
-					<DataGrid.Column
-						accessorKey='lineCount'
-						title='Lines'
-						cellVariant='number'
-					/>
-					<DataGrid.Column
-						accessorKey='totalAmount'
-						title='Total Amount'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.totalAmount)}
-					/>
-				</DataGrid.Columns>
-			</DataGrid>
+			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+				<DataGrid
+					variant='lined'
+					height={Math.max(windowSize.height - 240, 400)}
+				>
+					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
+						<DataGrid.Toolbar filter sort search export />
+					</DataGrid.Header>
+					<DataGrid.Columns>
+						<DataGrid.Column
+							accessorKey='documentNo'
+							title='Document No.'
+							handleEdit={handleEdit}
+						/>
+						<DataGrid.Column
+							accessorKey='documentType'
+							title='Type'
+							cellVariant='select'
+						/>
+						<DataGrid.Column
+							accessorKey='status'
+							title='Status'
+							cell={({ row }) => <StatusBadge status={row.original.status} />}
+						/>
+						<DataGrid.Column accessorKey='customerName' title='Customer' />
+						<DataGrid.Column
+							accessorKey='orderDate'
+							title='Order Date'
+							cellVariant='date'
+							formatter={(v, f) => f.date(v.orderDate, { format: 'P' })}
+						/>
+						<DataGrid.Column accessorKey='currency' title='Currency' />
+						<DataGrid.Column
+							accessorKey='lineCount'
+							title='Lines'
+							cellVariant='number'
+						/>
+						<DataGrid.Column
+							accessorKey='totalAmount'
+							title='Total Amount'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.totalAmount)}
+						/>
+					</DataGrid.Columns>
+				</DataGrid>
+			</div>
 
 			<SalesOrderCard
 				selectedId={selectedId}
 				onClose={() => setSelectedId(null)}
+				onCreated={(id) => setSelectedId(id)}
 			/>
 		</div>
 	)

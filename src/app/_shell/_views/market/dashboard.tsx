@@ -134,7 +134,7 @@ export default function MarketDashboard() {
 	const isLoading = ordersLoading || customersLoading || itemsLoading
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Market Dashboard'
 				description='Revenue, customer health, and order performance for your commerce operations.'
@@ -144,7 +144,7 @@ export default function MarketDashboard() {
 
 			<DashboardSectionGrid>
 				<DashboardTrendChart
-					className='xl:col-span-2'
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'
 					title='Order Volume Trend'
 					description='Orders created per month'
 					data={monthlyOrderVolume}
@@ -152,82 +152,112 @@ export default function MarketDashboard() {
 					metricLabel='Orders'
 				/>
 				<DashboardDistributionChart
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 					title='Order Status Mix'
 					description='Current distribution by status'
 					data={orderStatusMix}
 				/>
 			</DashboardSectionGrid>
 
-			<DashboardStatsPanel
-				title='Commercial Statistics'
-				description='Key operational insights to monitor weekly'
-				items={[
-					{
-						label: 'Active Customers',
-						value: activeCustomers.toLocaleString(),
-						description: `${blockedCustomers.toLocaleString()} blocked accounts`,
-					},
-					{
-						label: 'Average Lines Per Order',
-						value: avgLinesPerOrder.toFixed(1),
-						description: 'Basket complexity indicator',
-					},
-					{
-						label: 'Top Selling Item',
-						value: topItem?.description ?? 'N/A',
-						description: topItem
-							? `$${(topItem.totalSalesAmount ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-							: 'No item sales data',
-					},
-				]}
-			/>
+			<div className='grid grid-cols-1 gap-6 xl:grid-cols-3'>
+				<DashboardStatsPanel
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-1'
+					title='Commercial Statistics'
+					description='Key operational insights to monitor weekly'
+					items={[
+						{
+							label: 'Active Customers',
+							value: activeCustomers.toLocaleString(),
+							description: `${blockedCustomers.toLocaleString()} blocked accounts`,
+						},
+						{
+							label: 'Average Lines Per Order',
+							value: avgLinesPerOrder.toFixed(1),
+							description: 'Basket complexity indicator',
+						},
+						{
+							label: 'Top Selling Item',
+							value: topItem?.description ?? 'N/A',
+							description: topItem
+								? `$${(topItem.totalSalesAmount ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+								: 'No item sales data',
+						},
+					]}
+				/>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Recent Orders</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{isLoading ? (
-						<div className='space-y-2' role='status' aria-label='Loading'>
-							{Array.from({ length: 5 }).map((_, i) => (
-								<div
-									key={`skeleton-${i}`}
-									className='h-8 rounded bg-muted motion-safe:animate-pulse'
-								/>
-							))}
+				<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'>
+					<CardHeader className='flex flex-row items-center justify-between pb-2'>
+						<div className='space-y-1'>
+							<CardTitle className='text-xl'>Recent Orders</CardTitle>
+							<p className='text-muted-foreground text-sm'>
+								Latest transactions across all channels
+							</p>
 						</div>
-					) : recentOrders.length === 0 ? (
-						<p className='text-muted-foreground text-sm'>No orders found.</p>
-					) : (
-						<ul className='space-y-1'>
-							{recentOrders.map((order) => (
-								<li
-									key={order.id}
-									className='flex items-center justify-between rounded-md px-3 py-2 text-sm'
-								>
-									<div className='flex min-w-0 items-center gap-3'>
-										<span className='truncate font-medium'>
-											{order.documentNo}
-										</span>
-										<span className='truncate text-muted-foreground text-xs'>
-											{order.customerId}
-										</span>
-									</div>
-									<div className='flex items-center gap-3'>
-										<span className='text-muted-foreground text-xs tabular-nums'>
-											$
-											{order.totalAmount?.toLocaleString('en-US', {
-												minimumFractionDigits: 2,
-											}) ?? '0.00'}
-										</span>
-										<StatusBadge status={order.status} />
-									</div>
-								</li>
-							))}
-						</ul>
-					)}
-				</CardContent>
-			</Card>
+					</CardHeader>
+					<CardContent>
+						{isLoading ? (
+							<div className='space-y-3' role='status' aria-label='Loading'>
+								{Array.from({ length: 5 }).map((_, i) => (
+									<div
+										key={`skeleton-${i}`}
+										className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
+									/>
+								))}
+							</div>
+						) : recentOrders.length === 0 ? (
+							<div className='flex flex-col items-center justify-center py-12 text-center'>
+								<ShoppingCart className='mb-4 size-12 text-muted-foreground/20' />
+								<p className='font-medium text-muted-foreground text-sm'>
+									No orders found.
+								</p>
+								<p className='mt-1 text-muted-foreground text-xs'>
+									New orders will appear here
+								</p>
+							</div>
+						) : (
+							<ul className='mt-4 space-y-2'>
+								{recentOrders.map((order) => (
+									<li
+										key={order.id}
+										className='group flex items-center justify-between rounded-xl border border-border/40 bg-background/40 px-4 py-3 text-sm transition-all hover:border-border/80 hover:bg-accent/50'
+									>
+										<div className='flex min-w-0 items-center gap-4'>
+											<div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary'>
+												<ShoppingCart className='size-5' />
+											</div>
+											<div className='flex flex-col'>
+												<span className='truncate font-semibold text-foreground'>
+													{order.documentNo}
+												</span>
+												<span className='truncate text-muted-foreground text-xs'>
+													Customer: {order.customerId}
+												</span>
+											</div>
+										</div>
+										<div className='flex items-center gap-6'>
+											<div className='flex flex-col items-end'>
+												<span className='font-medium text-foreground tabular-nums'>
+													$
+													{order.totalAmount?.toLocaleString('en-US', {
+														minimumFractionDigits: 2,
+													}) ?? '0.00'}
+												</span>
+												<span className='text-[10px] text-muted-foreground uppercase tracking-wider'>
+													{new Date(order.orderDate).toLocaleDateString()}
+												</span>
+											</div>
+											<StatusBadge
+												status={order.status}
+												className='shadow-sm'
+											/>
+										</div>
+									</li>
+								))}
+							</ul>
+						)}
+					</CardContent>
+				</Card>
+			</div>
 		</div>
 	)
 }

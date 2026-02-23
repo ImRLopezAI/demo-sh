@@ -66,8 +66,13 @@ export function DashboardTrendChart({
 	} as ChartConfig
 
 	return (
-		<Card className={className}>
-			<CardHeader className='border-b'>
+		<Card
+			className={cn(
+				'shadow-sm transition-shadow duration-300 hover:shadow-md',
+				className,
+			)}
+		>
+			<CardHeader className='border-border/50 border-b bg-muted/20'>
 				<CardTitle>{title}</CardTitle>
 				{description && <CardDescription>{description}</CardDescription>}
 			</CardHeader>
@@ -126,8 +131,13 @@ export function DashboardDistributionChart({
 	) as ChartConfig
 
 	return (
-		<Card className={className}>
-			<CardHeader className='border-b'>
+		<Card
+			className={cn(
+				'shadow-sm transition-shadow duration-300 hover:shadow-md',
+				className,
+			)}
+		>
+			<CardHeader className='border-border/50 border-b bg-muted/20'>
 				<CardTitle>{title}</CardTitle>
 				{description && <CardDescription>{description}</CardDescription>}
 			</CardHeader>
@@ -182,8 +192,13 @@ export function DashboardStatsPanel({
 	className?: string
 }) {
 	return (
-		<Card className={className}>
-			<CardHeader className='border-b'>
+		<Card
+			className={cn(
+				'shadow-sm transition-shadow duration-300 hover:shadow-md',
+				className,
+			)}
+		>
+			<CardHeader className='border-border/50 border-b bg-muted/20'>
 				<CardTitle>{title}</CardTitle>
 				{description && <CardDescription>{description}</CardDescription>}
 			</CardHeader>
@@ -197,7 +212,7 @@ export function DashboardStatsPanel({
 						{items.map((item) => (
 							<div
 								key={item.label}
-								className='rounded-md border border-border bg-background/45 p-3'
+								className='rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 							>
 								<dt className='truncate text-muted-foreground text-xs'>
 									{item.label}

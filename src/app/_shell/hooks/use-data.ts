@@ -1,155 +1,101 @@
-import { cvx, useMutation, usePaginatedQuery } from '@lib/rpc'
-import type {
-	FunctionArgs,
-	FunctionReference,
-	FunctionReturnType,
-} from 'convex/server'
-import { useCallback, useState } from 'react'
+import { $rpc, useInfiniteQuery, useQuery } from '@lib/rpc'
+import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useWindowSize } from '@/components/data-grid/hooks/use-window-size'
-import React from 'react'
 
 const PAGE_SIZE = 25
 const DEFAULT_WINDOW_SIZE = { defaultWidth: 1200, defaultHeight: 800 }
+/** Uplink module keys (excludes health + ORPC internals) */
+type UplinkModule = Exclude<keyof typeof $rpc, 'key' | 'health'>
 
-// ---------------------------------------------------------------------------
-// Convex API type helpers
-// ---------------------------------------------------------------------------
+/** Entity sub-router keys within a given module */
+type EntityOf<M extends UplinkModule> = Exclude<keyof (typeof $rpc)[M], 'key'>
 
-type CvxModules = (typeof cvx)['api']
-type UplinkModule = keyof CvxModules
-type EntityOf<M extends UplinkModule> = keyof CvxModules[M]
+/** Client-side entity RPC utils shape produced by createTenantScopedCrudRouter */
+type EntityRpc = (typeof $rpc)['hub']['operationTasks']
 
-/** Extract a named property from a module type */
-type Fn<Module, K extends string> =
-	Module extends Record<K, infer F> ? F : never
-
-/** Extract the page-item type from a list query's PaginationResult */
-type PageItem<M extends UplinkModule, E extends EntityOf<M>> =
-	Fn<CvxModules[M][E], 'list'> extends FunctionReference<any, any, any, infer R>
-		? R extends { page: (infer D)[] }
-			? D
-			: Record<string, any>
-		: Record<string, any>
-
-/** Bridge: runtime accessor. Types flow via conditional types above. */
-function entity<M extends UplinkModule, E extends EntityOf<M>>(m: M, e: E) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return cvx.api[m][e] 
-}
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-
-/**
- * Paginated data hook backed by Convex `usePaginatedQuery`.
- * Types are inferred from the module + entity name.
- */
-export function useModuleData<M extends UplinkModule, E extends EntityOf<M>>(
+export function useModuleData<
+	M extends UplinkModule,
+	T extends object = object,
+>(
 	moduleId: M,
-	entityId: E,
-	options?: { pageSize?: number; search?: string; orderBy?: 'asc' | 'desc' },
+	entityId: EntityOf<M> & string,
+	viewSlug: string,
+	options?: {
+		pageSize?: number
+		filters?: Record<string, string | number | boolean | null>
+	},
 ) {
 	const pageSize = options?.pageSize ?? PAGE_SIZE
+	const rpc = ($rpc[moduleId] as unknown as Record<string, EntityRpc>)[entityId]
 	const windowSize = useWindowSize(DEFAULT_WINDOW_SIZE)
+	const { data, fetchNextPage, ...query } = useInfiniteQuery({
+		...rpc.listViewRecords.infiniteOptions({
+			input: (context: number) => ({
+				viewId: viewSlug,
+				limit: pageSize,
+				offset: context,
+				filters: options?.filters,
+			}),
+			initialPageParam: 0,
+			getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+		}),
+		maxPages: 10,
+	})
 
-	const { results, status, loadMore } = usePaginatedQuery(
-		entity(moduleId, entityId).list,
-		{ search: options?.search, orderBy: options?.orderBy },
-		{ initialNumItems: pageSize },
+	const items = React.useMemo(
+		() => (data?.pages.flatMap((p) => p.items) ?? []) as T[],
+		[data?.pages],
 	)
-
-	const isLoading = React.useMemo(() => ['LoadingFirstPage', 'LoadingMore'].includes(status), [status])
-
-	const DataGrid = useGrid<PageItem<M, E>>(
+	const DataGrid = useGrid<T>(
 		() => ({
-			data: results ?? [],
-			isLoading,
+			data: items ?? [],
+			isLoading: query.isLoading,
 			readOnly: true,
 			enableSearch: true,
 			infiniteScroll: {
-				loadMore: () => loadMore(pageSize),
-				hasMore: status === 'CanLoadMore',
-				isLoading: status === 'LoadingMore',
+				loadMore: () => {
+					fetchNextPage()
+				},
+				hasMore: Boolean(data?.pages[data.pages.length - 1].nextOffset),
+				isLoading: query.isFetchingNextPage,
 			},
 		}),
-		[results, isLoading, status],
+		[items, query.isLoading, data],
 	)
-
 	return {
-		items: results ?? [],
-		loadMore: () => loadMore(pageSize),
-		fetchNextPage: () => loadMore(pageSize),
-		hasNextPage: status === 'CanLoadMore',
-		isFetchingNextPage: status === 'LoadingMore',
+		items,
+		fetchNextPage: () => {
+			fetchNextPage()
+		},
 		DataGrid,
 		windowSize,
-		isLoading,
-		status,
+		...query,
 	}
 }
 
-/**
- * Simple list hook — loads a single page via Convex pagination.
- */
-export function useModuleList<M extends UplinkModule, E extends EntityOf<M>>(
+export function useModuleList<M extends UplinkModule>(
 	moduleId: M,
-	entityId: E,
+	entityId: EntityOf<M> & string,
 	options?: { limit?: number; search?: string },
 ) {
-	const limit = options?.limit ?? 50
+	const rpc = ($rpc[moduleId] as unknown as Record<string, EntityRpc>)[entityId]
+	const normalizedLimit =
+		typeof options?.limit === 'number' && Number.isFinite(options.limit)
+			? options.limit
+			: 50
+	const normalizedSearch =
+		typeof options?.search === 'string'
+			? options.search.trim() || undefined
+			: undefined
 
-	const { results, status } = usePaginatedQuery(
-		entity(moduleId, entityId).list,
-		{ search: options?.search },
-		{ initialNumItems: limit },
+	return useQuery(
+		rpc.list.queryOptions({
+			input: {
+				limit: normalizedLimit,
+				offset: 0,
+				search: normalizedSearch,
+			},
+		}),
 	)
-
-	return {
-		data: (results ?? []) as PageItem<M, E>[],
-		isLoading: status === 'LoadingFirstPage',
-		status,
-	}
-}
-
-/**
- * Wraps Convex `useMutation` with `.mutateAsync()` and `.isPending`.
- */
-function useWrappedMutation<F extends FunctionReference<'mutation'>>(ref: F) {
-	const rawMutate = useMutation(ref)
-	const [isPending, setIsPending] = useState(false)
-
-	const mutateAsync = useCallback(
-		async (args: FunctionArgs<F>): Promise<FunctionReturnType<F>> => {
-			setIsPending(true)
-			try {
-				return (await rawMutate(args)) as FunctionReturnType<F>
-			} finally {
-				setIsPending(false)
-			}
-		},
-		[rawMutate],
-	)
-
-	return { mutateAsync, mutate: mutateAsync, isPending }
-}
-
-/**
- * Mutation hooks for create / update / remove / transitionStatus.
- */
-export type { UplinkModule, EntityOf }
-
-export function useModuleMutations<
-	M extends UplinkModule,
-	E extends EntityOf<M>,
->(moduleId: M, entityId: E) {
-	const e = entity(moduleId, entityId)
-
-	return {
-		create: useWrappedMutation(e.create),
-		update: useWrappedMutation(e.update),
-		remove: useWrappedMutation(e.remove),
-		transitionStatus: useWrappedMutation(e.transitionStatus),
-	}
 }

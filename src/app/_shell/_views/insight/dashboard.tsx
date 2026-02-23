@@ -24,21 +24,62 @@ import { type KpiCardDef, KpiCards } from '../_shared/kpi-cards'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
+interface ItemLedgerEntry {
+	id: string
+	entryNo: number
+	entryType:
+		| 'SALE'
+		| 'PURCHASE'
+		| 'POSITIVE_ADJUSTMENT'
+		| 'NEGATIVE_ADJUSTMENT'
+		| 'TRANSFER'
+	itemId: string
+	locationCode: string
+	postingDate: string
+	quantity: number
+	remainingQty: number
+	open: boolean
+}
+
+interface ValueEntry {
+	id: string
+	entryNo: number
+	itemId: string
+	postingDate: string
+	entryType:
+		| 'DIRECT_COST'
+		| 'REVALUATION'
+		| 'ROUNDING'
+		| 'INDIRECT_COST'
+		| 'VARIANCE'
+	costAmountActual: number
+	salesAmountActual: number
+	costPerUnit: number
+}
+
+interface Location {
+	id: string
+	code: string
+	name: string
+	type: 'WAREHOUSE' | 'STORE' | 'DISTRIBUTION_CENTER'
+	active: boolean
+}
+
 export default function Dashboard() {
-	const { items: ledgerEntries, isLoading: ledgerLoading } = useModuleData(
+	const { items: ledgerEntries, isLoading: ledgerLoading } = useModuleData<
 		'insight',
-		'itemLedgerEntries',
-	)
+		ItemLedgerEntry
+	>('insight', 'itemLedgerEntries', 'all')
 
-	const { items: valueEntries, isLoading: valueLoading } = useModuleData(
+	const { items: valueEntries, isLoading: valueLoading } = useModuleData<
 		'insight',
-		'valueEntries',
-	)
+		ValueEntry
+	>('insight', 'valueEntries', 'all')
 
-	const { items: locations, isLoading: locationsLoading } = useModuleData(
+	const { items: locations, isLoading: locationsLoading } = useModuleData<
 		'insight',
-		'locations',
-	)
+		Location
+	>('insight', 'locations', 'all')
 
 	const totalLocations = locations.length
 	const activeLocations = locations.filter((location) => location.active).length
@@ -115,7 +156,7 @@ export default function Dashboard() {
 	const isLoading = ledgerLoading || valueLoading || locationsLoading
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Insight Dashboard'
 				description='Inventory analytics, value movements, and location performance intelligence.'
@@ -125,7 +166,7 @@ export default function Dashboard() {
 
 			<DashboardSectionGrid>
 				<DashboardTrendChart
-					className='xl:col-span-2'
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md xl:col-span-2'
 					title='Inventory Movement Trend'
 					description='Ledger movement records created per month'
 					data={monthlyMovement}
@@ -133,6 +174,7 @@ export default function Dashboard() {
 					metricLabel='Entries'
 				/>
 				<DashboardDistributionChart
+					className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 					title='Entry Type Mix'
 					description='Distribution by item ledger entry type'
 					data={ledgerEntryMix}
@@ -140,6 +182,7 @@ export default function Dashboard() {
 			</DashboardSectionGrid>
 
 			<DashboardStatsPanel
+				className='shadow-sm transition-shadow duration-300 hover:shadow-md'
 				title='Inventory Statistics'
 				description='Operational signals for stock strategy and valuation'
 				items={[
@@ -166,38 +209,41 @@ export default function Dashboard() {
 				]}
 			/>
 
-			<div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
-				<Card>
-					<CardHeader className='border-b'>
+			<div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+				<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md'>
+					<CardHeader className='border-border/50 border-b bg-muted/20'>
 						<CardTitle>Recent Ledger Entries</CardTitle>
 						<CardDescription>Latest item ledger movements</CardDescription>
 					</CardHeader>
-					<CardContent className='pt-4'>
+					<CardContent className='pt-6'>
 						{isLoading ? (
-							<div className='space-y-2' role='status' aria-label='Loading'>
+							<div className='space-y-3' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}
-										className='h-8 rounded bg-muted motion-safe:animate-pulse'
+										className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 									/>
 								))}
 							</div>
 						) : recentEntries.length === 0 ? (
-							<p className='py-4 text-center text-muted-foreground text-sm'>
-								No ledger entries found.
-							</p>
+							<div className='flex flex-col items-center justify-center py-8 text-center'>
+								<Package className='mb-3 h-8 w-8 text-muted-foreground/50' />
+								<p className='text-muted-foreground text-sm'>
+									No ledger entries found.
+								</p>
+							</div>
 						) : (
-							<ul className='divide-y'>
+							<ul className='space-y-3'>
 								{recentEntries.map((entry) => (
 									<li
-										key={entry._id}
-										className='flex items-center justify-between gap-2 py-2'
+										key={entry.id}
+										className='flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>
 											<p className='truncate font-medium text-sm'>
 												#{entry.entryNo} &middot; {entry.itemId}
 											</p>
-											<p className='truncate text-muted-foreground text-xs'>
+											<p className='mt-0.5 truncate text-muted-foreground text-xs'>
 												{entry.locationCode} &middot; Qty: {entry.quantity}
 											</p>
 										</div>
@@ -209,37 +255,40 @@ export default function Dashboard() {
 					</CardContent>
 				</Card>
 
-				<Card>
-					<CardHeader className='border-b'>
+				<Card className='shadow-sm transition-shadow duration-300 hover:shadow-md'>
+					<CardHeader className='border-border/50 border-b bg-muted/20'>
 						<CardTitle>Location Summary</CardTitle>
 						<CardDescription>Active locations by type</CardDescription>
 					</CardHeader>
-					<CardContent className='pt-4'>
+					<CardContent className='pt-6'>
 						{isLoading ? (
-							<div className='space-y-2' role='status' aria-label='Loading'>
+							<div className='space-y-3' role='status' aria-label='Loading'>
 								{Array.from({ length: 5 }).map((_, i) => (
 									<div
 										key={`skeleton-${i}`}
-										className='h-8 rounded bg-muted motion-safe:animate-pulse'
+										className='h-12 rounded-lg bg-muted/50 motion-safe:animate-pulse'
 									/>
 								))}
 							</div>
 						) : locations.length === 0 ? (
-							<p className='py-4 text-center text-muted-foreground text-sm'>
-								No locations found.
-							</p>
+							<div className='flex flex-col items-center justify-center py-8 text-center'>
+								<MapPin className='mb-3 h-8 w-8 text-muted-foreground/50' />
+								<p className='text-muted-foreground text-sm'>
+									No locations found.
+								</p>
+							</div>
 						) : (
-							<ul className='divide-y'>
+							<ul className='space-y-3'>
 								{locations.slice(0, 8).map((location) => (
 									<li
-										key={location._id}
-										className='flex items-center justify-between gap-2 py-2'
+										key={location.id}
+										className='flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>
 											<p className='truncate font-medium text-sm'>
 												{location.name}
 											</p>
-											<p className='truncate text-muted-foreground text-xs'>
+											<p className='mt-0.5 truncate text-muted-foreground text-xs'>
 												{location.code}
 											</p>
 										</div>

@@ -16,14 +16,12 @@ export const locations = zodTable('locations', (_zid) => ({
 	latitude: z.number().optional(),
 	longitude: z.number().optional(),
 	active: z.boolean().default(true),
-	itemCount: z.number().default(0),
 }))
 
 export const itemLedgerEntries = zodTable('itemLedgerEntries', (zid) => ({
 	entryNo: z.number().default(0),
 	entryType: z.enum(ITEM_LEDGER_ENTRY_TYPE).default('PURCHASE'),
 	itemId: zid('items'),
-	itemDescription: z.string().optional(),
 	locationCode: z.string().optional(),
 	postingDate: z.string().optional(),
 	quantity: z.number().default(0),
@@ -37,7 +35,6 @@ export const valueEntries = zodTable('valueEntries', (zid) => ({
 	entryNo: z.number().default(0),
 	itemLedgerEntryId: zid('itemLedgerEntries'),
 	itemId: zid('items'),
-	itemDescription: z.string().optional(),
 	postingDate: z.string().optional(),
 	entryType: z.enum(VALUE_ENTRY_TYPE).default('DIRECT_COST'),
 	costAmountActual: z.number().default(0),

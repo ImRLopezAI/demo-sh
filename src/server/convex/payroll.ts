@@ -23,8 +23,6 @@ export const employees = zodTable('employees', (_zid) => ({
 	baseSalary: z.number().default(0),
 	payFrequency: z.enum(PAY_FREQUENCY).default('MONTHLY'),
 	bankAccountId: z.string().optional(),
-	ledgerEntryCount: z.number().default(0),
-	outstandingAmount: z.number().default(0),
 }))
 
 export const employeeLedgerEntries = zodTable(
@@ -32,7 +30,6 @@ export const employeeLedgerEntries = zodTable(
 	(zid) => ({
 		entryNo: z.number().default(0),
 		employeeId: zid('employees'),
-		employeeName: z.string().optional(),
 		postingDate: z.string().optional(),
 		documentType: z.enum(EMPLOYEE_LEDGER_DOCUMENT_TYPE).default('PAYROLL'),
 		documentNo: z.string().optional(),

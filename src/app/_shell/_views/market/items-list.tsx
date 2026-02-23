@@ -33,55 +33,64 @@ export default function ItemsList() {
 	const handleNew = () => setSelectedId('new')
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-8 pb-8'>
 			<PageHeader
 				title='Items'
 				description='Product catalog and inventory management'
 				actions={
-					<Button size='sm' onClick={handleNew}>
-						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+					<Button
+						size='sm'
+						onClick={handleNew}
+						className='shadow-sm transition-all hover:shadow-md'
+					>
+						<Plus className='mr-1.5 size-4' aria-hidden='true' />
 						New Item
 					</Button>
 				}
 			/>
 
-			<DataGrid variant='card' height={Math.max(windowSize.height - 200, 380)}>
-				<DataGrid.Header>
-					<DataGrid.Toolbar filter sort search export />
-				</DataGrid.Header>
-				<DataGrid.Columns>
-					<DataGrid.Column
-						accessorKey='itemNo'
-						title='Item No.'
-						handleEdit={handleEdit}
-					/>
-					<DataGrid.Column accessorKey='description' title='Description' />
-					<DataGrid.Column
-						accessorKey='type'
-						title='Type'
-						cellVariant='select'
-					/>
-					<DataGrid.Column
-						accessorKey='unitPrice'
-						title='Unit Price'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.unitPrice)}
-					/>
-					<DataGrid.Column
-						accessorKey='unitCost'
-						title='Unit Cost'
-						cellVariant='number'
-						formatter={(v, f) => f.currency(v.unitCost)}
-					/>
-					<DataGrid.Column
-						accessorKey='inventory'
-						title='Inventory'
-						cellVariant='number'
-					/>
-					<DataGrid.Column accessorKey='uom' title='UOM' />
-					<DataGrid.Column accessorKey='barcode' title='Barcode' />
-				</DataGrid.Columns>
-			</DataGrid>
+			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
+				<DataGrid
+					variant='card'
+					height={Math.max(windowSize.height - 240, 400)}
+				>
+					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
+						<DataGrid.Toolbar filter sort search export />
+					</DataGrid.Header>
+					<DataGrid.Columns>
+						<DataGrid.Column
+							accessorKey='itemNo'
+							title='Item No.'
+							handleEdit={handleEdit}
+						/>
+						<DataGrid.Column accessorKey='description' title='Description' />
+						<DataGrid.Column
+							accessorKey='type'
+							title='Type'
+							cellVariant='select'
+						/>
+						<DataGrid.Column
+							accessorKey='unitPrice'
+							title='Unit Price'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.unitPrice)}
+						/>
+						<DataGrid.Column
+							accessorKey='unitCost'
+							title='Unit Cost'
+							cellVariant='number'
+							formatter={(v, f) => f.currency(v.unitCost)}
+						/>
+						<DataGrid.Column
+							accessorKey='inventory'
+							title='Inventory'
+							cellVariant='number'
+						/>
+						<DataGrid.Column accessorKey='uom' title='UOM' />
+						<DataGrid.Column accessorKey='barcode' title='Barcode' />
+					</DataGrid.Columns>
+				</DataGrid>
+			</div>
 
 			<ItemCard selectedId={selectedId} onClose={() => setSelectedId(null)} />
 		</div>

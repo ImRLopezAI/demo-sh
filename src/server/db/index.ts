@@ -20,6 +20,11 @@ export const db = defineSchema(
 					.default('MEDIUM'),
 				assigneeUserId: z.string().optional(),
 				dueDate: z.string().optional().meta({ type: 'date' }),
+				slaTargetAt: z.string().optional().meta({ type: 'date' }),
+				slaStatus: z.enum(['ON_TRACK', 'AT_RISK', 'BREACHED']).optional(),
+				slaBreachedAt: z.string().optional().meta({ type: 'date' }),
+				slaLastEvaluatedAt: z.string().optional().meta({ type: 'date' }),
+				escalationLevel: z.enum(['NONE', 'L1', 'L2']).optional(),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 			},
@@ -44,6 +49,261 @@ export const db = defineSchema(
 			.table()
 			.index('moduleNotifications_moduleId_idx', ['moduleId'])
 			.index('moduleNotifications_status_idx', ['status']),
+
+		hubUsers: createTable('hubUsers', {
+			schema: {
+				userId: z.string(),
+				displayName: z.string().optional().meta({ type: 'fullname' }),
+				email: z.string().optional().meta({ type: 'email' }),
+				active: z.boolean().default(true),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('hubUsers_userId_uq', ['userId'])
+			.index('hubUsers_active_idx', ['active']),
+
+		hubRoles: createTable('hubRoles', {
+			schema: {
+				roleCode: z.string(),
+				name: z.string().meta({ field: 'commerce.department' }),
+				description: z.string().optional(),
+				minBaseRole: z
+					.enum(['VIEWER', 'AGENT', 'MANAGER', 'ADMIN'])
+					.default('VIEWER'),
+				builtIn: z.boolean().default(false),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('hubRoles_roleCode_uq', ['roleCode']),
+
+		hubPermissions: createTable('hubPermissions', {
+			schema: {
+				permissionCode: z.string(),
+				moduleId: z.string(),
+				action: z.string(),
+				description: z.string().optional(),
+				builtIn: z.boolean().default(false),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('hubPermissions_permissionCode_uq', ['permissionCode'])
+			.index('hubPermissions_moduleId_idx', ['moduleId']),
+
+		hubUserRoles: createTable('hubUserRoles', {
+			schema: (one) => ({
+				hubUserId: one('hubUsers'),
+				roleId: one('hubRoles'),
+				active: z.boolean().default(true),
+				assignedAt: z.string().optional().meta({ type: 'date' }),
+				assignedByUserId: z.string().optional(),
+			}),
+			seed: false,
+		})
+			.table()
+			.unique('hubUserRoles_user_role_uq', ['hubUserId', 'roleId'])
+			.index('hubUserRoles_hubUserId_idx', ['hubUserId'])
+			.index('hubUserRoles_roleId_idx', ['roleId']),
+
+		hubRolePermissions: createTable('hubRolePermissions', {
+			schema: (one) => ({
+				roleId: one('hubRoles'),
+				permissionId: one('hubPermissions'),
+				grantedAt: z.string().optional().meta({ type: 'date' }),
+				grantedByUserId: z.string().optional(),
+			}),
+			seed: false,
+		})
+			.table()
+			.unique('hubRolePermissions_role_permission_uq', ['roleId', 'permissionId'])
+			.index('hubRolePermissions_roleId_idx', ['roleId'])
+			.index('hubRolePermissions_permissionId_idx', ['permissionId']),
+
+		hubModuleSettings: createTable('hubModuleSettings', {
+			schema: {
+				moduleId: z.string(),
+				settingKey: z.string(),
+				valueJson: z.string().default('{}'),
+				schemaVersion: z.string().optional(),
+				revisionNo: z.number().default(0),
+				updatedByUserId: z.string().optional(),
+				updatedAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('hubModuleSettings_module_key_uq', ['moduleId', 'settingKey'])
+			.index('hubModuleSettings_moduleId_idx', ['moduleId']),
+
+		hubModuleSettingsRevisions: createTable('hubModuleSettingsRevisions', {
+			schema: (one) => ({
+				settingId: one('hubModuleSettings'),
+				moduleId: z.string(),
+				settingKey: z.string(),
+				revisionNo: z.number().default(0),
+				valueJson: z.string().default('{}'),
+				schemaVersion: z.string().optional(),
+				changeReason: z.string().optional(),
+				changedByUserId: z.string().optional(),
+				changedAt: z.string().optional().meta({ type: 'date' }),
+				rollbackOfRevisionNo: z.number().optional(),
+			}),
+			seed: false,
+		})
+			.table()
+			.unique('hubModuleSettingsRevisions_setting_revision_uq', [
+				'settingId',
+				'revisionNo',
+			])
+			.index('hubModuleSettingsRevisions_settingId_idx', ['settingId'])
+			.index('hubModuleSettingsRevisions_module_key_idx', ['moduleId', 'settingKey']),
+
+		hubAuditLogs: createTable('hubAuditLogs', {
+			schema: {
+				auditNo: z.string(),
+				actorUserId: z.string().optional(),
+				actorRole: z.string().optional(),
+				moduleId: z.string(),
+				action: z.string(),
+				entityType: z.string(),
+				entityId: z.string().optional(),
+				status: z.enum(['SUCCESS', 'DENIED', 'FAILED']).default('SUCCESS'),
+				message: z.string().optional(),
+				beforeJson: z.string().optional(),
+				afterJson: z.string().optional(),
+				correlationId: z.string().optional(),
+				occurredAt: z.string().optional().meta({ type: 'date' }),
+				source: z.string().default('RPC'),
+			},
+			seed: false,
+			noSeries: { pattern: 'AUD0000001', field: 'auditNo' },
+		})
+			.table()
+			.index('hubAuditLogs_moduleId_idx', ['moduleId'])
+			.index('hubAuditLogs_action_idx', ['action'])
+			.index('hubAuditLogs_status_idx', ['status'])
+			.index('hubAuditLogs_actorUserId_idx', ['actorUserId']),
+
+		scheduledJobs: createTable('scheduledJobs', {
+			schema: {
+				jobCode: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				moduleId: z.string(),
+				cadenceType: z.enum(['HOURLY', 'DAILY']).default('DAILY'),
+				cadenceInterval: z.number().int().min(1).max(24).default(1),
+				runHourUtc: z.number().int().min(0).max(23).default(0),
+				runMinuteUtc: z.number().int().min(0).max(59).default(0),
+				enabled: z.boolean().default(true),
+				retryLimit: z.number().int().min(0).max(5).default(1),
+				nextRunAt: z.string().optional().meta({ type: 'date' }),
+				lastRunAt: z.string().optional().meta({ type: 'date' }),
+				lastRunStatus: z
+					.enum(['IDLE', 'SUCCESS', 'FAILED'])
+					.default('IDLE'),
+				lastRunError: z.string().optional(),
+				configJson: z.string().default('{}'),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('scheduledJobs_jobCode_uq', ['jobCode'])
+			.index('scheduledJobs_moduleId_idx', ['moduleId'])
+			.index('scheduledJobs_enabled_idx', ['enabled'])
+			.index('scheduledJobs_nextRunAt_idx', ['nextRunAt']),
+
+		scheduledJobRuns: createTable('scheduledJobRuns', {
+			schema: (one) => ({
+				runNo: z.string(),
+				jobId: one('scheduledJobs'),
+				jobCode: z.string(),
+				moduleId: z.string(),
+				cadenceWindowKey: z.string(),
+				status: z
+					.enum(['RUNNING', 'SUCCESS', 'FAILED', 'SKIPPED'])
+					.default('RUNNING'),
+				startedAt: z.string().optional().meta({ type: 'date' }),
+				finishedAt: z.string().optional().meta({ type: 'date' }),
+				errorSummary: z.string().optional(),
+				attemptNo: z.number().int().min(1).default(1),
+				trigger: z
+					.enum(['SCHEDULED', 'MANUAL', 'RETRY'])
+					.default('SCHEDULED'),
+				resultJson: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'SJOBRUN0000001', field: 'runNo' },
+		})
+			.table()
+			.unique('scheduledJobRuns_job_window_uq', ['jobId', 'cadenceWindowKey'])
+			.index('scheduledJobRuns_jobId_idx', ['jobId'])
+			.index('scheduledJobRuns_status_idx', ['status'])
+			.index('scheduledJobRuns_window_idx', ['cadenceWindowKey']),
+
+		orderWorkflows: createTable('orderWorkflows', {
+			schema: {
+				workflowNo: z.string(),
+				salesOrderId: z.string(),
+				salesOrderNo: z.string().optional(),
+				status: z.enum(['RUNNING', 'FAILED', 'COMPLETED']).default('RUNNING'),
+				currentStage: z
+					.enum([
+						'VALIDATE_ORDER',
+						'CREATE_AND_POST_INVOICE',
+						'CREATE_SHIPMENT',
+						'DONE',
+					])
+					.default('VALIDATE_ORDER'),
+				startedAt: z.string().optional().meta({ type: 'date' }),
+				completedAt: z.string().optional().meta({ type: 'date' }),
+				failedAt: z.string().optional().meta({ type: 'date' }),
+				failureCode: z.string().optional(),
+				failureMessage: z.string().optional(),
+				retryCount: z.number().default(0),
+				invoiceId: z.string().optional(),
+				invoiceNo: z.string().optional(),
+				shipmentId: z.string().optional(),
+				shipmentNo: z.string().optional(),
+				failureTaskId: z.string().optional(),
+				failureNotificationId: z.string().optional(),
+				lastStepAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+			noSeries: { pattern: 'WF0000001', field: 'workflowNo' },
+		})
+			.table()
+			.index('orderWorkflows_salesOrderId_idx', ['salesOrderId'])
+			.index('orderWorkflows_salesOrderNo_idx', ['salesOrderNo'])
+			.index('orderWorkflows_status_idx', ['status']),
+
+		orderWorkflowSteps: createTable('orderWorkflowSteps', {
+			schema: (one) => ({
+				workflowId: one('orderWorkflows'),
+				stage: z.enum([
+					'VALIDATE_ORDER',
+					'CREATE_AND_POST_INVOICE',
+					'CREATE_SHIPMENT',
+				]),
+				status: z
+					.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED'])
+					.default('PENDING'),
+				attemptNo: z.number().default(0),
+				startedAt: z.string().optional().meta({ type: 'date' }),
+				finishedAt: z.string().optional().meta({ type: 'date' }),
+				errorMessage: z.string().optional(),
+				detail: z.string().optional(),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('orderWorkflowSteps_workflowId_idx', ['workflowId'])
+			.index('orderWorkflowSteps_stage_idx', ['stage'])
+			.index('orderWorkflowSteps_status_idx', ['status'])
+			.unique('orderWorkflowSteps_workflowId_stage_uq', [
+				'workflowId',
+				'stage',
+			]),
 
 		// =====================================================================
 		// Market
@@ -166,6 +426,9 @@ export const db = defineSchema(
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 				externalRef: z.string().optional(),
+				idempotencyKey: z.string().optional(),
+				promotionCode: z.string().optional(),
+				taxJurisdiction: z.string().optional(),
 
 				lineCount: z
 					.number()
@@ -196,7 +459,8 @@ export const db = defineSchema(
 		})
 			.table()
 			.index('salesHeaders_customerId_idx', ['customerId'])
-			.index('salesHeaders_status_idx', ['status']),
+			.index('salesHeaders_status_idx', ['status'])
+			.index('salesHeaders_idempotencyKey_idx', ['idempotencyKey']),
 
 		salesLines: createTable('salesLines', {
 			schema: (one) => ({
@@ -219,6 +483,13 @@ export const db = defineSchema(
 				unitPrice: z.number().default(0).meta({ min: 10, max: 500 }),
 				discountPercent: z.number().default(0).meta({ min: 0, max: 25 }),
 				lineAmount: z.number().default(0).meta({ min: 10, max: 5000 }),
+				priceRuleCode: z.string().optional(),
+				promotionCode: z.string().optional(),
+				promotionDiscountPercent: z.number().default(0),
+				taxPolicyCode: z.string().optional(),
+				taxRatePercent: z.number().default(0),
+				taxAmount: z.number().default(0),
+				reservedQuantity: z.number().default(0),
 			}),
 			seed: { min: 2, max: 5, perParent: true, parentTable: 'salesHeaders' },
 		})
@@ -228,7 +499,94 @@ export const db = defineSchema(
 			.computed((row) => ({
 				calculatedAmount:
 					row.quantity * row.unitPrice * (1 - row.discountPercent / 100),
+				calculatedTax:
+					row.quantity *
+					row.unitPrice *
+					(1 - row.discountPercent / 100) *
+					(row.taxRatePercent / 100),
 			})),
+
+		priceRules: createTable('priceRules', {
+			schema: (one) => ({
+				code: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				active: z.boolean().default(true),
+				itemId: one('items'),
+				customerId: one('customers').optional(),
+				minQuantity: z.number().default(1),
+				unitPrice: z.number().optional(),
+				discountPercent: z.number().default(0),
+				currency: z.string().default('USD'),
+				startsAt: z.string().optional().meta({ type: 'date' }),
+				endsAt: z.string().optional().meta({ type: 'date' }),
+				priority: z.number().default(0),
+			}),
+			seed: false,
+			noSeries: { pattern: 'PRULE000001', field: 'code' },
+		})
+			.table()
+			.index('priceRules_itemId_idx', ['itemId'])
+			.index('priceRules_customerId_idx', ['customerId'])
+			.index('priceRules_active_idx', ['active']),
+
+		promotions: createTable('promotions', {
+			schema: {
+				code: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				active: z.boolean().default(true),
+				discountPercent: z.number().default(0),
+				stackable: z.boolean().default(false),
+				usageLimit: z.number().optional(),
+				usageCount: z.number().default(0),
+				startsAt: z.string().optional().meta({ type: 'date' }),
+				endsAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('promotions_code_uq', ['code'])
+			.index('promotions_active_idx', ['active']),
+
+		taxPolicies: createTable('taxPolicies', {
+			schema: {
+				code: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				jurisdiction: z.string().default('US-DEFAULT'),
+				channel: z.enum(['MARKET', 'POS', 'ALL']).default('ALL'),
+				ratePercent: z.number().default(0),
+				active: z.boolean().default(true),
+				startsAt: z.string().optional().meta({ type: 'date' }),
+				endsAt: z.string().optional().meta({ type: 'date' }),
+				priority: z.number().default(0),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('taxPolicies_code_uq', ['code'])
+			.index('taxPolicies_jurisdiction_idx', ['jurisdiction'])
+			.index('taxPolicies_active_idx', ['active']),
+
+		inventoryReservations: createTable('inventoryReservations', {
+			schema: (one) => ({
+				reservationNo: z.string(),
+				documentNo: one('salesHeaders'),
+				salesLineId: one('salesLines'),
+				itemId: one('items'),
+				quantity: z.number().default(0),
+				status: z
+					.enum(['ACTIVE', 'RELEASED', 'EXPIRED', 'CONSUMED'])
+					.default('ACTIVE'),
+				reason: z.string().optional(),
+				reservedAt: z.string().optional().meta({ type: 'date' }),
+				releasedAt: z.string().optional().meta({ type: 'date' }),
+			}),
+			seed: false,
+			noSeries: { pattern: 'RES0000001', field: 'reservationNo' },
+		})
+			.table()
+			.index('inventoryReservations_documentNo_idx', ['documentNo'])
+			.index('inventoryReservations_itemId_idx', ['itemId'])
+			.index('inventoryReservations_status_idx', ['status']),
 
 		carts: createTable('carts', {
 			schema: (one) => ({
@@ -518,6 +876,7 @@ export const db = defineSchema(
 					.meta({ field: 'finance.currencyCode' }),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
+				idempotencyKey: z.string().optional(),
 
 				lineCount: z
 					.number()
@@ -548,7 +907,8 @@ export const db = defineSchema(
 		})
 			.table()
 			.index('purchaseHeaders_vendorId_idx', ['vendorId'])
-			.index('purchaseHeaders_status_idx', ['status']),
+			.index('purchaseHeaders_status_idx', ['status'])
+			.index('purchaseHeaders_idempotencyKey_idx', ['idempotencyKey']),
 
 		purchaseLines: createTable('purchaseLines', {
 			schema: (one) => ({
@@ -582,6 +942,169 @@ export const db = defineSchema(
 				calculatedAmount: row.quantity * row.unitCost,
 				outstandingQty: row.quantity - row.quantityReceived,
 			})),
+
+		purchaseReceipts: createTable('purchaseReceipts', {
+			schema: (one) => ({
+				receiptNo: z.string(),
+				purchaseOrderNo: one('purchaseHeaders'),
+				purchaseLineId: one('purchaseLines'),
+				itemId: one('items'),
+				receiptDate: z.string().optional().meta({ type: 'date' }),
+				quantityReceived: z.number().default(0).meta({ min: 0, max: 5000 }),
+				receivedByUserId: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'PRC0000001', field: 'receiptNo' },
+		})
+			.table()
+			.index('purchaseReceipts_purchaseOrderNo_idx', ['purchaseOrderNo'])
+			.index('purchaseReceipts_purchaseLineId_idx', ['purchaseLineId']),
+
+		purchaseInvoiceHeaders: createTable('purchaseInvoiceHeaders', {
+			schema: (one) => ({
+				invoiceNo: z.string(),
+				status: z.enum(['DRAFT', 'POSTED', 'CANCELED']).default('DRAFT'),
+				vendorId: one('vendors'),
+				vendorName: z
+					.string()
+					.optional()
+					.meta({
+						flowField: flowField({
+							type: 'lookup',
+							source: 'vendors',
+							key: '_id',
+							from: 'vendorId',
+							field: 'name',
+						}),
+					}),
+				purchaseOrderNo: one('purchaseHeaders'),
+				postingDate: z.string().optional().meta({ type: 'date' }),
+				dueDate: z.string().optional().meta({ type: 'date' }),
+				currency: z
+					.string()
+					.default('USD')
+					.meta({ field: 'finance.currencyCode' }),
+				statusReason: z.string().optional(),
+				statusUpdatedAt: z.date().optional(),
+
+				lineCount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'count',
+							source: 'purchaseInvoiceLines',
+							key: 'invoiceNo',
+							from: 'invoiceNo',
+						}),
+					}),
+				totalAmount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'sum',
+							source: 'purchaseInvoiceLines',
+							key: 'invoiceNo',
+							from: 'invoiceNo',
+							field: 'lineAmount',
+						}),
+					}),
+			}),
+			seed: false,
+			noSeries: { pattern: 'PINV0000001', field: 'invoiceNo' },
+		})
+			.table()
+			.index('purchaseInvoiceHeaders_vendorId_idx', ['vendorId'])
+			.index('purchaseInvoiceHeaders_status_idx', ['status'])
+			.index('purchaseInvoiceHeaders_purchaseOrderNo_idx', ['purchaseOrderNo']),
+
+		purchaseInvoiceLines: createTable('purchaseInvoiceLines', {
+			schema: (one) => ({
+				invoiceNo: one('purchaseInvoiceHeaders'),
+				lineNo: z.number().default(0),
+				itemId: one('items'),
+				itemDescription: z
+					.string()
+					.optional()
+					.meta({
+						flowField: flowField({
+							type: 'lookup',
+							source: 'items',
+							key: '_id',
+							from: 'itemId',
+							field: 'description',
+						}),
+					}),
+				purchaseLineId: one('purchaseLines'),
+				quantity: z.number().default(0).meta({ min: 1, max: 5000 }),
+				unitCost: z.number().default(0).meta({ min: 0, max: 5000 }),
+				lineAmount: z.number().default(0).meta({ min: 0, max: 500000 }),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('purchaseInvoiceLines_invoiceNo_idx', ['invoiceNo'])
+			.index('purchaseInvoiceLines_itemId_idx', ['itemId'])
+			.index('purchaseInvoiceLines_purchaseLineId_idx', ['purchaseLineId']),
+
+		vendorLedgerEntries: createTable('vendorLedgerEntries', {
+			schema: (one) => ({
+				entryNo: z.number().default(0),
+				vendorId: one('vendors'),
+				vendorName: z
+					.string()
+					.optional()
+					.meta({
+						flowField: flowField({
+							type: 'lookup',
+							source: 'vendors',
+							key: '_id',
+							from: 'vendorId',
+							field: 'name',
+						}),
+					}),
+				postingDate: z.string().optional().meta({ type: 'date' }),
+				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
+					'INVOICE',
+				),
+				documentNo: z.string(),
+				description: z.string().optional(),
+				amount: z.number().default(0),
+				remainingAmount: z.number().default(0),
+				open: z.boolean().default(true),
+				currency: z
+					.string()
+					.default('USD')
+					.meta({ field: 'finance.currencyCode' }),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('vendorLedgerEntries_vendorId_idx', ['vendorId'])
+			.index('vendorLedgerEntries_documentNo_idx', ['documentNo']),
+
+		detailedVendorLedgerEntries: createTable('detailedVendorLedgerEntries', {
+			schema: (one) => ({
+				entryNo: z.number().default(0),
+				vendorLedgerEntryId: one('vendorLedgerEntries'),
+				postingDate: z.string().optional().meta({ type: 'date' }),
+				documentType: z.enum(['INVOICE', 'PAYMENT', 'CREDIT_MEMO']).default(
+					'INVOICE',
+				),
+				documentNo: z.string(),
+				description: z.string().optional(),
+				amount: z.number().default(0),
+				unapplied: z.boolean().default(true),
+			}),
+			seed: false,
+		})
+			.table()
+			.index(
+				'detailedVendorLedgerEntries_vendorLedgerEntryId_idx',
+				['vendorLedgerEntryId'],
+			)
+			.index('detailedVendorLedgerEntries_documentNo_idx', ['documentNo']),
 
 		transferHeaders: createTable('transferHeaders', {
 			schema: {
@@ -651,6 +1174,16 @@ export const db = defineSchema(
 			schema: (one) => ({
 				invoiceNo: z.string(),
 				status: z.enum(['DRAFT', 'POSTED', 'REVERSED']).default('DRAFT'),
+				eInvoiceStatus: z
+					.enum([
+						'DRAFT',
+						'POSTED',
+						'SUBMITTED',
+						'ACCEPTED',
+						'REJECTED',
+						'CANCELED',
+					])
+					.default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
 					.string()
@@ -671,6 +1204,8 @@ export const db = defineSchema(
 					.string()
 					.default('USD')
 					.meta({ field: 'finance.currencyCode' }),
+				taxJurisdiction: z.string().optional(),
+				taxRegistrationNo: z.string().optional(),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 
@@ -697,13 +1232,26 @@ export const db = defineSchema(
 							field: 'lineAmount',
 						}),
 					}),
+				totalTaxAmount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'sum',
+							source: 'salesInvoiceLines',
+							key: 'invoiceNo',
+							from: 'invoiceNo',
+							field: 'taxAmount',
+						}),
+					}),
 			}),
 			seed: 8,
 			noSeries: { pattern: 'SINV0000001', field: 'invoiceNo' },
 		})
 			.table()
 			.index('salesInvoiceHeaders_customerId_idx', ['customerId'])
-			.index('salesInvoiceHeaders_status_idx', ['status']),
+			.index('salesInvoiceHeaders_status_idx', ['status'])
+			.index('salesInvoiceHeaders_eInvoiceStatus_idx', ['eInvoiceStatus']),
 
 		salesInvoiceLines: createTable('salesInvoiceLines', {
 			schema: (one) => ({
@@ -725,6 +1273,9 @@ export const db = defineSchema(
 				quantity: z.number().default(0).meta({ min: 1, max: 50 }),
 				unitPrice: z.number().default(0).meta({ min: 10, max: 500 }),
 				lineAmount: z.number().default(0).meta({ min: 10, max: 5000 }),
+				taxCode: z.string().optional(),
+				taxRatePercent: z.number().default(0).meta({ min: 0, max: 100 }),
+				taxAmount: z.number().default(0).meta({ min: 0, max: 5000 }),
 			}),
 			seed: {
 				min: 2,
@@ -738,7 +1289,180 @@ export const db = defineSchema(
 			.index('salesInvoiceLines_itemId_idx', ['itemId'])
 			.computed((row) => ({
 				calculatedAmount: row.quantity * row.unitPrice,
+				calculatedTax: row.lineAmount * (row.taxRatePercent / 100),
 			})),
+
+		salesCreditMemoHeaders: createTable('salesCreditMemoHeaders', {
+			schema: (one) => ({
+				creditMemoNo: z.string(),
+				status: z.enum(['DRAFT', 'POSTED', 'CANCELED']).default('DRAFT'),
+				eInvoiceStatus: z
+					.enum([
+						'DRAFT',
+						'POSTED',
+						'SUBMITTED',
+						'ACCEPTED',
+						'REJECTED',
+						'CANCELED',
+					])
+					.default('DRAFT'),
+				customerId: one('customers'),
+				customerName: z
+					.string()
+					.optional()
+					.meta({
+						flowField: flowField({
+							type: 'lookup',
+							source: 'customers',
+							key: '_id',
+							from: 'customerId',
+							field: 'name',
+						}),
+					}),
+				appliesToInvoiceNo: z.string().optional(),
+				postingDate: z.string().optional().meta({ type: 'date' }),
+				currency: z
+					.string()
+					.default('USD')
+					.meta({ field: 'finance.currencyCode' }),
+				taxJurisdiction: z.string().optional(),
+				taxRegistrationNo: z.string().optional(),
+				statusReason: z.string().optional(),
+				statusUpdatedAt: z.date().optional(),
+
+				lineCount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'count',
+							source: 'salesCreditMemoLines',
+							key: 'creditMemoNo',
+							from: 'creditMemoNo',
+						}),
+					}),
+				totalAmount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'sum',
+							source: 'salesCreditMemoLines',
+							key: 'creditMemoNo',
+							from: 'creditMemoNo',
+							field: 'lineAmount',
+						}),
+					}),
+				totalTaxAmount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'sum',
+							source: 'salesCreditMemoLines',
+							key: 'creditMemoNo',
+							from: 'creditMemoNo',
+							field: 'taxAmount',
+						}),
+					}),
+			}),
+			seed: false,
+			noSeries: { pattern: 'SCM0000001', field: 'creditMemoNo' },
+		})
+			.table()
+			.index('salesCreditMemoHeaders_customerId_idx', ['customerId'])
+			.index('salesCreditMemoHeaders_status_idx', ['status'])
+			.index('salesCreditMemoHeaders_eInvoiceStatus_idx', ['eInvoiceStatus']),
+
+		salesCreditMemoLines: createTable('salesCreditMemoLines', {
+			schema: (one) => ({
+				creditMemoNo: one('salesCreditMemoHeaders'),
+				lineNo: z.number().default(0),
+				itemId: one('items'),
+				itemDescription: z
+					.string()
+					.optional()
+					.meta({
+						flowField: flowField({
+							type: 'lookup',
+							source: 'items',
+							key: '_id',
+							from: 'itemId',
+							field: 'description',
+						}),
+					}),
+				quantity: z.number().default(0).meta({ min: 1, max: 50 }),
+				unitPrice: z.number().default(0).meta({ min: 10, max: 500 }),
+				lineAmount: z.number().default(0).meta({ min: 0, max: 5000 }),
+				taxCode: z.string().optional(),
+				taxRatePercent: z.number().default(0).meta({ min: 0, max: 100 }),
+				taxAmount: z.number().default(0).meta({ min: 0, max: 5000 }),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('salesCreditMemoLines_creditMemoNo_idx', ['creditMemoNo'])
+			.index('salesCreditMemoLines_itemId_idx', ['itemId'])
+			.computed((row) => ({
+				calculatedAmount: row.quantity * row.unitPrice,
+				calculatedTax: row.lineAmount * (row.taxRatePercent / 100),
+			})),
+
+		eInvoiceSubmissions: createTable('eInvoiceSubmissions', {
+			schema: {
+				submissionNo: z.string(),
+				documentType: z.enum(['INVOICE', 'CREDIT_MEMO']),
+				documentNo: z.string(),
+				documentId: z.string(),
+				status: z
+					.enum([
+						'DRAFT',
+						'POSTED',
+						'SUBMITTED',
+						'ACCEPTED',
+						'REJECTED',
+						'CANCELED',
+					])
+					.default('DRAFT'),
+				attemptNo: z.number().default(1),
+				submittedAt: z.string().optional().meta({ type: 'date' }),
+				respondedAt: z.string().optional().meta({ type: 'date' }),
+				lastError: z.string().optional(),
+				providerRef: z.string().optional(),
+				payloadHash: z.string().optional(),
+			},
+			seed: false,
+			noSeries: { pattern: 'EINV0000001', field: 'submissionNo' },
+		})
+			.table()
+			.unique('eInvoiceSubmissions_doc_attempt_uq', [
+				'documentType',
+				'documentNo',
+				'attemptNo',
+			])
+			.index('eInvoiceSubmissions_document_idx', ['documentType', 'documentNo'])
+			.index('eInvoiceSubmissions_status_idx', ['status']),
+
+		eInvoiceEvents: createTable('eInvoiceEvents', {
+			schema: (one) => ({
+				submissionId: one('eInvoiceSubmissions'),
+				eventType: z.enum([
+					'CREATED',
+					'SUBMITTED',
+					'ACCEPTED',
+					'REJECTED',
+					'RETRIED',
+					'CANCELED',
+				]),
+				eventAt: z.string().optional().meta({ type: 'date' }),
+				message: z.string().optional(),
+				metadataJson: z.string().optional(),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('eInvoiceEvents_submissionId_idx', ['submissionId'])
+			.index('eInvoiceEvents_eventType_idx', ['eventType']),
 
 		custLedgerEntries: createTable('custLedgerEntries', {
 			schema: (one) => ({
@@ -1071,6 +1795,150 @@ export const db = defineSchema(
 				isSettled: row.remainingAmount <= 0,
 			})),
 
+		payrollRuleSets: createTable('payrollRuleSets', {
+			schema: {
+				code: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				jurisdiction: z.string().default('US-DEFAULT'),
+				defaultTaxPercent: z.number().default(20),
+				active: z.boolean().default(true),
+				effectiveFrom: z.string().optional().meta({ type: 'date' }),
+				effectiveTo: z.string().optional().meta({ type: 'date' }),
+				versionNo: z.number().default(1),
+			},
+			seed: false,
+			noSeries: { pattern: 'PRS000001', field: 'code' },
+		})
+			.table()
+			.index('payrollRuleSets_active_idx', ['active'])
+			.index('payrollRuleSets_jurisdiction_idx', ['jurisdiction']),
+
+		payrollTaxBrackets: createTable('payrollTaxBrackets', {
+			schema: (one) => ({
+				rulesetId: one('payrollRuleSets'),
+				lowerBound: z.number().default(0),
+				upperBound: z.number().optional(),
+				ratePercent: z.number().default(0),
+				baseTax: z.number().default(0),
+				priority: z.number().default(0),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('payrollTaxBrackets_rulesetId_idx', ['rulesetId']),
+
+		payrollDeductionRules: createTable('payrollDeductionRules', {
+			schema: (one) => ({
+				rulesetId: one('payrollRuleSets'),
+				code: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				phase: z.enum(['PRE_TAX', 'POST_TAX']).default('POST_TAX'),
+				fixedAmount: z.number().default(0),
+				percentOfGross: z.number().default(0),
+				active: z.boolean().default(true),
+				priority: z.number().default(0),
+			}),
+			seed: false,
+		})
+			.table()
+			.index('payrollDeductionRules_rulesetId_idx', ['rulesetId'])
+			.index('payrollDeductionRules_active_idx', ['active']),
+
+		payrollRuns: createTable('payrollRuns', {
+			schema: (one) => ({
+				runNo: z.string(),
+				status: z
+					.enum(['DRAFT', 'CALCULATED', 'POSTED', 'PAID', 'CANCELED'])
+					.default('DRAFT'),
+				periodStart: z.string().optional().meta({ type: 'date' }),
+				periodEnd: z.string().optional().meta({ type: 'date' }),
+				scopeType: z.enum(['ALL_ACTIVE', 'SELECTED']).default('ALL_ACTIVE'),
+				selectedEmployeeIds: z.string().optional(),
+				currency: z
+					.string()
+					.default('USD')
+					.meta({ field: 'finance.currencyCode' }),
+				rulesetId: one('payrollRuleSets').optional(),
+				employeeCount: z.number().default(0),
+				grossAmount: z.number().default(0),
+				deductionAmount: z.number().default(0),
+				netAmount: z.number().default(0),
+				postedJournalCount: z.number().default(0),
+				disbursementCount: z.number().default(0),
+				calculationSnapshot: z.string().optional(),
+				postingSummary: z.string().optional(),
+				paidAt: z.string().optional().meta({ type: 'date' }),
+				statusReason: z.string().optional(),
+				statusUpdatedAt: z.date().optional(),
+				adjustmentCount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'count',
+							source: 'payrollRunAdjustments',
+							key: 'runId',
+						}),
+					}),
+				statutoryReportCount: z
+					.number()
+					.default(0)
+					.meta({
+						flowField: flowField({
+							type: 'count',
+							source: 'payrollRunStatutoryReports',
+							key: 'runId',
+						}),
+					}),
+			}),
+			seed: 3,
+			noSeries: { pattern: 'PRUN0000001', field: 'runNo' },
+		})
+			.table()
+			.index('payrollRuns_runNo_idx', ['runNo'])
+			.index('payrollRuns_status_idx', ['status']),
+
+		payrollRunAdjustments: createTable('payrollRunAdjustments', {
+			schema: (one) => ({
+				adjustmentNo: z.string(),
+				runId: one('payrollRuns'),
+				employeeId: one('employees'),
+				adjustmentType: z
+					.enum(['CORRECTION', 'BONUS', 'DEDUCTION'])
+					.default('CORRECTION'),
+				amountDelta: z.number().default(0),
+				reason: z.string(),
+				appliedAt: z.string().optional().meta({ type: 'date' }),
+				appliedByUserId: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'PADJ000001', field: 'adjustmentNo' },
+		})
+			.table()
+			.index('payrollRunAdjustments_runId_idx', ['runId'])
+			.index('payrollRunAdjustments_employeeId_idx', ['employeeId']),
+
+		payrollRunStatutoryReports: createTable('payrollRunStatutoryReports', {
+			schema: (one) => ({
+				reportNo: z.string(),
+				runId: one('payrollRuns'),
+				reportType: z
+					.enum(['TAX_SUMMARY', 'DEDUCTION_SUMMARY', 'PAYMENT_FILE'])
+					.default('TAX_SUMMARY'),
+				status: z.enum(['GENERATED', 'VOIDED']).default('GENERATED'),
+				periodStart: z.string().optional().meta({ type: 'date' }),
+				periodEnd: z.string().optional().meta({ type: 'date' }),
+				artifactJson: z.string().default('{}'),
+				generatedAt: z.string().optional().meta({ type: 'date' }),
+				generatedByUserId: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'PREPORT0001', field: 'reportNo' },
+		})
+			.table()
+			.index('payrollRunStatutoryReports_runId_idx', ['runId'])
+			.index('payrollRunStatutoryReports_reportType_idx', ['reportType']),
+
 		// =====================================================================
 		// POS
 		// =====================================================================
@@ -1317,9 +2185,178 @@ export const db = defineSchema(
 		})
 			.table()
 			.defaults({ tenantId: 'demo-tenant' } as Record<string, unknown>),
+
+		carrierAccounts: createTable('carrierAccounts', {
+			schema: {
+				accountCode: z.string(),
+				carrierCode: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				active: z.boolean().default(true),
+				webhookSecret: z.string().optional(),
+				apiBaseUrl: z.string().optional(),
+				credentialRef: z.string().optional(),
+				supportsRates: z.boolean().default(true),
+				supportsLabels: z.boolean().default(true),
+			},
+			seed: false,
+			noSeries: { pattern: 'CARR000001', field: 'accountCode' },
+		})
+			.table()
+			.index('carrierAccounts_carrierCode_idx', ['carrierCode'])
+			.index('carrierAccounts_active_idx', ['active']),
+
+		shipmentCarrierLabels: createTable('shipmentCarrierLabels', {
+			schema: (one) => ({
+				labelNo: z.string(),
+				shipmentId: one('shipments'),
+				carrierAccountId: one('carrierAccounts'),
+				status: z
+					.enum(['QUOTED', 'PURCHASED', 'VOIDED', 'ERROR'])
+					.default('QUOTED'),
+				serviceLevel: z.string().optional(),
+				rateQuoteAmount: z.number().default(0),
+				currency: z.string().default('USD'),
+				labelUrl: z.string().optional(),
+				trackingNo: z.string().optional(),
+				purchasedAt: z.string().optional().meta({ type: 'date' }),
+				errorMessage: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'SLBL000001', field: 'labelNo' },
+		})
+			.table()
+			.index('shipmentCarrierLabels_shipmentId_idx', ['shipmentId'])
+			.index('shipmentCarrierLabels_carrierAccountId_idx', ['carrierAccountId'])
+			.index('shipmentCarrierLabels_status_idx', ['status']),
+
+		shipmentTrackingEvents: createTable('shipmentTrackingEvents', {
+			schema: (one) => ({
+				eventNo: z.string(),
+				shipmentId: one('shipments'),
+				carrierAccountId: one('carrierAccounts').optional(),
+				carrierEventId: z.string(),
+				eventType: z.string(),
+				eventStatus: z.string(),
+				occurredAt: z.string().optional().meta({ type: 'date' }),
+				location: z.string().optional(),
+				source: z.enum(['WEBHOOK', 'POLL']).default('WEBHOOK'),
+				exception: z.boolean().default(false),
+				rawPayload: z.string().optional(),
+			}),
+			seed: false,
+			noSeries: { pattern: 'STEV000001', field: 'eventNo' },
+		})
+			.table()
+			.unique('shipmentTrackingEvents_shipment_event_uq', [
+				'shipmentId',
+				'carrierEventId',
+			])
+			.index('shipmentTrackingEvents_shipmentId_idx', ['shipmentId'])
+			.index('shipmentTrackingEvents_carrierAccountId_idx', ['carrierAccountId'])
+			.index('shipmentTrackingEvents_occurredAt_idx', ['occurredAt']),
 	}),
 	{
 		relations: (r) => ({
+			// Hub relations
+			orderWorkflows: {
+				steps: r.many.orderWorkflowSteps({
+					from: r.orderWorkflows._id,
+					to: r.orderWorkflowSteps.workflowId,
+				}),
+				salesOrder: r.one.salesHeaders({
+					from: r.orderWorkflows.salesOrderId,
+					to: r.salesHeaders._id,
+				}),
+				invoice: r.one.salesInvoiceHeaders({
+					from: r.orderWorkflows.invoiceNo,
+					to: r.salesInvoiceHeaders.invoiceNo,
+				}),
+				shipment: r.one.shipments({
+					from: r.orderWorkflows.shipmentNo,
+					to: r.shipments.shipmentNo,
+				}),
+				failureTask: r.one.operationTasks({
+					from: r.orderWorkflows.failureTaskId,
+					to: r.operationTasks._id,
+				}),
+				failureNotification: r.one.moduleNotifications({
+					from: r.orderWorkflows.failureNotificationId,
+					to: r.moduleNotifications._id,
+				}),
+			},
+			orderWorkflowSteps: {
+				workflow: r.one.orderWorkflows({
+					from: r.orderWorkflowSteps.workflowId,
+					to: r.orderWorkflows._id,
+				}),
+			},
+			hubUsers: {
+				roleAssignments: r.many.hubUserRoles({
+					from: r.hubUsers._id,
+					to: r.hubUserRoles.hubUserId,
+				}),
+			},
+			hubRoles: {
+				userAssignments: r.many.hubUserRoles({
+					from: r.hubRoles._id,
+					to: r.hubUserRoles.roleId,
+				}),
+				permissions: r.many.hubRolePermissions({
+					from: r.hubRoles._id,
+					to: r.hubRolePermissions.roleId,
+				}),
+			},
+			hubPermissions: {
+				roleAssignments: r.many.hubRolePermissions({
+					from: r.hubPermissions._id,
+					to: r.hubRolePermissions.permissionId,
+				}),
+			},
+			hubUserRoles: {
+				user: r.one.hubUsers({
+					from: r.hubUserRoles.hubUserId,
+					to: r.hubUsers._id,
+				}),
+				role: r.one.hubRoles({
+					from: r.hubUserRoles.roleId,
+					to: r.hubRoles._id,
+				}),
+			},
+			hubRolePermissions: {
+				role: r.one.hubRoles({
+					from: r.hubRolePermissions.roleId,
+					to: r.hubRoles._id,
+				}),
+				permission: r.one.hubPermissions({
+					from: r.hubRolePermissions.permissionId,
+					to: r.hubPermissions._id,
+				}),
+			},
+			hubModuleSettings: {
+				revisions: r.many.hubModuleSettingsRevisions({
+					from: r.hubModuleSettings._id,
+					to: r.hubModuleSettingsRevisions.settingId,
+				}),
+			},
+			hubModuleSettingsRevisions: {
+				setting: r.one.hubModuleSettings({
+					from: r.hubModuleSettingsRevisions.settingId,
+					to: r.hubModuleSettings._id,
+				}),
+			},
+			scheduledJobs: {
+				runs: r.many.scheduledJobRuns({
+					from: r.scheduledJobs._id,
+					to: r.scheduledJobRuns.jobId,
+				}),
+			},
+			scheduledJobRuns: {
+				job: r.one.scheduledJobs({
+					from: r.scheduledJobRuns.jobId,
+					to: r.scheduledJobs._id,
+				}),
+			},
+
 			// Market relations
 			salesHeaders: {
 				customer: r.one.customers({
@@ -1330,6 +2367,10 @@ export const db = defineSchema(
 					from: r.salesHeaders.documentNo,
 					to: r.salesLines.documentNo,
 				}),
+				reservations: r.many.inventoryReservations({
+					from: r.salesHeaders.documentNo,
+					to: r.inventoryReservations.documentNo,
+				}),
 			},
 			salesLines: {
 				header: r.one.salesHeaders({
@@ -1338,6 +2379,34 @@ export const db = defineSchema(
 				}),
 				item: r.one.items({
 					from: r.salesLines.itemId,
+					to: r.items._id,
+				}),
+				reservations: r.many.inventoryReservations({
+					from: r.salesLines._id,
+					to: r.inventoryReservations.salesLineId,
+				}),
+			},
+			priceRules: {
+				item: r.one.items({
+					from: r.priceRules.itemId,
+					to: r.items._id,
+				}),
+				customer: r.one.customers({
+					from: r.priceRules.customerId,
+					to: r.customers._id,
+				}),
+			},
+			inventoryReservations: {
+				header: r.one.salesHeaders({
+					from: r.inventoryReservations.documentNo,
+					to: r.salesHeaders.documentNo,
+				}),
+				line: r.one.salesLines({
+					from: r.inventoryReservations.salesLineId,
+					to: r.salesLines._id,
+				}),
+				item: r.one.items({
+					from: r.inventoryReservations.itemId,
 					to: r.items._id,
 				}),
 			},
@@ -1390,6 +2459,14 @@ export const db = defineSchema(
 					from: r.purchaseHeaders.documentNo,
 					to: r.purchaseLines.documentNo,
 				}),
+				receipts: r.many.purchaseReceipts({
+					from: r.purchaseHeaders.documentNo,
+					to: r.purchaseReceipts.purchaseOrderNo,
+				}),
+				invoices: r.many.purchaseInvoiceHeaders({
+					from: r.purchaseHeaders.documentNo,
+					to: r.purchaseInvoiceHeaders.purchaseOrderNo,
+				}),
 			},
 			purchaseLines: {
 				header: r.one.purchaseHeaders({
@@ -1399,6 +2476,86 @@ export const db = defineSchema(
 				item: r.one.items({
 					from: r.purchaseLines.itemId,
 					to: r.items._id,
+				}),
+				receipts: r.many.purchaseReceipts({
+					from: r.purchaseLines._id,
+					to: r.purchaseReceipts.purchaseLineId,
+				}),
+				invoiceLines: r.many.purchaseInvoiceLines({
+					from: r.purchaseLines._id,
+					to: r.purchaseInvoiceLines.purchaseLineId,
+				}),
+			},
+			purchaseReceipts: {
+				header: r.one.purchaseHeaders({
+					from: r.purchaseReceipts.purchaseOrderNo,
+					to: r.purchaseHeaders.documentNo,
+				}),
+				line: r.one.purchaseLines({
+					from: r.purchaseReceipts.purchaseLineId,
+					to: r.purchaseLines._id,
+				}),
+				item: r.one.items({
+					from: r.purchaseReceipts.itemId,
+					to: r.items._id,
+				}),
+			},
+			purchaseInvoiceHeaders: {
+				vendor: r.one.vendors({
+					from: r.purchaseInvoiceHeaders.vendorId,
+					to: r.vendors._id,
+				}),
+				order: r.one.purchaseHeaders({
+					from: r.purchaseInvoiceHeaders.purchaseOrderNo,
+					to: r.purchaseHeaders.documentNo,
+				}),
+				lines: r.many.purchaseInvoiceLines({
+					from: r.purchaseInvoiceHeaders.invoiceNo,
+					to: r.purchaseInvoiceLines.invoiceNo,
+				}),
+			},
+			purchaseInvoiceLines: {
+				header: r.one.purchaseInvoiceHeaders({
+					from: r.purchaseInvoiceLines.invoiceNo,
+					to: r.purchaseInvoiceHeaders.invoiceNo,
+				}),
+				item: r.one.items({
+					from: r.purchaseInvoiceLines.itemId,
+					to: r.items._id,
+				}),
+				purchaseLine: r.one.purchaseLines({
+					from: r.purchaseInvoiceLines.purchaseLineId,
+					to: r.purchaseLines._id,
+				}),
+			},
+			vendors: {
+				purchaseOrders: r.many.purchaseHeaders({
+					from: r.vendors._id,
+					to: r.purchaseHeaders.vendorId,
+				}),
+				purchaseInvoices: r.many.purchaseInvoiceHeaders({
+					from: r.vendors._id,
+					to: r.purchaseInvoiceHeaders.vendorId,
+				}),
+				ledgerEntries: r.many.vendorLedgerEntries({
+					from: r.vendors._id,
+					to: r.vendorLedgerEntries.vendorId,
+				}),
+			},
+			vendorLedgerEntries: {
+				vendor: r.one.vendors({
+					from: r.vendorLedgerEntries.vendorId,
+					to: r.vendors._id,
+				}),
+				details: r.many.detailedVendorLedgerEntries({
+					from: r.vendorLedgerEntries._id,
+					to: r.detailedVendorLedgerEntries.vendorLedgerEntryId,
+				}),
+			},
+			detailedVendorLedgerEntries: {
+				vendorLedgerEntry: r.one.vendorLedgerEntries({
+					from: r.detailedVendorLedgerEntries.vendorLedgerEntryId,
+					to: r.vendorLedgerEntries._id,
 				}),
 			},
 			transferHeaders: {
@@ -1428,6 +2585,14 @@ export const db = defineSchema(
 					from: r.salesInvoiceHeaders.invoiceNo,
 					to: r.salesInvoiceLines.invoiceNo,
 				}),
+				creditMemos: r.many.salesCreditMemoHeaders({
+					from: r.salesInvoiceHeaders.invoiceNo,
+					to: r.salesCreditMemoHeaders.appliesToInvoiceNo,
+				}),
+				eInvoiceSubmissions: r.many.eInvoiceSubmissions({
+					from: r.salesInvoiceHeaders.invoiceNo,
+					to: r.eInvoiceSubmissions.documentNo,
+				}),
 			},
 			salesInvoiceLines: {
 				header: r.one.salesInvoiceHeaders({
@@ -1437,6 +2602,46 @@ export const db = defineSchema(
 				item: r.one.items({
 					from: r.salesInvoiceLines.itemId,
 					to: r.items._id,
+				}),
+			},
+			salesCreditMemoHeaders: {
+				customer: r.one.customers({
+					from: r.salesCreditMemoHeaders.customerId,
+					to: r.customers._id,
+				}),
+				appliesToInvoice: r.one.salesInvoiceHeaders({
+					from: r.salesCreditMemoHeaders.appliesToInvoiceNo,
+					to: r.salesInvoiceHeaders.invoiceNo,
+				}),
+				lines: r.many.salesCreditMemoLines({
+					from: r.salesCreditMemoHeaders.creditMemoNo,
+					to: r.salesCreditMemoLines.creditMemoNo,
+				}),
+				eInvoiceSubmissions: r.many.eInvoiceSubmissions({
+					from: r.salesCreditMemoHeaders.creditMemoNo,
+					to: r.eInvoiceSubmissions.documentNo,
+				}),
+			},
+			salesCreditMemoLines: {
+				header: r.one.salesCreditMemoHeaders({
+					from: r.salesCreditMemoLines.creditMemoNo,
+					to: r.salesCreditMemoHeaders.creditMemoNo,
+				}),
+				item: r.one.items({
+					from: r.salesCreditMemoLines.itemId,
+					to: r.items._id,
+				}),
+			},
+			eInvoiceSubmissions: {
+				events: r.many.eInvoiceEvents({
+					from: r.eInvoiceSubmissions._id,
+					to: r.eInvoiceEvents.submissionId,
+				}),
+			},
+			eInvoiceEvents: {
+				submission: r.one.eInvoiceSubmissions({
+					from: r.eInvoiceEvents.submissionId,
+					to: r.eInvoiceSubmissions._id,
 				}),
 			},
 			custLedgerEntries: {
@@ -1466,11 +2671,71 @@ export const db = defineSchema(
 					from: r.employees._id,
 					to: r.employeeLedgerEntries.employeeId,
 				}),
+				adjustments: r.many.payrollRunAdjustments({
+					from: r.employees._id,
+					to: r.payrollRunAdjustments.employeeId,
+				}),
 			},
 			employeeLedgerEntries: {
 				employee: r.one.employees({
 					from: r.employeeLedgerEntries.employeeId,
 					to: r.employees._id,
+				}),
+			},
+			payrollRuleSets: {
+				taxBrackets: r.many.payrollTaxBrackets({
+					from: r.payrollRuleSets._id,
+					to: r.payrollTaxBrackets.rulesetId,
+				}),
+				deductionRules: r.many.payrollDeductionRules({
+					from: r.payrollRuleSets._id,
+					to: r.payrollDeductionRules.rulesetId,
+				}),
+				runs: r.many.payrollRuns({
+					from: r.payrollRuleSets._id,
+					to: r.payrollRuns.rulesetId,
+				}),
+			},
+			payrollTaxBrackets: {
+				ruleset: r.one.payrollRuleSets({
+					from: r.payrollTaxBrackets.rulesetId,
+					to: r.payrollRuleSets._id,
+				}),
+			},
+			payrollDeductionRules: {
+				ruleset: r.one.payrollRuleSets({
+					from: r.payrollDeductionRules.rulesetId,
+					to: r.payrollRuleSets._id,
+				}),
+			},
+			payrollRuns: {
+				ruleset: r.one.payrollRuleSets({
+					from: r.payrollRuns.rulesetId,
+					to: r.payrollRuleSets._id,
+				}),
+				adjustments: r.many.payrollRunAdjustments({
+					from: r.payrollRuns._id,
+					to: r.payrollRunAdjustments.runId,
+				}),
+				statutoryReports: r.many.payrollRunStatutoryReports({
+					from: r.payrollRuns._id,
+					to: r.payrollRunStatutoryReports.runId,
+				}),
+			},
+			payrollRunAdjustments: {
+				run: r.one.payrollRuns({
+					from: r.payrollRunAdjustments.runId,
+					to: r.payrollRuns._id,
+				}),
+				employee: r.one.employees({
+					from: r.payrollRunAdjustments.employeeId,
+					to: r.employees._id,
+				}),
+			},
+			payrollRunStatutoryReports: {
+				run: r.one.payrollRuns({
+					from: r.payrollRunStatutoryReports.runId,
+					to: r.payrollRuns._id,
 				}),
 			},
 
@@ -1512,6 +2777,14 @@ export const db = defineSchema(
 					from: r.shipments.shipmentNo,
 					to: r.shipmentLines.shipmentNo,
 				}),
+				labels: r.many.shipmentCarrierLabels({
+					from: r.shipments._id,
+					to: r.shipmentCarrierLabels.shipmentId,
+				}),
+				trackingEvents: r.many.shipmentTrackingEvents({
+					from: r.shipments._id,
+					to: r.shipmentTrackingEvents.shipmentId,
+				}),
 			},
 			shipmentLines: {
 				shipment: r.one.shipments({
@@ -1521,6 +2794,36 @@ export const db = defineSchema(
 				item: r.one.items({
 					from: r.shipmentLines.itemId,
 					to: r.items._id,
+				}),
+			},
+			carrierAccounts: {
+				labels: r.many.shipmentCarrierLabels({
+					from: r.carrierAccounts._id,
+					to: r.shipmentCarrierLabels.carrierAccountId,
+				}),
+				events: r.many.shipmentTrackingEvents({
+					from: r.carrierAccounts._id,
+					to: r.shipmentTrackingEvents.carrierAccountId,
+				}),
+			},
+			shipmentCarrierLabels: {
+				shipment: r.one.shipments({
+					from: r.shipmentCarrierLabels.shipmentId,
+					to: r.shipments._id,
+				}),
+				carrierAccount: r.one.carrierAccounts({
+					from: r.shipmentCarrierLabels.carrierAccountId,
+					to: r.carrierAccounts._id,
+				}),
+			},
+			shipmentTrackingEvents: {
+				shipment: r.one.shipments({
+					from: r.shipmentTrackingEvents.shipmentId,
+					to: r.shipments._id,
+				}),
+				carrierAccount: r.one.carrierAccounts({
+					from: r.shipmentTrackingEvents.carrierAccountId,
+					to: r.carrierAccounts._id,
 				}),
 			},
 		}),

@@ -1,91 +1,57 @@
-import { cvx, useMutation, useQuery } from '@lib/rpc'
-import type {
-	FunctionArgs,
-	FunctionReference,
-	FunctionReturnType,
-} from 'convex/server'
-import { useCallback, useState } from 'react'
+import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
 
-// ---------------------------------------------------------------------------
-// Convex API type helpers (mirrors use-data.ts)
-// ---------------------------------------------------------------------------
+type UplinkModule = Exclude<keyof typeof $rpc, 'key' | 'health'>
+type EntityRpc = (typeof $rpc)['hub']['operationTasks']
 
-type CvxModules = (typeof cvx)['api']
-type UplinkModule = keyof CvxModules
-type EntityOf<M extends UplinkModule> = keyof CvxModules[M] & string
-
-export type { UplinkModule, EntityOf }
-
-/** Bridge: runtime accessor. Types flow via conditional types at call sites. */
-function entity<M extends UplinkModule, E extends EntityOf<M>>(m: M, e: E) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (cvx.api[m] as Record<string, any>)[e as string]
+function getRpc(moduleId: string, entityId: string): EntityRpc {
+	return (
+		$rpc[moduleId as UplinkModule] as unknown as Record<string, EntityRpc>
+	)[entityId]
 }
 
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-
-export function useEntityRecord<M extends UplinkModule, E extends EntityOf<M>>(
-	moduleId: M,
-	entityId: E,
+export function useEntityRecord(
+	moduleId: string,
+	entityId: string,
 	id: string | null,
-	opts?: { enabled?: boolean; with?: Record<string, boolean> },
+	opts?: { enabled?: boolean },
 ) {
-	const e = entity(moduleId, entityId)
-	const enabled = (opts?.enabled ?? true) && !!id && id !== 'new'
-	const result = useQuery(
-		e.getById,
-		...(enabled
-			? [{ id, ...(opts?.with ? { with: opts.with } : {}) }]
-			: ['skip' as const]),
-	)
-
-	return { ...result, isLoading: result.isPending }
+	const rpc = getRpc(moduleId, entityId)
+	return useQuery({
+		...rpc.getById.queryOptions({ input: { id: id ?? '' } }),
+		enabled: (opts?.enabled ?? true) && !!id && id !== 'new',
+	})
 }
 
-/**
- * Wraps Convex `useMutation` with `.mutateAsync()` and `.isPending`.
- */
-function useWrappedMutation<F extends FunctionReference<'mutation'>>(ref: F) {
-	const rawMutate = useMutation(ref)
-	const [isPending, setIsPending] = useState(false)
+export function useEntityMutations(moduleId: string, entityId: string) {
+	const rpc = getRpc(moduleId, entityId)
+	const queryClient = useQueryClient()
 
-	const mutateAsync = useCallback(
-		async (args: FunctionArgs<F>): Promise<FunctionReturnType<F>> => {
-			setIsPending(true)
-			try {
-				return (await rawMutate(args)) as FunctionReturnType<F>
-			} finally {
-				setIsPending(false)
-			}
-		},
-		[rawMutate],
-	)
-
-	return { mutateAsync, mutate: mutateAsync, isPending }
-}
-
-export function useEntityMutations<
-	M extends UplinkModule,
-	E extends EntityOf<M>,
->(moduleId: M, entityId: E) {
-	const e = entity(moduleId, entityId)
-
-	return {
-		create: useWrappedMutation(e.create),
-		update: useWrappedMutation(e.update),
-		remove: useWrappedMutation(e.remove),
-		transitionStatus: useWrappedMutation(e.transitionStatus),
+	const invalidate = () => {
+		queryClient.invalidateQueries({
+			queryKey: rpc.key(),
+		})
 	}
+
+	const create = useMutation({
+		...rpc.create.mutationOptions({ onSuccess: invalidate }),
+	})
+
+	const update = useMutation({
+		...rpc.update.mutationOptions({ onSuccess: invalidate }),
+	})
+
+	const remove = useMutation({
+		...rpc.delete.mutationOptions({ onSuccess: invalidate }),
+	})
+
+	const transitionStatus = useMutation({
+		...rpc.transitionStatus.mutationOptions({ onSuccess: invalidate }),
+	})
+
+	return { create, update, remove, transitionStatus }
 }
 
-export function useEntityKpis<M extends UplinkModule, E extends EntityOf<M>>(
-	moduleId: M,
-	entityId: E,
-) {
-	const e = entity(moduleId, entityId)
-	const result = useQuery(e.kpis, {})
-
-	return { ...result, isLoading: result.isPending }
+export function useEntityKpis(moduleId: string, entityId: string) {
+	const rpc = getRpc(moduleId, entityId)
+	return useQuery(rpc.kpis.queryOptions({ input: {} }))
 }

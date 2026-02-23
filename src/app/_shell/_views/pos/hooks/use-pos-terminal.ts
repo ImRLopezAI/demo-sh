@@ -1,3 +1,4 @@
+import { $rpc, useQueryClient } from '@lib/rpc'
 import * as React from 'react'
 import { useEntityMutations } from '../../_shared/use-entity'
 
@@ -34,6 +35,33 @@ export interface Totals {
 	total: number
 	lineCount: number
 	itemCount: number
+}
+
+export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE'
+
+export interface OfflineQueuedSale {
+	idempotencyKey: string
+	sessionId: string
+	customerId?: string
+	paymentMethod: PaymentMethod
+	totalAmount: number
+	taxAmount: number
+	discountAmount: number
+	paidAmount: number
+	cart: CartItem[]
+	queuedAt: string
+}
+
+interface ProcessOfflineQueueArgs {
+	queuedSales: OfflineQueuedSale[]
+	initialProcessedKeys: Iterable<string>
+	syncSale: (queuedSale: OfflineQueuedSale) => Promise<void>
+}
+
+interface ProcessOfflineQueueResult {
+	remainingQueue: OfflineQueuedSale[]
+	processedKeys: string[]
+	lastError: string | null
 }
 
 export interface TerminalState {
@@ -87,6 +115,117 @@ type Action =
 
 function calcLineAmount(qty: number, price: number, disc: number): number {
 	return qty * price * (1 - disc / 100)
+}
+
+const OFFLINE_QUEUE_STORAGE_KEY = 'uplink.pos.offline.queue.v1'
+const PROCESSED_SALES_STORAGE_KEY = 'uplink.pos.offline.processed.v1'
+
+function isBrowser() {
+	return typeof window !== 'undefined'
+}
+
+function parseJsonArray<T>(raw: string | null): T[] {
+	if (!raw) return []
+	try {
+		const parsed = JSON.parse(raw) as unknown
+		return Array.isArray(parsed) ? (parsed as T[]) : []
+	} catch {
+		return []
+	}
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+	return error instanceof Error ? error.message : fallback
+}
+
+export function readOfflineQueue(): OfflineQueuedSale[] {
+	if (!isBrowser()) return []
+	return parseJsonArray<OfflineQueuedSale>(
+		window.localStorage.getItem(OFFLINE_QUEUE_STORAGE_KEY),
+	)
+}
+
+export function writeOfflineQueue(queue: OfflineQueuedSale[]) {
+	if (!isBrowser()) return
+	window.localStorage.setItem(OFFLINE_QUEUE_STORAGE_KEY, JSON.stringify(queue))
+}
+
+export function readProcessedOfflineSales(): string[] {
+	if (!isBrowser()) return []
+	return parseJsonArray<string>(
+		window.localStorage.getItem(PROCESSED_SALES_STORAGE_KEY),
+	)
+}
+
+export function writeProcessedOfflineSales(keys: string[]) {
+	if (!isBrowser()) return
+	window.localStorage.setItem(PROCESSED_SALES_STORAGE_KEY, JSON.stringify(keys))
+}
+
+export function createOfflineIdempotencyKey(sessionId: string): string {
+	return `OFFLINE-${sessionId}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+}
+
+export function enqueueOfflineSale(
+	existingQueue: OfflineQueuedSale[],
+	entry: OfflineQueuedSale,
+) {
+	if (
+		existingQueue.some(
+			(queued) => queued.idempotencyKey === entry.idempotencyKey,
+		)
+	) {
+		return existingQueue
+	}
+	return [...existingQueue, entry]
+}
+
+export function removeOfflineSaleByKey(
+	existingQueue: OfflineQueuedSale[],
+	idempotencyKey: string,
+) {
+	return existingQueue.filter(
+		(queued) => queued.idempotencyKey !== idempotencyKey,
+	)
+}
+
+export async function processOfflineQueueBatch({
+	queuedSales,
+	initialProcessedKeys,
+	syncSale,
+}: ProcessOfflineQueueArgs): Promise<ProcessOfflineQueueResult> {
+	const processedKeys = new Set(initialProcessedKeys)
+	const remainingQueue: OfflineQueuedSale[] = []
+	let lastError: string | null = null
+
+	for (const queuedSale of queuedSales) {
+		if (processedKeys.has(queuedSale.idempotencyKey)) continue
+
+		try {
+			await syncSale(queuedSale)
+			processedKeys.add(queuedSale.idempotencyKey)
+		} catch (error) {
+			remainingQueue.push(queuedSale)
+			lastError = getErrorMessage(error, 'Unable to sync offline sale queue')
+		}
+	}
+
+	return {
+		remainingQueue,
+		processedKeys: Array.from(processedKeys),
+		lastError,
+	}
+}
+
+export function resolveEntityId(
+	entity: { _id?: string; id?: string } | null | undefined,
+	entityLabel: string,
+): string {
+	const id = entity?._id ?? entity?.id
+	if (!id) {
+		throw new Error(`${entityLabel} creation did not return an id`)
+	}
+	return id
 }
 
 // ── Reducer ───────────────────────────────────────────────────
@@ -305,15 +444,132 @@ function reducer(state: TerminalState, action: Action): TerminalState {
 
 export function usePosTerminal() {
 	const [state, dispatch] = React.useReducer(reducer, initialState)
+	const queryClient = useQueryClient()
+	const syncInProgressRef = React.useRef(false)
+	const [isOnline, setIsOnline] = React.useState<boolean>(() =>
+		isBrowser() ? navigator.onLine : true,
+	)
+	const [pendingSyncCount, setPendingSyncCount] = React.useState<number>(
+		() => readOfflineQueue().length,
+	)
+	const [isSyncingQueue, setIsSyncingQueue] = React.useState(false)
+	const [lastSyncError, setLastSyncError] = React.useState<string | null>(null)
 
 	const { create: createTransaction, transitionStatus } = useEntityMutations(
 		'pos',
-		'posTransactions',
+		'transactions',
 	)
-	const { create: createLine } = useEntityMutations(
-		'pos',
-		'posTransactionLines',
+	const { create: createLine } = useEntityMutations('pos', 'transactionLines')
+
+	const syncSaleToBackend = React.useCallback(
+		async (queuedSale: OfflineQueuedSale) => {
+			const existingTransactions = await queryClient.fetchQuery(
+				$rpc.pos.transactions.list.queryOptions({
+					input: {
+						limit: 1,
+						offset: 0,
+						filters: { receiptNo: queuedSale.idempotencyKey },
+					},
+				}),
+			)
+			const existingTransaction = existingTransactions.items[0] as
+				| { _id: string; status?: string }
+				| undefined
+
+			const header =
+				existingTransaction ??
+				(await createTransaction.mutateAsync({
+					receiptNo: queuedSale.idempotencyKey,
+					posSessionId: queuedSale.sessionId,
+					customerId: queuedSale.customerId ?? undefined,
+					totalAmount: queuedSale.totalAmount,
+					taxAmount: queuedSale.taxAmount,
+					discountAmount: queuedSale.discountAmount,
+					paidAmount: queuedSale.paidAmount,
+					paymentMethod: queuedSale.paymentMethod,
+				}))
+
+			const headerId = resolveEntityId(
+				header as { _id?: string; id?: string } | null | undefined,
+				'POS transaction',
+			)
+
+			const existingLines = await queryClient.fetchQuery(
+				$rpc.pos.transactionLines.list.queryOptions({
+					input: {
+						limit: 200,
+						offset: 0,
+						filters: { transactionId: headerId },
+					},
+				}),
+			)
+			const existingLineKeys = new Set(
+				existingLines.items.map(
+					(line) =>
+						`${line.itemId}|${line.quantity}|${line.unitPrice}|${line.discountPercent}|${line.lineAmount}`,
+				),
+			)
+
+			for (const line of queuedSale.cart) {
+				const lineKey = `${line.itemId}|${line.quantity}|${line.unitPrice}|${line.discountPercent}|${line.lineAmount}`
+				if (existingLineKeys.has(lineKey)) continue
+
+				await createLine.mutateAsync({
+					transactionId: headerId,
+					itemId: line.itemId,
+					description: line.description,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					discountPercent: line.discountPercent,
+					lineAmount: line.lineAmount,
+				})
+			}
+
+			if ((header as { status?: string }).status !== 'COMPLETED') {
+				await transitionStatus.mutateAsync({
+					id: headerId,
+					toStatus: 'COMPLETED',
+				})
+			}
+		},
+		[createLine, createTransaction, queryClient, transitionStatus],
 	)
+
+	const flushOfflineQueue = React.useCallback(async () => {
+		if (!isOnline || syncInProgressRef.current) return
+		const queuedSales = readOfflineQueue()
+		if (queuedSales.length === 0) {
+			setPendingSyncCount(0)
+			setLastSyncError(null)
+			return
+		}
+
+		syncInProgressRef.current = true
+		setIsSyncingQueue(true)
+		setLastSyncError(null)
+
+		try {
+			const result = await processOfflineQueueBatch({
+				queuedSales,
+				initialProcessedKeys: readProcessedOfflineSales(),
+				syncSale: syncSaleToBackend,
+			})
+
+			writeOfflineQueue(result.remainingQueue)
+			writeProcessedOfflineSales(result.processedKeys.slice(-1000))
+			setPendingSyncCount(result.remainingQueue.length)
+			setLastSyncError(result.lastError)
+			void queryClient.invalidateQueries({
+				queryKey: $rpc.pos.transactions.key(),
+			})
+			void queryClient.invalidateQueries({
+				queryKey: $rpc.pos.transactionLines.key(),
+			})
+		} finally {
+			syncInProgressRef.current = false
+			setIsSyncingQueue(false)
+		}
+	}, [isOnline, queryClient, syncSaleToBackend])
 
 	const totals = React.useMemo<Totals>(() => {
 		const subtotal = state.cart.reduce(
@@ -363,50 +619,82 @@ export function usePosTerminal() {
 	}, [])
 
 	const completeSale = React.useCallback(
-		async (paymentMethod: 'CASH' | 'CARD' | 'MOBILE') => {
+		async (paymentMethod: PaymentMethod) => {
 			if (!state.session || state.cart.length === 0) return
-
-			const header = await createTransaction.mutateAsync({
-				posSessionId: state.session.id,
+			const idempotencyKey = createOfflineIdempotencyKey(state.session.id)
+			const queuedSale: OfflineQueuedSale = {
+				idempotencyKey,
+				sessionId: state.session.id,
 				customerId: state.customer?.id ?? undefined,
+				paymentMethod,
 				totalAmount: totals.total,
 				taxAmount: totals.taxAmount,
 				discountAmount: totals.discountTotal,
 				paidAmount: totals.total,
-				paymentMethod,
-			})
-
-			const headerId = (header as { id: string }).id
-
-			for (const line of state.cart) {
-				await createLine.mutateAsync({
-					transactionId: headerId,
-					itemId: line.itemId,
-					description: line.description,
-					quantity: line.quantity,
-					unitPrice: line.unitPrice,
-					discountPercent: line.discountPercent,
-					lineAmount: line.lineAmount,
-				})
+				cart: state.cart,
+				queuedAt: new Date().toISOString(),
 			}
 
-			await transitionStatus.mutateAsync({
-				id: headerId,
-				toStatus: 'COMPLETED',
-			})
+			try {
+				await syncSaleToBackend(queuedSale)
+				const processedKeys = new Set(readProcessedOfflineSales())
+				processedKeys.add(idempotencyKey)
+				writeProcessedOfflineSales(Array.from(processedKeys).slice(-1000))
+				const queueAfterSuccess = removeOfflineSaleByKey(
+					readOfflineQueue(),
+					idempotencyKey,
+				)
+				writeOfflineQueue(queueAfterSuccess)
+				setPendingSyncCount(queueAfterSuccess.length)
+				setLastSyncError(null)
+			} catch (error) {
+				const updatedQueue = enqueueOfflineSale(readOfflineQueue(), queuedSale)
+				writeOfflineQueue(updatedQueue)
+				setPendingSyncCount(updatedQueue.length)
+				setLastSyncError(
+					getErrorMessage(
+						error,
+						'Sale queued for offline retry due to backend availability',
+					),
+				)
+			}
 
 			dispatch({ type: 'COMPLETE_SALE' })
 		},
-		[
-			state.session,
-			state.cart,
-			state.customer,
-			totals,
-			createTransaction,
-			createLine,
-			transitionStatus,
-		],
+		[state.session, state.cart, state.customer, totals, syncSaleToBackend],
 	)
+
+	React.useEffect(() => {
+		if (!isBrowser()) return
+
+		const onOnline = () => {
+			setIsOnline(true)
+		}
+		const onOffline = () => {
+			setIsOnline(false)
+		}
+
+		window.addEventListener('online', onOnline)
+		window.addEventListener('offline', onOffline)
+		return () => {
+			window.removeEventListener('online', onOnline)
+			window.removeEventListener('offline', onOffline)
+		}
+	}, [])
+
+	React.useEffect(() => {
+		if (!isOnline) return
+		void flushOfflineQueue()
+	}, [isOnline, flushOfflineQueue])
+
+	React.useEffect(() => {
+		if (!isOnline) return
+		if (pendingSyncCount === 0) return
+		const id = window.setInterval(() => {
+			void flushOfflineQueue()
+		}, 5000)
+		return () => window.clearInterval(id)
+	}, [isOnline, pendingSyncCount, flushOfflineQueue])
 
 	return {
 		state,
@@ -417,5 +705,10 @@ export function usePosTerminal() {
 		clearCart,
 		completeSale,
 		voidTransaction,
+		isOnline,
+		pendingSyncCount,
+		isSyncingQueue,
+		lastSyncError,
+		syncOfflineQueueNow: flushOfflineQueue,
 	}
 }

@@ -1,3 +1,4 @@
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
 import { Monitor, Plus } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
@@ -41,10 +42,10 @@ export function SessionSelectDialog({
 	open,
 	dispatch,
 }: SessionSelectDialogProps) {
-	const { items: sessions, isLoading: sessionsLoading } = useModuleData(
+	const { items: sessions, isLoading: sessionsLoading } = useModuleData<
 		'pos',
-		'posSessions',
-	)
+		PosSession
+	>('pos', 'sessions', 'all')
 	const { data: terminalsData, isLoading: terminalsLoading } = useModuleList(
 		'pos',
 		'terminals',
@@ -60,6 +61,16 @@ export function SessionSelectDialog({
 	const [showNew, setShowNew] = React.useState(false)
 	const [selectedTerminal, setSelectedTerminal] = React.useState('')
 	const [openingBalance, setOpeningBalance] = React.useState('')
+	const queryClient = useQueryClient()
+	const startSession = useMutation({
+		...$rpc.pos.sessions.startSession.mutationOptions({
+			onSuccess: () => {
+				void queryClient.invalidateQueries({
+					queryKey: $rpc.pos.sessions.key(),
+				})
+			},
+		}),
+	})
 
 	const handleSelectSession = (session: PosSession) => {
 		const info: SessionInfo = {
@@ -71,14 +82,27 @@ export function SessionSelectDialog({
 		dispatch({ type: 'SET_SESSION', session: info })
 	}
 
-	const handleCreateSession = () => {
+	const handleCreateSession = async () => {
 		if (!selectedTerminal) return
 		const terminal = terminals.find((t) => t._id === selectedTerminal)
+		const parsedOpeningBalance = Number.parseFloat(openingBalance)
+		const normalizedOpeningBalance =
+			Number.isFinite(parsedOpeningBalance) && parsedOpeningBalance > 0
+				? parsedOpeningBalance
+				: 0
+		const startedSession = await startSession.mutateAsync({
+			terminalId: selectedTerminal,
+			openingBalance: normalizedOpeningBalance,
+		})
 		const info: SessionInfo = {
-			id: `new-${Date.now()}`,
-			sessionNo: `SESS-${Date.now().toString(36).toUpperCase()}`,
-			terminalName: terminal?.name ?? terminal?.terminalCode ?? 'Terminal',
-			cashierId: '',
+			id: startedSession.sessionId,
+			sessionNo: startedSession.sessionNo,
+			terminalName:
+				startedSession.terminalName ??
+				terminal?.name ??
+				terminal?.terminalCode ??
+				'Terminal',
+			cashierId: startedSession.cashierId ?? '',
 		}
 		dispatch({ type: 'SET_SESSION', session: info })
 	}
@@ -97,9 +121,13 @@ export function SessionSelectDialog({
 					<div className='space-y-3'>
 						{sessionsLoading ? (
 							<div className='space-y-2'>
-								{Array.from({ length: 3 }).map((_, i) => (
+								{[
+									'session-skeleton-1',
+									'session-skeleton-2',
+									'session-skeleton-3',
+								].map((key) => (
 									<div
-										key={`s-${i}`}
+										key={key}
 										className='h-14 rounded-lg bg-muted motion-safe:animate-pulse'
 									/>
 								))}
@@ -202,10 +230,12 @@ export function SessionSelectDialog({
 							</Button>
 							<Button
 								className='flex-1'
-								disabled={!selectedTerminal}
-								onClick={handleCreateSession}
+								disabled={!selectedTerminal || startSession.isPending}
+								onClick={() => {
+									void handleCreateSession()
+								}}
 							>
-								Start Session
+								{startSession.isPending ? 'Starting...' : 'Start Session'}
 							</Button>
 						</div>
 					</div>
