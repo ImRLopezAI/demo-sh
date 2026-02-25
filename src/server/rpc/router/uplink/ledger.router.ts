@@ -1,11 +1,11 @@
+import {
+	POSTING_REASON_REQUIRED,
+	POSTING_TRANSITIONS,
+	SALES_INVOICE_REASON_REQUIRED,
+	SALES_INVOICE_TRANSITIONS,
+} from '@server/db/constants'
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
-import {
-	SALES_INVOICE_TRANSITIONS,
-	SALES_INVOICE_REASON_REQUIRED,
-	POSTING_TRANSITIONS,
-	POSTING_REASON_REQUIRED,
-} from '@server/db/constants'
 import { assertPermission, assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 

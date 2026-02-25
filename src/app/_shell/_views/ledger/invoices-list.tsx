@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { InvoiceCard } from './components/invoice-card'
 
 interface SalesInvoiceHeader {
@@ -28,7 +29,7 @@ interface SalesInvoiceHeader {
 }
 
 export default function InvoicesList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'ledger', SalesInvoiceHeader>(
 		'ledger',
@@ -37,10 +38,22 @@ export default function InvoicesList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: SalesInvoiceHeader) => setSelectedId(row._id),
-		[],
+		(row: SalesInvoiceHeader) => openDetail(row._id),
+		[openDetail],
 	)
-	const handleNew = () => setSelectedId('new')
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<InvoiceCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -123,11 +136,6 @@ export default function InvoicesList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<InvoiceCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

@@ -16,6 +16,7 @@ interface EmployeeCardProps {
 	recordId: string | null
 	open: boolean
 	onOpenChange: (open: boolean) => void
+	presentation?: 'dialog' | 'page'
 }
 
 interface EmployeeFormValues {
@@ -38,6 +39,7 @@ export function EmployeeCard({
 	recordId,
 	open,
 	onOpenChange,
+	presentation = 'dialog',
 }: EmployeeCardProps) {
 	const isNew = recordId === 'new'
 
@@ -178,6 +180,7 @@ export function EmployeeCard({
 			<RecordDialog
 				open={open}
 				onOpenChange={onOpenChange}
+				presentation={presentation}
 				title={isNew ? 'New Employee' : `Employee ${record?.employeeNo ?? ''}`}
 				description={
 					isNew

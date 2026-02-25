@@ -1,3 +1,15 @@
+import {
+	BANK_ACCOUNT_REASON_REQUIRED,
+	DOCUMENT_APPROVAL_REASON_REQUIRED,
+	EMPLOYEE_REASON_REQUIRED,
+	JOURNAL_LINE_REASON_REQUIRED,
+	OPERATION_TASK_REASON_REQUIRED,
+	POS_TRANSACTION_REASON_REQUIRED,
+	RECONCILIATION_REASON_REQUIRED,
+	SALES_INVOICE_REASON_REQUIRED,
+	SHIPMENT_REASON_REQUIRED,
+	TRANSFER_REASON_REQUIRED,
+} from '@server/db/constants'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,28 +21,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import {
-	DOCUMENT_APPROVAL_REASON_REQUIRED,
-	RECONCILIATION_REASON_REQUIRED,
-	JOURNAL_LINE_REASON_REQUIRED,
-	TRANSFER_REASON_REQUIRED,
-	SALES_INVOICE_REASON_REQUIRED,
-	OPERATION_TASK_REASON_REQUIRED,
-	BANK_ACCOUNT_REASON_REQUIRED,
-	EMPLOYEE_REASON_REQUIRED,
-	POS_TRANSACTION_REASON_REQUIRED,
-	SHIPMENT_REASON_REQUIRED,
-} from '@server/db/constants'
-
-type UplinkModuleId =
-	| 'market'
-	| 'replenishment'
-	| 'ledger'
-	| 'pos'
-	| 'trace'
-	| 'flow'
-	| 'payroll'
-	| 'hub'
+import type { UplinkModule } from './use-entity'
 
 const REASON_REQUIRED_STATUSES: Record<string, readonly string[]> = {
 	'market.salesOrders': DOCUMENT_APPROVAL_REASON_REQUIRED,
@@ -68,7 +59,7 @@ interface TransitionPayload {
 }
 
 interface UseTransitionWithReasonOptions {
-	moduleId: UplinkModuleId
+	moduleId: UplinkModule
 	entityId: string
 	disabled?: boolean
 	getStatusLabel?: (status: string) => string

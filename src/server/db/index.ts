@@ -1,33 +1,35 @@
 import z from 'zod'
-import { defineSchema, flowField } from './definitions'
 import {
-	OPERATION_TASK_STATUSES,
-	SLA_STATUSES,
-	NOTIFICATION_STATUSES,
 	AUDIT_LOG_STATUSES,
-	SCHEDULED_JOB_STATUSES,
-	ORDER_WORKFLOW_STATUSES,
-	DOCUMENT_APPROVAL_STATUSES,
-	INVENTORY_RESERVATION_STATUSES,
-	CART_STATUSES,
-	POSTING_STATUSES,
-	TRANSFER_STATUSES,
-	SALES_INVOICE_STATUSES,
-	E_INVOICE_STATUSES,
 	BANK_ACCOUNT_STATUSES,
-	RECONCILIATION_STATUSES,
-	JOURNAL_LINE_STATUSES,
+	CARRIER_LABEL_STATUSES,
+	CART_STATUSES,
+	DOCUMENT_APPROVAL_STATUSES,
+	E_INVOICE_STATUSES,
 	EMPLOYEE_STATUSES,
+	INVENTORY_RESERVATION_STATUSES,
+	JOURNAL_LINE_STATUSES,
+	NOTIFICATION_STATUSES,
+	OPERATION_TASK_STATUSES,
+	ORDER_WORKFLOW_STATUSES,
 	PAYROLL_RUN_STATUSES,
-	STATUTORY_REPORT_STATUSES,
-	TERMINAL_STATUSES,
 	POS_SESSION_STATUSES,
 	POS_TRANSACTION_STATUSES,
-	SHIPMENT_STATUSES,
+	POSTING_STATUSES,
+	RECONCILIATION_STATUSES,
+	SALES_INVOICE_STATUSES,
+	SCHEDULED_JOB_STATUSES,
 	SHIPMENT_PRIORITY_STATUSES,
-	CARRIER_LABEL_STATUSES,
+	SHIPMENT_STATUSES,
+	SLA_STATUSES,
+	STATUTORY_REPORT_STATUSES,
+	TERMINAL_STATUSES,
 	TRACKING_EVENT_SOURCES,
+	TRANSFER_STATUSES,
 } from './constants'
+import { defineSchema, flowField } from './definitions'
+
+const DOCUMENT_SEED = 200
 
 export const db = defineSchema(
 	({ createTable }) => ({
@@ -40,9 +42,7 @@ export const db = defineSchema(
 				moduleId: z.string(),
 				title: z.string().meta({ type: 'sentence' }),
 				description: z.string().optional(),
-				status: z
-					.enum(OPERATION_TASK_STATUSES)
-					.default('OPEN'),
+				status: z.enum(OPERATION_TASK_STATUSES).default('OPEN'),
 				priority: z
 					.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
 					.default('MEDIUM'),
@@ -425,9 +425,7 @@ export const db = defineSchema(
 				documentType: z
 					.enum(['ORDER', 'RETURN_ORDER', 'QUOTE'])
 					.default('ORDER'),
-				status: z
-					.enum(DOCUMENT_APPROVAL_STATUSES)
-					.default('DRAFT'),
+				status: z.enum(DOCUMENT_APPROVAL_STATUSES).default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
 					.string()
@@ -596,9 +594,7 @@ export const db = defineSchema(
 				salesLineId: one('salesLines'),
 				itemId: one('items'),
 				quantity: z.number().default(0),
-				status: z
-					.enum(INVENTORY_RESERVATION_STATUSES)
-					.default('ACTIVE'),
+				status: z.enum(INVENTORY_RESERVATION_STATUSES).default('ACTIVE'),
 				reason: z.string().optional(),
 				reservedAt: z.string().optional().meta({ type: 'date' }),
 				releasedAt: z.string().optional().meta({ type: 'date' }),
@@ -868,9 +864,7 @@ export const db = defineSchema(
 				documentType: z
 					.enum(['ORDER', 'RETURN_ORDER', 'QUOTE'])
 					.default('ORDER'),
-				status: z
-					.enum(DOCUMENT_APPROVAL_STATUSES)
-					.default('DRAFT'),
+				status: z.enum(DOCUMENT_APPROVAL_STATUSES).default('DRAFT'),
 				vendorId: one('vendors'),
 				vendorName: z
 					.string()
@@ -918,7 +912,7 @@ export const db = defineSchema(
 						}),
 					}),
 			}),
-			seed: 8,
+			seed: DOCUMENT_SEED,
 			noSeries: { pattern: 'PO0000001', field: 'documentNo' },
 		})
 			.table()
@@ -1124,9 +1118,7 @@ export const db = defineSchema(
 		transferHeaders: createTable('transferHeaders', {
 			schema: {
 				transferNo: z.string(),
-				status: z
-					.enum(TRANSFER_STATUSES)
-					.default('DRAFT'),
+				status: z.enum(TRANSFER_STATUSES).default('DRAFT'),
 				fromLocationCode: z.string(),
 				toLocationCode: z.string(),
 				shipmentDate: z.string().optional().meta({ type: 'date' }),
@@ -1189,9 +1181,7 @@ export const db = defineSchema(
 			schema: (one) => ({
 				invoiceNo: z.string(),
 				status: z.enum(SALES_INVOICE_STATUSES).default('DRAFT'),
-				eInvoiceStatus: z
-					.enum(E_INVOICE_STATUSES)
-					.default('DRAFT'),
+				eInvoiceStatus: z.enum(E_INVOICE_STATUSES).default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
 					.string()
@@ -1253,7 +1243,7 @@ export const db = defineSchema(
 						}),
 					}),
 			}),
-			seed: 8,
+			seed: DOCUMENT_SEED,
 			noSeries: { pattern: 'SINV0000001', field: 'invoiceNo' },
 		})
 			.table()
@@ -1304,9 +1294,7 @@ export const db = defineSchema(
 			schema: (one) => ({
 				creditMemoNo: z.string(),
 				status: z.enum(POSTING_STATUSES).default('DRAFT'),
-				eInvoiceStatus: z
-					.enum(E_INVOICE_STATUSES)
-					.default('DRAFT'),
+				eInvoiceStatus: z.enum(E_INVOICE_STATUSES).default('DRAFT'),
 				customerId: one('customers'),
 				customerName: z
 					.string()
@@ -1415,9 +1403,7 @@ export const db = defineSchema(
 				documentType: z.enum(['INVOICE', 'CREDIT_MEMO']),
 				documentNo: z.string(),
 				documentId: z.string(),
-				status: z
-					.enum(E_INVOICE_STATUSES)
-					.default('DRAFT'),
+				status: z.enum(E_INVOICE_STATUSES).default('DRAFT'),
 				attemptNo: z.number().default(1),
 				submittedAt: z.string().optional().meta({ type: 'date' }),
 				respondedAt: z.string().optional().meta({ type: 'date' }),
@@ -1599,9 +1585,7 @@ export const db = defineSchema(
 				debitAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				creditAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				amount: z.number().default(0).meta({ min: -5000, max: 5000 }),
-				reconciliationStatus: z
-					.enum(RECONCILIATION_STATUSES)
-					.default('OPEN'),
+				reconciliationStatus: z.enum(RECONCILIATION_STATUSES).default('OPEN'),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 				open: z.boolean().default(true),
@@ -1666,9 +1650,7 @@ export const db = defineSchema(
 					.meta({ field: 'finance.transactionDescription' }),
 				debitAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				creditAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
-				status: z
-					.enum(JOURNAL_LINE_STATUSES)
-					.default('OPEN'),
+				status: z.enum(JOURNAL_LINE_STATUSES).default('OPEN'),
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 				sourceModule: z.string().default('FLOW'),
@@ -1841,9 +1823,7 @@ export const db = defineSchema(
 		payrollRuns: createTable('payrollRuns', {
 			schema: (one) => ({
 				runNo: z.string(),
-				status: z
-					.enum(PAYROLL_RUN_STATUSES)
-					.default('DRAFT'),
+				status: z.enum(PAYROLL_RUN_STATUSES).default('DRAFT'),
 				periodStart: z.string().optional().meta({ type: 'date' }),
 				periodEnd: z.string().optional().meta({ type: 'date' }),
 				scopeType: z.enum(['ALL_ACTIVE', 'SELECTED']).default('ALL_ACTIVE'),
@@ -2017,9 +1997,7 @@ export const db = defineSchema(
 			schema: (one) => ({
 				receiptNo: z.string(),
 				posSessionId: one('posSessions'),
-				status: z
-					.enum(POS_TRANSACTION_STATUSES)
-					.default('OPEN'),
+				status: z.enum(POS_TRANSACTION_STATUSES).default('OPEN'),
 				customerId: z.string().optional(),
 				customerName: z
 					.string()
@@ -2092,15 +2070,11 @@ export const db = defineSchema(
 		shipments: createTable('shipments', {
 			schema: {
 				shipmentNo: z.string(),
-				status: z
-					.enum(SHIPMENT_STATUSES)
-					.default('PLANNED'),
+				status: z.enum(SHIPMENT_STATUSES).default('PLANNED'),
 				sourceDocumentType: z.string().optional(),
 				sourceDocumentNo: z.string().optional(),
 				shipmentMethodCode: z.string().optional(),
-				priority: z
-					.enum(SHIPMENT_PRIORITY_STATUSES)
-					.default('NORMAL'),
+				priority: z.enum(SHIPMENT_PRIORITY_STATUSES).default('NORMAL'),
 				plannedDispatchDate: z.string().optional().meta({ type: 'date' }),
 				plannedDeliveryDate: z.string().optional().meta({ type: 'date' }),
 				actualDispatchDate: z.string().optional().meta({ type: 'date' }),
@@ -2198,9 +2172,7 @@ export const db = defineSchema(
 				labelNo: z.string(),
 				shipmentId: one('shipments'),
 				carrierAccountId: one('carrierAccounts'),
-				status: z
-					.enum(CARRIER_LABEL_STATUSES)
-					.default('QUOTED'),
+				status: z.enum(CARRIER_LABEL_STATUSES).default('QUOTED'),
 				serviceLevel: z.string().optional(),
 				rateQuoteAmount: z.number().default(0),
 				currency: z.string().default('USD'),
@@ -2246,6 +2218,7 @@ export const db = defineSchema(
 			.index('shipmentTrackingEvents_occurredAt_idx', ['occurredAt']),
 	}),
 	{
+		
 		relations: (r) => ({
 			// Hub relations
 			orderWorkflows: {

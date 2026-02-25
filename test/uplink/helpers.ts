@@ -9,11 +9,12 @@ export function createCaller(options?: {
 }) {
 	return createRouterClient(rpcRouter, {
 		context: createRpcContext({
-			headers: new Headers({
-				'x-tenant-id': options?.tenantId ?? 'demo-tenant',
-				'x-user-id': options?.userId ?? 'test-user',
-				'x-user-role': options?.role ?? 'ADMIN',
-			}),
+			headers: new Headers(),
+			auth: {
+				tenantId: options?.tenantId ?? 'demo-tenant',
+				userId: options?.userId ?? 'test-user',
+				role: options?.role ?? 'ADMIN',
+			},
 		}),
 	})
 }

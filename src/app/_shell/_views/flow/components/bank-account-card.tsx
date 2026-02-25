@@ -16,6 +16,7 @@ import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 interface BankAccountCardProps {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }
 
 interface BankAccountFormValues {
@@ -37,7 +38,11 @@ const CURRENCY_OPTIONS = [
 	{ value: 'CHF', label: 'CHF - Swiss Franc' },
 ]
 
-export function BankAccountCard({ selectedId, onClose }: BankAccountCardProps) {
+export function BankAccountCard({
+	selectedId,
+	onClose,
+	presentation = 'dialog',
+}: BankAccountCardProps) {
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
 
@@ -145,6 +150,7 @@ export function BankAccountCard({ selectedId, onClose }: BankAccountCardProps) {
 				onOpenChange={(isOpen) => {
 					if (!isOpen) onClose()
 				}}
+				presentation={presentation}
 				title={
 					isNew ? 'New Bank Account' : `Bank Account ${record?.accountNo ?? ''}`
 				}

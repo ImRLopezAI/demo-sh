@@ -35,9 +35,11 @@ interface SessionTransaction {
 export function SessionCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isOpen = selectedId !== null
 
@@ -95,6 +97,7 @@ export function SessionCard({
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
+			presentation={presentation}
 			title={`Session ${resolvedRecord?.sessionNo ?? ''}`}
 			description='POS session details and transactions'
 		>

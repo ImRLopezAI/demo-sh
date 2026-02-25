@@ -18,6 +18,7 @@ interface TaskCardProps {
 	recordId: string | null
 	open: boolean
 	onOpenChange: (open: boolean) => void
+	presentation?: 'dialog' | 'page'
 }
 
 interface TaskFormValues {
@@ -31,7 +32,12 @@ interface TaskFormValues {
 	slaTargetAt: string
 }
 
-export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
+export function TaskCard({
+	recordId,
+	open,
+	onOpenChange,
+	presentation = 'dialog',
+}: TaskCardProps) {
 	const isNew = recordId === 'new'
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
@@ -148,6 +154,7 @@ export function TaskCard({ recordId, open, onOpenChange }: TaskCardProps) {
 			<RecordDialog
 				open={open}
 				onOpenChange={onOpenChange}
+				presentation={presentation}
 				title={isNew ? 'New Task' : `Task ${record?.taskNo ?? ''}`}
 				description={
 					isNew

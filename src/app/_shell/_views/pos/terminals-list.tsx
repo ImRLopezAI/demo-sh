@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TerminalCard } from './components/terminal-card'
 
 interface Terminal {
@@ -16,7 +17,7 @@ interface Terminal {
 }
 
 export default function TerminalsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'pos', Terminal>(
 		'pos',
@@ -24,9 +25,24 @@ export default function TerminalsList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: Terminal) => {
-		setSelectedId(row._id)
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: Terminal) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<TerminalCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -36,7 +52,7 @@ export default function TerminalsList() {
 				actions={
 					<Button
 						size='sm'
-						onClick={() => setSelectedId('new')}
+						onClick={openCreate}
 						className='shadow-sm transition-all hover:shadow-md'
 					>
 						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
@@ -77,11 +93,6 @@ export default function TerminalsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<TerminalCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

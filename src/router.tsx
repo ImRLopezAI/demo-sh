@@ -1,5 +1,6 @@
 import { ErrorComponent } from '@components/layout/errors/error'
 import { NotFoundComponent } from '@components/layout/errors/not-found'
+import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
 import { getContext } from '@lib/rpc/context'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
@@ -14,6 +15,8 @@ export const getRouter = () => {
 	const router = createRouter({
 		routeTree,
 		context,
+		parseSearch: parseRouterSearch,
+		stringifySearch: stringifyRouterSearch,
 		scrollRestoration: true,
 		defaultPreloadStaleTime: 0,
 		defaultPreload: false,

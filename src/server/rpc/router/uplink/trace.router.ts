@@ -1,11 +1,11 @@
+import {
+	CARRIER_LABEL_REASON_REQUIRED,
+	CARRIER_LABEL_TRANSITIONS,
+	SHIPMENT_REASON_REQUIRED,
+	SHIPMENT_TRANSITIONS,
+} from '@server/db/constants'
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
-import {
-	SHIPMENT_TRANSITIONS,
-	SHIPMENT_REASON_REQUIRED,
-	CARRIER_LABEL_TRANSITIONS,
-	CARRIER_LABEL_REASON_REQUIRED,
-} from '@server/db/constants'
 import { assertRole } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
 

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { BankAccountCard } from './components/bank-account-card'
 
 interface BankAccount {
@@ -20,7 +21,7 @@ interface BankAccount {
 }
 
 export default function BankAccountsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'flow', BankAccount>(
 		'flow',
@@ -29,10 +30,22 @@ export default function BankAccountsList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: BankAccount) => setSelectedId(row._id),
-		[],
+		(row: BankAccount) => openDetail(row._id),
+		[openDetail],
 	)
-	const handleNew = () => setSelectedId('new')
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<BankAccountCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -89,11 +102,6 @@ export default function BankAccountsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<BankAccountCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

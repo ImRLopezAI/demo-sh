@@ -81,10 +81,12 @@ export function LocationCard({
 	locationId,
 	open,
 	onOpenChange,
+	presentation = 'dialog',
 }: {
 	locationId: string | null
 	open: boolean
 	onOpenChange: (open: boolean) => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = locationId === 'new'
 	const { data: record, isLoading } = useEntityRecord(
@@ -174,6 +176,7 @@ export function LocationCard({
 		<RecordDialog
 			open={open}
 			onOpenChange={onOpenChange}
+			presentation={presentation}
 			title={isNew ? 'New Location' : 'Location Details'}
 			description={
 				isNew

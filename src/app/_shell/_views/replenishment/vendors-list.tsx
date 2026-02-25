@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { VendorCard } from './components/vendor-card'
 
 interface Vendor {
@@ -22,7 +23,7 @@ interface Vendor {
 }
 
 export default function VendorsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'replenishment', Vendor>(
 		'replenishment',
@@ -30,12 +31,26 @@ export default function VendorsList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: Vendor) => {
-		setSelectedId(row._id)
-	}, [])
-	const handleNew = React.useCallback(() => {
-		setSelectedId('new')
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: Vendor) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<VendorCard
+					recordId={selectedId}
+					onClose={close}
+					onCreated={openDetail}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -97,12 +112,6 @@ export default function VendorsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<VendorCard
-				recordId={selectedId}
-				onClose={() => setSelectedId(null)}
-				onCreated={(id) => setSelectedId(id)}
-			/>
 		</div>
 	)
 }

@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ShipmentMethodCard } from './components/shipment-method-card'
 
 interface ShipmentMethod {
@@ -13,7 +14,7 @@ interface ShipmentMethod {
 }
 
 export default function ShipmentMethodsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const { DataGrid, windowSize } = useModuleData<'trace', ShipmentMethod>(
 		'trace',
 		'shipmentMethods',
@@ -21,9 +22,21 @@ export default function ShipmentMethodsList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: ShipmentMethod) => setSelectedId(row._id),
-		[],
+		(row: ShipmentMethod) => openDetail(row._id),
+		[openDetail],
 	)
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<ShipmentMethodCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -33,7 +46,7 @@ export default function ShipmentMethodsList() {
 				actions={
 					<Button
 						size='sm'
-						onClick={() => setSelectedId('new')}
+						onClick={openCreate}
 						className='shadow-sm transition-all hover:shadow-md'
 					>
 						<Plus className='mr-1.5 size-4' aria-hidden='true' />
@@ -68,11 +81,6 @@ export default function ShipmentMethodsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<ShipmentMethodCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

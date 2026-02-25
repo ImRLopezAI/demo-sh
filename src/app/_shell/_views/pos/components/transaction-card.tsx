@@ -36,9 +36,11 @@ interface TransactionLine {
 export function TransactionCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isOpen = selectedId !== null
 
@@ -92,6 +94,7 @@ export function TransactionCard({
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
+			presentation={presentation}
 			title={`Transaction ${resolvedRecord?.receiptNo ?? ''}`}
 			description='POS transaction details and line items'
 		>

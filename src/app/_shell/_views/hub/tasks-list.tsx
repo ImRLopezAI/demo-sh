@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TaskCard } from './components/task-card'
 
 interface OperationTask {
@@ -58,7 +59,7 @@ interface HubRolePermission {
 
 export default function TasksList() {
 	const queryClient = useQueryClient()
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const [selectedRoleCode, setSelectedRoleCode] = React.useState('VIEWER')
 	const [permissionCodesInput, setPermissionCodesInput] = React.useState('')
 
@@ -69,8 +70,8 @@ export default function TasksList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: OperationTask) => setSelectedId(row._id),
-		[],
+		(row: OperationTask) => openDetail(row._id),
+		[openDetail],
 	)
 
 	const rolesQuery = useModuleList('hub', 'roles', { limit: 200 })
@@ -178,6 +179,21 @@ export default function TasksList() {
 		})
 	}, [permissionCodesInput, selectedRoleCode, setRolePermissions])
 
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<TaskCard
+					recordId={selectedId}
+					open
+					onOpenChange={(open) => {
+						if (!open) close()
+					}}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
+
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
@@ -185,7 +201,7 @@ export default function TasksList() {
 				description='Manage cross-module operational tasks.'
 				actions={
 					<Button
-						onClick={() => setSelectedId('new')}
+						onClick={openCreate}
 						className='shadow-sm transition-all hover:shadow-md'
 					>
 						<Plus data-icon='inline-start' />
@@ -333,14 +349,6 @@ export default function TasksList() {
 					</div>
 				</CardContent>
 			</Card>
-
-			<TaskCard
-				recordId={selectedId}
-				open={selectedId !== null}
-				onOpenChange={(open) => {
-					if (!open) setSelectedId(null)
-				}}
-			/>
 		</div>
 	)
 }

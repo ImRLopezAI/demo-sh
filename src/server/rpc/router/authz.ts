@@ -1,3 +1,4 @@
+import { ORPCError } from '@orpc/server'
 import type { RpcContextType } from '@server/rpc/init'
 
 export const AUTH_ROLES = ['VIEWER', 'AGENT', 'MANAGER', 'ADMIN'] as const
@@ -30,9 +31,9 @@ export function assertRole(
 ) {
 	const role = getAuthRole(context)
 	if (ROLE_RANK[role] < ROLE_RANK[minRole]) {
-		throw new Error(
-			`Role "${minRole}" or higher is required for ${actionLabel}`,
-		)
+		throw new ORPCError('FORBIDDEN', {
+			message: `Role "${minRole}" or higher is required for ${actionLabel}`,
+		})
 	}
 }
 
@@ -235,5 +236,7 @@ export function assertPermission(
 		status: 'DENIED',
 		message: `Permission "${normalizedPermissionCode}" is required`,
 	})
-	throw new Error(`Permission "${normalizedPermissionCode}" is required`)
+	throw new ORPCError('FORBIDDEN', {
+		message: `Permission "${normalizedPermissionCode}" is required`,
+	})
 }

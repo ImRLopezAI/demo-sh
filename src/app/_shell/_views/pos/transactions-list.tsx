@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransactionCard } from './components/transaction-card'
 
 interface PosTransaction {
@@ -21,7 +22,7 @@ interface PosTransaction {
 }
 
 export default function TransactionsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'pos', PosTransaction>(
 		'pos',
@@ -29,9 +30,24 @@ export default function TransactionsList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: PosTransaction) => {
-		setSelectedId(row._id)
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: PosTransaction) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<TransactionCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -114,11 +130,6 @@ export default function TransactionsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<TransactionCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

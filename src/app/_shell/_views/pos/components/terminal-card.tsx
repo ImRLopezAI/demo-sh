@@ -20,9 +20,11 @@ interface TerminalFormValues {
 export function TerminalCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
@@ -127,6 +129,7 @@ export function TerminalCard({
 			<RecordDialog
 				open={isOpen}
 				onOpenChange={(open) => !open && onClose()}
+				presentation={presentation}
 				title={dialogTitle}
 				description={
 					isNew

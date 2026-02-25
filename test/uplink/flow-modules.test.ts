@@ -7,10 +7,12 @@ import { beforeEach, describe, expect, test } from 'vitest'
 function createCaller() {
 	return createRouterClient(rpcRouter, {
 		context: createRpcContext({
-			headers: new Headers({
-				'x-tenant-id': 'demo-tenant',
-				'x-user-id': 'test-user',
-			}),
+			headers: new Headers(),
+			auth: {
+				tenantId: 'demo-tenant',
+				userId: 'test-user',
+				role: 'ADMIN',
+			},
 		}),
 	})
 }

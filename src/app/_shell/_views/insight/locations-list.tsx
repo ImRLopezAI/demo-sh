@@ -1,8 +1,8 @@
 import { Plus } from 'lucide-react'
-import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { LocationCard } from './components/location-card'
 
 interface Location {
@@ -18,13 +18,28 @@ interface Location {
 }
 
 export default function LocationsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'insight', Location>(
 		'insight',
 		'locations',
 		'all',
 	)
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<LocationCard
+					locationId={selectedId}
+					open
+					onOpenChange={(open) => {
+						if (!open) close()
+					}}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -34,7 +49,7 @@ export default function LocationsList() {
 				actions={
 					<Button
 						size='sm'
-						onClick={() => setSelectedId('new')}
+						onClick={openCreate}
 						className='shadow-sm transition-all hover:shadow-md'
 					>
 						<Plus className='mr-1.5 size-4' aria-hidden='true' />
@@ -56,7 +71,7 @@ export default function LocationsList() {
 						<DataGrid.Column
 							accessorKey='code'
 							title='Code'
-							handleEdit={(row) => setSelectedId(row._id)}
+							handleEdit={(row) => openDetail(row._id)}
 						/>
 						<DataGrid.Column accessorKey='name' title='Name' />
 						<DataGrid.Column
@@ -90,14 +105,6 @@ export default function LocationsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<LocationCard
-				locationId={selectedId}
-				open={selectedId !== null}
-				onOpenChange={(open) => {
-					if (!open) setSelectedId(null)
-				}}
-			/>
 		</div>
 	)
 }

@@ -25,10 +25,12 @@ export function VendorCard({
 	recordId,
 	onClose,
 	onCreated,
+	presentation = 'dialog',
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = recordId === 'new'
 	const open = recordId !== null
@@ -156,6 +158,7 @@ export function VendorCard({
 			onOpenChange={(next) => {
 				if (!next) onClose()
 			}}
+			presentation={presentation}
 			title={isNew ? 'New Vendor' : `Vendor ${vendor?.vendorNo ?? ''}`}
 			description='Manage vendor details, address, and purchasing information.'
 			footer={

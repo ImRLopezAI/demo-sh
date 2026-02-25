@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ShipmentCard } from './components/shipment-card'
 
 interface Shipment {
@@ -24,7 +25,7 @@ interface Shipment {
 }
 
 export default function ShipmentsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'trace', Shipment>(
 		'trace',
@@ -32,11 +33,26 @@ export default function ShipmentsList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: Shipment) => {
-		setSelectedId(row._id)
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: Shipment) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
 
-	const handleNew = () => setSelectedId('new')
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<ShipmentCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -125,11 +141,6 @@ export default function ShipmentsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<ShipmentCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

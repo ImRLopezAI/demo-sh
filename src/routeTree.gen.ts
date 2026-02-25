@@ -9,332 +9,356 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app/__root'
-import { Route as ShellSplatRouteImport } from './app/_shell/$'
 import { Route as ShellRouteRouteImport } from './app/_shell/route'
-import { Route as ApiSplatRouteImport } from './app/api/$'
 import { Route as IndexRouteImport } from './app/index'
+import { Route as ApiSplatRouteImport } from './app/api/$'
+import { Route as ShellSplatRouteImport } from './app/_shell/$'
+import { Route as ShellMarketSalesOrdersRouteImport } from './app/_shell/market/sales-orders'
 
 const ShellRouteRoute = ShellRouteRouteImport.update({
-	id: '/_shell',
-	getParentRoute: () => rootRouteImport,
+  id: '/_shell',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
-	id: '/',
-	path: '/',
-	getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
-	id: '/api/$',
-	path: '/api/$',
-	getParentRoute: () => rootRouteImport,
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ShellSplatRoute = ShellSplatRouteImport.update({
-	id: '/$',
-	path: '/$',
-	getParentRoute: () => ShellRouteRoute,
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellMarketSalesOrdersRoute = ShellMarketSalesOrdersRouteImport.update({
+  id: '/market/sales-orders',
+  path: '/market/sales-orders',
+  getParentRoute: () => ShellRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-	'/': typeof IndexRoute
-	'/$': typeof ShellSplatRoute
-	'/api/$': typeof ApiSplatRoute
+  '/': typeof IndexRoute
+  '/$': typeof ShellSplatRoute
+  '/api/$': typeof ApiSplatRoute
+  '/market/sales-orders': typeof ShellMarketSalesOrdersRoute
 }
 export interface FileRoutesByTo {
-	'/': typeof IndexRoute
-	'/$': typeof ShellSplatRoute
-	'/api/$': typeof ApiSplatRoute
+  '/': typeof IndexRoute
+  '/$': typeof ShellSplatRoute
+  '/api/$': typeof ApiSplatRoute
+  '/market/sales-orders': typeof ShellMarketSalesOrdersRoute
 }
 export interface FileRoutesById {
-	__root__: typeof rootRouteImport
-	'/': typeof IndexRoute
-	'/_shell': typeof ShellRouteRouteWithChildren
-	'/_shell/$': typeof ShellSplatRoute
-	'/api/$': typeof ApiSplatRoute
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_shell': typeof ShellRouteRouteWithChildren
+  '/_shell/$': typeof ShellSplatRoute
+  '/api/$': typeof ApiSplatRoute
+  '/_shell/market/sales-orders': typeof ShellMarketSalesOrdersRoute
 }
 export interface FileRouteTypes {
-	fileRoutesByFullPath: FileRoutesByFullPath
-	fullPaths: '/' | '/$' | '/api/$'
-	fileRoutesByTo: FileRoutesByTo
-	to: '/' | '/$' | '/api/$'
-	id: '__root__' | '/' | '/_shell' | '/_shell/$' | '/api/$'
-	fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/$' | '/api/$' | '/market/sales-orders'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/$' | '/api/$' | '/market/sales-orders'
+  id:
+    | '__root__'
+    | '/'
+    | '/_shell'
+    | '/_shell/$'
+    | '/api/$'
+    | '/_shell/market/sales-orders'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-	IndexRoute: typeof IndexRoute
-	ShellRouteRoute: typeof ShellRouteRouteWithChildren
-	ApiSplatRoute: typeof ApiSplatRoute
+  IndexRoute: typeof IndexRoute
+  ShellRouteRoute: typeof ShellRouteRouteWithChildren
+  ApiSplatRoute: typeof ApiSplatRoute
 }
 
 declare module '@tanstack/react-router' {
-	interface FileRoutesByPath {
-		'/_shell': {
-			id: '/_shell'
-			path: ''
-			fullPath: '/'
-			preLoaderRoute: typeof ShellRouteRouteImport
-			parentRoute: typeof rootRouteImport
-		}
-		'/': {
-			id: '/'
-			path: '/'
-			fullPath: '/'
-			preLoaderRoute: typeof IndexRouteImport
-			parentRoute: typeof rootRouteImport
-		}
-		'/api/$': {
-			id: '/api/$'
-			path: '/api/$'
-			fullPath: '/api/$'
-			preLoaderRoute: typeof ApiSplatRouteImport
-			parentRoute: typeof rootRouteImport
-		}
-		'/_shell/$': {
-			id: '/_shell/$'
-			path: '/$'
-			fullPath: '/$'
-			preLoaderRoute: typeof ShellSplatRouteImport
-			parentRoute: typeof ShellRouteRoute
-		}
-	}
+  interface FileRoutesByPath {
+    '/_shell': {
+      id: '/_shell'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ShellRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_shell/$': {
+      id: '/_shell/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof ShellSplatRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/market/sales-orders': {
+      id: '/_shell/market/sales-orders'
+      path: '/market/sales-orders'
+      fullPath: '/market/sales-orders'
+      preLoaderRoute: typeof ShellMarketSalesOrdersRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+  }
 }
 
 interface ShellRouteRouteChildren {
-	ShellSplatRoute: typeof ShellSplatRoute
+  ShellSplatRoute: typeof ShellSplatRoute
+  ShellMarketSalesOrdersRoute: typeof ShellMarketSalesOrdersRoute
 }
 
 const ShellRouteRouteChildren: ShellRouteRouteChildren = {
-	ShellSplatRoute: ShellSplatRoute,
+  ShellSplatRoute: ShellSplatRoute,
+  ShellMarketSalesOrdersRoute: ShellMarketSalesOrdersRoute,
 }
 
 const ShellRouteRouteWithChildren = ShellRouteRoute._addFileChildren(
-	ShellRouteRouteChildren,
+  ShellRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
-	IndexRoute: IndexRoute,
-	ShellRouteRoute: ShellRouteRouteWithChildren,
-	ApiSplatRoute: ApiSplatRoute,
+  IndexRoute: IndexRoute,
+  ShellRouteRoute: ShellRouteRouteWithChildren,
+  ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport
-	._addFileChildren(rootRouteChildren)
-	._addFileTypes<FileRouteTypes>()
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-
+import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
-	interface Register {
-		ssr: true
-		router: Awaited<ReturnType<typeof getRouter>>
-	}
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
 
 import type {
-	AnyContext,
-	AnyRoute,
-	AnyRouteMatch,
-	FileBaseRouteOptions,
-	FileRoutesByPath,
-	ParsedLocation,
-	Register,
-	ResolveParams,
-	Route,
-	RouteComponent,
-	RouteConstraints,
-	UpdatableRouteOptions,
+  AnyContext,
+  AnyRoute,
+  AnyRouteMatch,
+  FileBaseRouteOptions,
+  FileRoutesByPath,
+  ParsedLocation,
+  Register,
+  ResolveParams,
+  Route,
+  RouteComponent,
+  RouteConstraints,
+  UpdatableRouteOptions,
 } from '@tanstack/react-router'
 
 import * as React from 'react'
 
 declare module '@tanstack/react-router' {
-	type RoutePath = keyof FileRoutesByPath
+  type RoutePath = keyof FileRoutesByPath
 
-	type PreLoaderRoute<TPath extends RoutePath> =
-		FileRoutesByPath[TPath]['preLoaderRoute']
+  type PreLoaderRoute<TPath extends RoutePath> =
+    FileRoutesByPath[TPath]['preLoaderRoute']
 
-	type LoaderDataFor<TPath extends RoutePath> =
-		PreLoaderRoute<TPath>['types']['loaderData']
+  type LoaderDataFor<TPath extends RoutePath> =
+    PreLoaderRoute<TPath>['types']['loaderData']
 
-	type ParamsFor<TPath extends RoutePath> =
-		PreLoaderRoute<TPath>['types']['allParams']
+  type ParamsFor<TPath extends RoutePath> =
+    PreLoaderRoute<TPath>['types']['allParams']
 
-	type SearchFor<TPath extends RoutePath> =
-		PreLoaderRoute<TPath>['types']['fullSearchSchema']
+  type SearchFor<TPath extends RoutePath> =
+    PreLoaderRoute<TPath>['types']['fullSearchSchema']
 
-	type ContextFor<TPath extends RoutePath> =
-		PreLoaderRoute<TPath>['types']['allContext']
+  type ContextFor<TPath extends RoutePath> =
+    PreLoaderRoute<TPath>['types']['allContext']
 
-	export type RouteComponentPropsStrict<TPath extends RoutePath = RoutePath> = {
-		route: PreLoaderRoute<TPath>
-		match: AnyRouteMatch & {
-			routeId: PreLoaderRoute<TPath>['id']
-			params: ParamsFor<TPath>
-			search: SearchFor<TPath>
-			context: ContextFor<TPath>
-			loaderData: LoaderDataFor<TPath>
-		}
-		loaderData: LoaderDataFor<TPath>
-		params: ParamsFor<TPath>
-		search: SearchFor<TPath>
-		context: ContextFor<TPath>
-		location: ParsedLocation<{}>
-		router: ReturnType<typeof import('@tanstack/react-router').useRouter>
-		state: ReturnType<typeof import('@tanstack/react-router').useRouterState>
-	}
+  export type RouteComponentPropsStrict<TPath extends RoutePath = RoutePath> = {
+    route: PreLoaderRoute<TPath>
+    match: AnyRouteMatch & {
+      routeId: PreLoaderRoute<TPath>['id']
+      params: ParamsFor<TPath>
+      search: SearchFor<TPath>
+      context: ContextFor<TPath>
+      loaderData: LoaderDataFor<TPath>
+    }
+    loaderData: LoaderDataFor<TPath>
+    params: ParamsFor<TPath>
+    search: SearchFor<TPath>
+    context: ContextFor<TPath>
+    location: ParsedLocation<{}>
+    router: ReturnType<typeof import('@tanstack/react-router').useRouter>
+    state: ReturnType<typeof import('@tanstack/react-router').useRouterState>
+  }
 
-	export type RouteComponentProps<TPath extends RoutePath = RoutePath> =
-		RouteComponentPropsStrict<TPath>
+  export type RouteComponentProps<TPath extends RoutePath = RoutePath> =
+    RouteComponentPropsStrict<TPath>
 
-	export function createFileRoute<
-		TFilePath extends keyof FileRoutesByPath,
-		TParentRoute extends AnyRoute = FileRoutesByPath[TFilePath]['parentRoute'],
-		TId extends RouteConstraints['TId'] = FileRoutesByPath[TFilePath]['id'],
-		TPath extends
-			RouteConstraints['TPath'] = FileRoutesByPath[TFilePath]['path'],
-		TFullPath extends
-			RouteConstraints['TFullPath'] = FileRoutesByPath[TFilePath]['fullPath'],
-	>(
-		path?: TFilePath,
-	): <
-		TRegister = Register,
-		TSearchValidator = undefined,
-		TParams = ResolveParams<TPath>,
-		TRouteContextFn = AnyContext,
-		TBeforeLoadFn = AnyContext,
-		TLoaderDeps extends Record<string, any> = {},
-		TLoaderFn = undefined,
-		TChildren = unknown,
-		TSSR = unknown,
-		const TMiddlewares = unknown,
-		THandlers = undefined,
-	>(
-		options?: FileBaseRouteOptions<
-			TRegister,
-			TParentRoute,
-			TId,
-			TPath,
-			TSearchValidator,
-			TParams,
-			TLoaderDeps,
-			TLoaderFn,
-			AnyContext,
-			TRouteContextFn,
-			TBeforeLoadFn,
-			AnyContext,
-			TSSR,
-			TMiddlewares,
-			THandlers
-		> &
-			Omit<
-				UpdatableRouteOptions<
-					TParentRoute,
-					TId,
-					TFullPath,
-					TParams,
-					TSearchValidator,
-					TLoaderFn,
-					TLoaderDeps,
-					AnyContext,
-					TRouteContextFn,
-					TBeforeLoadFn
-				>,
-				'component'
-			> & {
-				component?:
-					| RouteComponent
-					| ((props: RouteComponentProps<TFilePath>) => any)
-			},
-	) => Route<
-		TRegister,
-		TParentRoute,
-		TPath,
-		TFullPath,
-		TFilePath,
-		TId,
-		TSearchValidator,
-		TParams,
-		AnyContext,
-		TRouteContextFn,
-		TBeforeLoadFn,
-		TLoaderDeps,
-		TLoaderFn,
-		TChildren,
-		unknown,
-		TSSR,
-		TMiddlewares,
-		THandlers
-	>
+  export function createFileRoute<
+    TFilePath extends keyof FileRoutesByPath,
+    TParentRoute extends AnyRoute = FileRoutesByPath[TFilePath]['parentRoute'],
+    TId extends RouteConstraints['TId'] = FileRoutesByPath[TFilePath]['id'],
+    TPath extends RouteConstraints['TPath'] =
+      FileRoutesByPath[TFilePath]['path'],
+    TFullPath extends RouteConstraints['TFullPath'] =
+      FileRoutesByPath[TFilePath]['fullPath'],
+  >(
+    path?: TFilePath,
+  ): <
+    TRegister = Register,
+    TSearchValidator = undefined,
+    TParams = ResolveParams<TPath>,
+    TRouteContextFn = AnyContext,
+    TBeforeLoadFn = AnyContext,
+    TLoaderDeps extends Record<string, any> = {},
+    TLoaderFn = undefined,
+    TChildren = unknown,
+    TSSR = unknown,
+    const TMiddlewares = unknown,
+    THandlers = undefined,
+  >(
+    options?: FileBaseRouteOptions<
+      TRegister,
+      TParentRoute,
+      TId,
+      TPath,
+      TSearchValidator,
+      TParams,
+      TLoaderDeps,
+      TLoaderFn,
+      AnyContext,
+      TRouteContextFn,
+      TBeforeLoadFn,
+      AnyContext,
+      TSSR,
+      TMiddlewares,
+      THandlers
+    > &
+      Omit<
+        UpdatableRouteOptions<
+          TParentRoute,
+          TId,
+          TFullPath,
+          TParams,
+          TSearchValidator,
+          TLoaderFn,
+          TLoaderDeps,
+          AnyContext,
+          TRouteContextFn,
+          TBeforeLoadFn
+        >,
+        'component'
+      > & {
+        component?:
+          | RouteComponent
+          | ((props: RouteComponentProps<TFilePath>) => any)
+      },
+  ) => Route<
+    TRegister,
+    TParentRoute,
+    TPath,
+    TFullPath,
+    TFilePath,
+    TId,
+    TSearchValidator,
+    TParams,
+    AnyContext,
+    TRouteContextFn,
+    TBeforeLoadFn,
+    TLoaderDeps,
+    TLoaderFn,
+    TChildren,
+    unknown,
+    TSSR,
+    TMiddlewares,
+    THandlers
+  >
 }
 
-import { useRouter, useRouterState } from '@tanstack/react-router'
+import { useRouterState, useRouter } from '@tanstack/react-router'
 
 const wrappedRoutes = new WeakSet()
 const wrappedComponents = new WeakSet()
 
 function getRouteChildren(route) {
-	const children = route?.children
+  const children = route?.children
 
-	if (!children) return []
-	if (Array.isArray(children)) return children
-	if (typeof children === 'object') return Object.values(children)
+  if (!children) return []
+  if (Array.isArray(children)) return children
+  if (typeof children === 'object') return Object.values(children)
 
-	return []
+  return []
 }
 
 function wrapComponent(route, Component) {
-	if (wrappedComponents.has(Component)) {
-		return Component
-	}
+  if (wrappedComponents.has(Component)) {
+    return Component
+  }
 
-	const Wrapped = function RouteComponentPropsWrapper() {
-		const match = route.useMatch()
-		const loaderData = route.useLoaderData()
-		const router = useRouter()
-		const state = useRouterState()
+  const Wrapped = function RouteComponentPropsWrapper() {
+    const match = route.useMatch()
+    const loaderData = route.useLoaderData()
+    const router = useRouter()
+    const state = useRouterState()
 
-		const matchWithLoader = { ...match, loaderData }
-		const props = {
-			route,
-			match: matchWithLoader,
-			loaderData,
-			params: match.params,
-			search: match.search,
-			context: match.context,
-			location: state.location,
-			router,
-			state,
-		}
+    const matchWithLoader = { ...match, loaderData }
+    const props = {
+      route,
+      match: matchWithLoader,
+      loaderData,
+      params: match.params,
+      search: match.search,
+      context: match.context,
+      location: state.location,
+      router,
+      state,
+    }
 
-		return React.createElement(Component, props)
-	}
+    return React.createElement(Component, props)
+  }
 
-	const componentName = Component?.displayName || Component?.name || 'Anonymous'
-	Wrapped.displayName = `RouteComponentProps(${componentName})`
-	if (Component?.preload) {
-		Wrapped.preload = Component.preload
-	}
+  const componentName = Component?.displayName || Component?.name || 'Anonymous'
+  Wrapped.displayName = `RouteComponentProps(${componentName})`
+  if (Component?.preload) {
+    Wrapped.preload = Component.preload
+  }
 
-	wrappedComponents.add(Wrapped)
-	return Wrapped
+  wrappedComponents.add(Wrapped)
+  return Wrapped
 }
 
 function attachRouteComponentProps(route) {
-	if (!route || typeof route !== 'object') {
-		return
-	}
+  if (!route || typeof route !== 'object') {
+    return
+  }
 
-	if (!wrappedRoutes.has(route)) {
-		wrappedRoutes.add(route)
-		const component = route.options?.component
-		if (component) {
-			route.update({
-				component: wrapComponent(route, component),
-			})
-		}
-	}
+  if (!wrappedRoutes.has(route)) {
+    wrappedRoutes.add(route)
+    const component = route.options?.component
+    if (component) {
+      route.update({
+        component: wrapComponent(route, component),
+      })
+    }
+  }
 
-	for (const child of getRouteChildren(route)) {
-		attachRouteComponentProps(child)
-	}
+  for (const child of getRouteChildren(route)) {
+    attachRouteComponentProps(child)
+  }
 }
 
 attachRouteComponentProps(routeTree)

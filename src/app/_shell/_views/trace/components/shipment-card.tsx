@@ -58,9 +58,11 @@ const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'EXPRESS'] as const
 export function ShipmentCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
@@ -214,6 +216,7 @@ export function ShipmentCard({
 			<RecordDialog
 				open={isOpen}
 				onOpenChange={(open) => !open && onClose()}
+				presentation={presentation}
 				title={dialogTitle}
 				description='Shipment header and line details'
 				footer={

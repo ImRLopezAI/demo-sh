@@ -1,5 +1,8 @@
 import { NotFoundComponent } from '@components/layout/errors/not-found'
-import type { ParsedLocation } from '@tanstack/react-router'
+import type {
+	ParsedLocation,
+	RouteComponentProps,
+} from '@tanstack/react-router'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import type { ComponentType, LazyExoticComponent } from 'react'
 import { lazy, Suspense } from 'react'
@@ -11,7 +14,10 @@ export interface ViewComponentProps {
 	location: ParsedLocation
 }
 
-const VIEW_COMPONENTS = {
+const VIEW_COMPONENTS: Record<
+	string,
+	LazyExoticComponent<ComponentType<RouteComponentProps<'/_shell/$'>>>
+> = {
 	'hub/dashboard': lazy(() => import('./_views/hub/dashboard')),
 	'hub/tasks': lazy(() => import('./_views/hub/tasks-list')),
 	'hub/notifications': lazy(() => import('./_views/hub/notifications-list')),
@@ -96,7 +102,10 @@ const VIEW_COMPONENTS = {
 		() => import('./_views/trace/shipment-methods-list'),
 	),
 	'trace/carrier-ops': lazy(() => import('./_views/trace/carrier-ops')),
-} as const satisfies Record<string, LazyExoticComponent<ComponentType<any>>>
+} as const satisfies Record<
+	string,
+	LazyExoticComponent<ComponentType<RouteComponentProps<'/_shell/$'>>>
+>
 
 type ViewRouteKey = keyof typeof VIEW_COMPONENTS
 
@@ -115,33 +124,20 @@ export const Route = createFileRoute('/_shell/$')({
 	component: RouteComponent,
 })
 
-function RouteComponent(props: {
-	params: Record<string, string>
-	search: Record<string, unknown>
-	location: ParsedLocation
-}) {
-	const { _splat } = Route.useParams()
+function RouteComponent(props: RouteComponentProps<'/_shell/$'>) {
+	const { _splat } = props.params
 	const routeKey = _splat ?? ''
 
 	if (!isViewRouteKey(routeKey)) {
-		return (
-			<div className='flex h-64 items-center justify-center text-muted-foreground'>
-				Page not found
-			</div>
-		)
+		return <NotFoundComponent />
 	}
-	const ViewComponent = VIEW_COMPONENTS[routeKey] as LazyExoticComponent<
-		ComponentType<ViewComponentProps>
-	>
+	const ViewComponent = VIEW_COMPONENTS[routeKey]
 
 	return (
 		<Suspense fallback={<ViewSkeleton />}>
-			<ViewComponent
-				splat={routeKey}
-				params={props.params}
-				search={props.search}
-				location={props.location}
-			/>
+			<div data-slot='view-component'>
+				<ViewComponent {...props} />
+			</div>
 		</Suspense>
 	)
 }

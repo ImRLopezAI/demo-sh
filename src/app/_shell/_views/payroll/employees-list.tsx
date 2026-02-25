@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { EmployeeCard } from './components/employee-card'
 
 interface Employee {
@@ -23,7 +24,7 @@ interface Employee {
 }
 
 export default function EmployeesList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'payroll', Employee>(
 		'payroll',
@@ -32,10 +33,25 @@ export default function EmployeesList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: Employee) => setSelectedId(row._id),
-		[],
+		(row: Employee) => openDetail(row._id),
+		[openDetail],
 	)
-	const handleNew = () => setSelectedId('new')
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<EmployeeCard
+					recordId={selectedId}
+					open
+					onOpenChange={(open) => {
+						if (!open) close()
+					}}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -121,14 +137,6 @@ export default function EmployeesList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<EmployeeCard
-				recordId={selectedId}
-				open={selectedId !== null}
-				onOpenChange={(open) => {
-					if (!open) setSelectedId(null)
-				}}
-			/>
 		</div>
 	)
 }

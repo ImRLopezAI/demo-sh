@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { PurchaseOrderCard } from './components/purchase-order-card'
 
 interface PurchaseOrder {
@@ -27,17 +28,33 @@ interface PurchaseOrder {
 }
 
 export default function PurchaseOrdersList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<
 		'replenishment',
 		PurchaseOrder
 	>('replenishment', 'purchaseOrders', 'all')
 
-	const handleEdit = React.useCallback((row: PurchaseOrder) => {
-		setSelectedId(row._id)
-	}, [])
-	const handleNew = () => setSelectedId('new')
+	const handleEdit = React.useCallback(
+		(row: PurchaseOrder) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<PurchaseOrderCard
+					recordId={selectedId}
+					onClose={close}
+					onCreated={openDetail}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -117,12 +134,6 @@ export default function PurchaseOrdersList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<PurchaseOrderCard
-				recordId={selectedId}
-				onClose={() => setSelectedId(null)}
-				onCreated={(id) => setSelectedId(id)}
-			/>
 		</div>
 	)
 }

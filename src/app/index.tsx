@@ -256,7 +256,8 @@ function Hero() {
 					<div className='grid grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
 						{heroModules.map((mod) => (
 							<Link
-								to={`/${mod.name}/dashboard`}
+								to='/$'
+								params={{ _splat: `${mod.name}/dashboard` }}
 								key={mod.name}
 								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5'
 							>

@@ -67,10 +67,12 @@ export function PurchaseOrderCard({
 	recordId,
 	onClose,
 	onCreated,
+	presentation = 'dialog',
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = recordId === 'new'
 	const open = recordId !== null
@@ -385,6 +387,7 @@ export function PurchaseOrderCard({
 				onOpenChange={(next) => {
 					if (!next) onClose()
 				}}
+				presentation={presentation}
 				title={
 					isNew
 						? 'New Purchase Order'

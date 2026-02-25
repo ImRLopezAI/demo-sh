@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { CustomerCard } from './components/customer-card'
 
 interface Customer {
@@ -20,7 +21,7 @@ interface Customer {
 }
 
 export default function CustomersList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'market', Customer>(
 		'market',
@@ -29,10 +30,22 @@ export default function CustomersList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: Customer) => setSelectedId(row._id),
-		[],
+		(row: Customer) => openDetail(row._id),
+		[openDetail],
 	)
-	const handleNew = () => setSelectedId('new')
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<CustomerCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -89,11 +102,6 @@ export default function CustomersList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<CustomerCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

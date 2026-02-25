@@ -25,9 +25,11 @@ const ITEM_TYPES = ['ITEM', 'SERVICE', 'BUNDLE'] as const
 export function ItemCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
@@ -84,6 +86,7 @@ export function ItemCard({
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
+			presentation={presentation}
 			title={dialogTitle}
 			description='Item details, pricing, and inventory'
 			footer={

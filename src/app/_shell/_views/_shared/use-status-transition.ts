@@ -1,27 +1,21 @@
 import * as React from 'react'
 import { useTransitionWithReason } from './transition-reason'
-import { useEntityMutations } from './use-entity'
-
-type UplinkModuleId =
-	| 'market'
-	| 'replenishment'
-	| 'ledger'
-	| 'pos'
-	| 'trace'
-	| 'flow'
-	| 'payroll'
-	| 'hub'
+import {
+	type EntityOf,
+	type UplinkModule,
+	useEntityMutations,
+} from './use-entity'
 
 interface TransitionPayload {
 	toStatus: string
 	reason?: string
 }
 
-interface UseStatusTransitionOptions {
+interface UseStatusTransitionOptions<M extends UplinkModule = UplinkModule> {
 	/** Module identifier (e.g. 'market', 'replenishment') */
-	moduleId: UplinkModuleId
+	moduleId: M
 	/** Entity identifier (e.g. 'salesOrders', 'purchaseOrders') */
-	entityId: string
+	entityId: EntityOf<M> & string
 	/** Record id for the current entity; null when no record is selected */
 	recordId: string | null
 	/** True when the card is in "create new" mode */
@@ -58,7 +52,7 @@ interface UseStatusTransitionOptions {
  * Returns everything the card needs to wire up transition buttons and
  * render the reason dialog.
  */
-export function useStatusTransition({
+export function useStatusTransition<M extends UplinkModule>({
 	moduleId,
 	entityId,
 	recordId,
@@ -67,8 +61,11 @@ export function useStatusTransition({
 	getStatusLabel,
 	onTransition,
 	onSuccess,
-}: UseStatusTransitionOptions) {
-	const { transitionStatus } = useEntityMutations(moduleId, entityId)
+}: UseStatusTransitionOptions<M>) {
+	const { transitionStatus, isMutating } = useEntityMutations(
+		moduleId,
+		entityId,
+	)
 
 	const handleTransition = React.useCallback(
 		async ({ toStatus, reason }: TransitionPayload) => {
@@ -102,5 +99,7 @@ export function useStatusTransition({
 		reasonDialog,
 		/** The underlying transitionStatus mutation (for disabling buttons, etc.) */
 		transitionStatus,
+		/** True when any mutation from the underlying useEntityMutations is pending */
+		isMutating,
 	}
 }

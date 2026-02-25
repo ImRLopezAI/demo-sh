@@ -22,9 +22,11 @@ interface CustomerRecord {
 export function CustomerCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
@@ -80,6 +82,7 @@ export function CustomerCard({
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
+			presentation={presentation}
 			title={dialogTitle}
 			description='Customer details, address, and statistics'
 			footer={

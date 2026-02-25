@@ -39,10 +39,12 @@ export function TransferCard({
 	recordId,
 	onClose,
 	onCreated,
+	presentation = 'dialog',
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = recordId === 'new'
 	const open = recordId !== null
@@ -276,6 +278,7 @@ export function TransferCard({
 				onOpenChange={(next) => {
 					if (!next) onClose()
 				}}
+				presentation={presentation}
 				title={isNew ? 'New Transfer' : `Transfer ${header?.transferNo ?? ''}`}
 				description='Manage transfer header and lines.'
 				footer={

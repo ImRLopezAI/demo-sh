@@ -458,8 +458,11 @@ export function usePosTerminal() {
 	const { create: createTransaction, transitionStatus } = useEntityMutations(
 		'pos',
 		'transactions',
+		{ enableOptimistic: false },
 	)
-	const { create: createLine } = useEntityMutations('pos', 'transactionLines')
+	const { create: createLine } = useEntityMutations('pos', 'transactionLines', {
+		enableOptimistic: false,
+	})
 
 	const syncSaleToBackend = React.useCallback(
 		async (queuedSale: OfflineQueuedSale) => {

@@ -50,8 +50,31 @@ export interface CrudRouterConfig {
 	transitions?: TransitionMap
 	reasonRequiredStatuses?: readonly string[]
 	statusRoleRequirements?: Partial<Record<string, AuthRole>>
+	rolePolicy?: Partial<CrudRolePolicy>
 	createSchema?: z.ZodObject<any>
 	updateSchema?: z.ZodObject<any>
+}
+
+export interface CrudRolePolicy {
+	list: AuthRole
+	listViewRecords: AuthRole
+	getById: AuthRole
+	create: AuthRole
+	update: AuthRole
+	delete: AuthRole
+	transitionStatus: AuthRole
+	kpis: AuthRole
+}
+
+const DEFAULT_CRUD_ROLE_POLICY: CrudRolePolicy = {
+	list: 'VIEWER',
+	listViewRecords: 'VIEWER',
+	getById: 'VIEWER',
+	create: 'AGENT',
+	update: 'AGENT',
+	delete: 'MANAGER',
+	transitionStatus: 'AGENT',
+	kpis: 'VIEWER',
 }
 function getTable(
 	context: RpcContextType,
@@ -173,6 +196,10 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 		.default({ viewId: 'overview', limit: 25, offset: 0 })
 
 	const NAME = config.prefix ?? config.moduleName
+	const rolePolicy: CrudRolePolicy = {
+		...DEFAULT_CRUD_ROLE_POLICY,
+		...config.rolePolicy,
+	}
 
 	const validateParentRelations = ({
 		context,
@@ -221,6 +248,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(listInputSchema)
 				.route({ method: 'GET', summary: `List ${NAME}` })
 				.handler(({ input, context }) => {
+					assertRole(context, rolePolicy.list, `${NAME} list`)
 					const table = getTable(context, config.primaryTable)
 					const tenantId = context.auth.tenantId
 					const search = input.search?.trim().toLowerCase()
@@ -258,6 +286,11 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(viewListInputSchema)
 				.route({ method: 'GET', summary: `List ${NAME} view` })
 				.handler(({ input, context }) => {
+					assertRole(
+						context,
+						rolePolicy.listViewRecords,
+						`${NAME} list view records`,
+					)
 					const tableName = (config.viewTables[input.viewId] ??
 						config.primaryTable) as TableNames
 					const table = getTable(context, tableName)
@@ -299,6 +332,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(getByIdInputSchema)
 				.route({ method: 'GET', summary: `Get ${NAME} by ID` })
 				.handler(({ input, context }) => {
+					assertRole(context, rolePolicy.getById, `${NAME} get by id`)
 					const table = getTable(context, config.primaryTable)
 					const hasQueryOpts = input.with || input.columns
 					if (hasQueryOpts) {
@@ -321,6 +355,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(createSchema)
 				.route({ method: 'POST', summary: `Create ${NAME}` })
 				.handler(({ input, context }) => {
+					assertRole(context, rolePolicy.create, `${NAME} create`)
 					const table = getTable(context, config.primaryTable)
 					const payload = {
 						...input,
@@ -346,6 +381,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				)
 				.route({ method: 'PATCH', summary: `Update ${NAME}` })
 				.handler(({ input, context }) => {
+					assertRole(context, rolePolicy.update, `${NAME} update`)
 					const table = getTable(context, config.primaryTable)
 					const existing = table.get(input.id)
 					ensureTenantAccess(
@@ -374,6 +410,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(deleteInputSchema)
 				.route({ method: 'DELETE', summary: `Delete ${NAME}` })
 				.handler(({ input, context }) => {
+					assertRole(context, rolePolicy.delete, `${NAME} delete`)
 					const table = getTable(context, config.primaryTable)
 					const existing = table.get(input.id)
 					ensureTenantAccess(
@@ -394,7 +431,11 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 					if (!config.statusField) {
 						throw new Error(`${NAME} does not have workflow status configured`)
 					}
-					assertRole(context, 'AGENT', `${NAME} status transition`)
+					assertRole(
+						context,
+						rolePolicy.transitionStatus,
+						`${NAME} status transition`,
+					)
 					const requiredRole = config.statusRoleRequirements?.[input.toStatus]
 					if (requiredRole) {
 						assertRole(
@@ -450,6 +491,7 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 				.input(z.object({}).default({}))
 				.route({ method: 'GET', summary: `Get ${NAME} KPIs` })
 				.handler(({ context }) => {
+					assertRole(context, rolePolicy.kpis, `${NAME} kpis`)
 					const table = getTable(context, config.primaryTable)
 					const tenantId = context.auth.tenantId
 					const tenantFilter = (row: any) =>

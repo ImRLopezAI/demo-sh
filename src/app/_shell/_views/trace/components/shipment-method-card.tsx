@@ -14,9 +14,11 @@ interface ShipmentMethod {
 export function ShipmentMethodCard({
 	selectedId,
 	onClose,
+	presentation = 'dialog',
 }: {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }) {
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
@@ -76,6 +78,7 @@ export function ShipmentMethodCard({
 			onOpenChange={(next) => {
 				if (!next) onClose()
 			}}
+			presentation={presentation}
 			title={
 				isNew ? 'New Shipment Method' : `Shipment Method ${method?.code ?? ''}`
 			}

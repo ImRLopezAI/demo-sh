@@ -5,7 +5,10 @@ import { StandardRPCJsonSerializer } from '@orpc/client/standard'
 import { createRouterClient, type RouterClient } from '@orpc/server'
 import { createTanstackQueryUtils } from '@orpc/tanstack-query'
 import { type RPCRouter, rpcRouter } from '@server/rpc'
-import { createRpcContext } from '@server/rpc/init'
+import {
+	createRpcContext,
+	resolveServerBootstrapAuthIdentity,
+} from '@server/rpc/init'
 import {
 	defaultShouldDehydrateQuery,
 	QueryCache,
@@ -78,6 +81,7 @@ export const getRPCClient = createIsomorphicFn()
 		createRouterClient(rpcRouter, {
 			context: createRpcContext({
 				headers: getRequestHeaders(),
+				auth: resolveServerBootstrapAuthIdentity() ?? undefined,
 			}),
 		}),
 	)

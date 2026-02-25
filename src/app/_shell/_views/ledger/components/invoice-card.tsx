@@ -20,6 +20,7 @@ import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 interface InvoiceCardProps {
 	selectedId: string | null
 	onClose: () => void
+	presentation?: 'dialog' | 'page'
 }
 
 interface InvoiceFormValues {
@@ -54,7 +55,11 @@ interface SalesInvoiceLine {
 	lineAmount: number
 }
 
-export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
+export function InvoiceCard({
+	selectedId,
+	onClose,
+	presentation = 'dialog',
+}: InvoiceCardProps) {
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
 
@@ -353,6 +358,7 @@ export function InvoiceCard({ selectedId, onClose }: InvoiceCardProps) {
 				onOpenChange={(isOpen) => {
 					if (!isOpen) onClose()
 				}}
+				presentation={presentation}
 				title={isNew ? 'New Invoice' : `Invoice ${invoice?.invoiceNo ?? ''}`}
 				description={
 					isNew

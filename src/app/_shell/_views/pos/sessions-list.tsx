@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { SessionCard } from './components/session-card'
 
 interface PosSession {
@@ -20,7 +21,7 @@ interface PosSession {
 }
 
 export default function SessionsList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'pos', PosSession>(
 		'pos',
@@ -28,9 +29,24 @@ export default function SessionsList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: PosSession) => {
-		setSelectedId(row._id)
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: PosSession) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<SessionCard
+					selectedId={selectedId}
+					onClose={close}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -100,11 +116,6 @@ export default function SessionsList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<SessionCard
-				selectedId={selectedId}
-				onClose={() => setSelectedId(null)}
-			/>
 		</div>
 	)
 }

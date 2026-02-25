@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
+import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransferCard } from './components/transfer-card'
 
 interface Transfer {
@@ -18,7 +19,7 @@ interface Transfer {
 }
 
 export default function TransfersList() {
-	const [selectedId, setSelectedId] = React.useState<string | null>(null)
+	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 
 	const { DataGrid, windowSize } = useModuleData<'replenishment', Transfer>(
 		'replenishment',
@@ -26,12 +27,26 @@ export default function TransfersList() {
 		'all',
 	)
 
-	const handleEdit = React.useCallback((row: Transfer) => {
-		setSelectedId(row._id)
-	}, [])
-	const handleNew = React.useCallback(() => {
-		setSelectedId('new')
-	}, [])
+	const handleEdit = React.useCallback(
+		(row: Transfer) => {
+			openDetail(row._id)
+		},
+		[openDetail],
+	)
+	const handleNew = openCreate
+
+	if (selectedId !== null) {
+		return (
+			<div className='space-y-8 pb-8'>
+				<TransferCard
+					recordId={selectedId}
+					onClose={close}
+					onCreated={openDetail}
+					presentation='page'
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -97,12 +112,6 @@ export default function TransfersList() {
 					</DataGrid.Columns>
 				</DataGrid>
 			</div>
-
-			<TransferCard
-				recordId={selectedId}
-				onClose={() => setSelectedId(null)}
-				onCreated={(id) => setSelectedId(id)}
-			/>
 		</div>
 	)
 }

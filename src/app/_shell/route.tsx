@@ -25,9 +25,9 @@ function ShellLayout() {
 				navigate: (to) => navigate({ to }),
 			}}
 		>
-			<ScrollInterceptor slots={['main-content']}>
 				<div className='relative flex min-h-svh flex-col'>
 					<SiteHeader />
+			<ScrollInterceptor slots={['main-content', 'view-component']}>
 					<main
 						id='main-content'
 						className='relative flex-1 overflow-auto bg-background/50 px-4 pt-4 pb-8 md:px-6 md:pt-6'
@@ -35,14 +35,12 @@ function ShellLayout() {
 					>
 						<div
 							aria-hidden
-							className='pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent'
+							className='pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/10 via-primary/5 to-transparent'
 						/>
-						<div className='relative mx-auto flex w-full max-w-[1680px] flex-col gap-6 md:gap-8'>
-							<Outlet />
-						</div>
+						<Outlet />
 					</main>
-				</div>
 			</ScrollInterceptor>
+				</div>
 		</AppSidebarContext>
 	)
 }

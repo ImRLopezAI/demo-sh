@@ -3,7 +3,11 @@ import { onError } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
 import { BatchHandlerPlugin } from '@orpc/server/plugins'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
-import { createRPCRouter, createRpcContext } from './init'
+import {
+	createRPCRouter,
+	createRpcContext,
+	resolveServerBootstrapAuthIdentity,
+} from './init'
 import { healthRouter } from './router/health.router'
 import { uplinkRouter } from './router/uplink'
 
@@ -35,4 +39,4 @@ const handler = new RPCHandler(rpcRouter, {
 	],
 })
 
-export { createRpcContext, handler, rpcRouter }
+export { createRpcContext, handler, resolveServerBootstrapAuthIdentity, rpcRouter }
