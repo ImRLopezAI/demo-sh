@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 /**
  * Page Object Model for the DataGrid component.
@@ -9,7 +9,7 @@ export class DataGridFixture {
 
 	constructor(
 		private page: Page,
-		gridSelector = '[data-slot="data-grid"]',
+		gridSelector = '[data-slot="grid-wrapper"]',
 	) {
 		this.grid = page.locator(gridSelector).first()
 	}
@@ -18,9 +18,9 @@ export class DataGridFixture {
 	async waitForRows(options?: { timeout?: number }) {
 		const timeout = options?.timeout ?? 10_000
 		await expect(this.grid).toBeVisible({ timeout })
-		await expect(
-			this.grid.locator('[role="row"]').first(),
-		).toBeVisible({ timeout })
+		await expect(this.grid.locator('[role="row"]').first()).toBeVisible({
+			timeout,
+		})
 	}
 
 	/** Get the count of visible data rows (excluding header). */
@@ -105,8 +105,6 @@ export class DataGridFixture {
 
 	/** Check if the "Add Row" button is visible. */
 	async hasAddRowButton(): Promise<boolean> {
-		return this.grid
-			.locator('[data-slot="grid-add-row"]')
-			.isVisible()
+		return this.grid.locator('[data-slot="grid-add-row"]').isVisible()
 	}
 }

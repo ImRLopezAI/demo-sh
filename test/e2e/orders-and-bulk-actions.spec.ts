@@ -70,14 +70,13 @@ test('market sales order create-with-lines flow works @smoke', async ({
 		'New Sales Order',
 	)
 
-	await selectFirstOption(
-		page.getByTestId('sales-order-customer-select'),
-		page,
-	)
-	await page.locator('[data-slot=\"grid-add-row\"] [role=\"gridcell\"]').click()
+	await selectFirstOption(page.getByTestId('sales-order-customer-select'), page)
+	await page.locator('[data-slot="grid-add-row"] [role="gridcell"]').click()
 	await page.getByTestId('sales-order-save-button').click()
 
-	await expect(page.getByRole('heading', { name: /^Sales Order /i })).toBeVisible()
+	await expect(
+		page.getByRole('heading', { name: /^Sales Order /i }),
+	).toBeVisible()
 	await page.getByRole('button', { name: 'Cancel' }).click()
 	await expect(
 		page.getByRole('heading', { name: 'Sales Orders' }),
@@ -102,7 +101,7 @@ test('replenishment purchase order create-with-lines flow works @smoke', async (
 		page.getByTestId('purchase-order-vendor-select'),
 		page,
 	)
-	await page.locator('[data-slot=\"grid-add-row\"] [role=\"gridcell\"]').click()
+	await page.locator('[data-slot="grid-add-row"] [role="gridcell"]').click()
 	await page.getByTestId('purchase-order-save-button').click()
 
 	await expect(

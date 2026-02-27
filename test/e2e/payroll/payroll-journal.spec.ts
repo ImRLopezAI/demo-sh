@@ -39,7 +39,7 @@ test.describe('payroll journal @functional', () => {
 	test('adjustments & off-cycle page renders', async ({ page }) => {
 		await page.goto('/payroll/adjustments-offcycle')
 		await expect(
-			page.getByRole('heading', { name: /adjustment|off.?cycle/i }),
+			page.getByRole('heading', { name: /adjustment|off.?cycle/i }).first(),
 		).toBeVisible({ timeout: 10_000 })
 	})
 })

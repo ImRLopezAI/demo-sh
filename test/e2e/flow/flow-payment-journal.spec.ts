@@ -48,7 +48,7 @@ test.describe('flow payment journal @functional', () => {
 	test('reconciliation & approvals page renders', async ({ page }) => {
 		await page.goto('/flow/reconciliation-approvals')
 		await expect(
-			page.getByRole('heading', { name: /reconciliation|approval/i }),
+			page.getByRole('heading', { name: /reconciliation|approval/i }).first(),
 		).toBeVisible({ timeout: 10_000 })
 	})
 })

@@ -1,4 +1,4 @@
-import { type Page, expect } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 
 /**
  * Shell navigation helpers for E2E tests.

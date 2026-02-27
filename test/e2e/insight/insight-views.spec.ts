@@ -32,7 +32,7 @@ test.describe('insight module views @functional', () => {
 	test('forecast workbench renders', async ({ page }) => {
 		await page.goto('/insight/forecast-workbench')
 		await expect(
-			page.getByRole('heading', { name: /forecast|workbench/i }),
+			page.getByRole('heading', { name: /forecast|workbench/i }).first(),
 		).toBeVisible({ timeout: 10_000 })
 	})
 })

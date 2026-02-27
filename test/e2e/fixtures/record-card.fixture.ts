@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 /**
  * Page Object Model for record detail/create card components.
@@ -25,9 +25,7 @@ export class RecordCardFixture {
 
 	/** Open create mode via URL search params. */
 	async openCreate(basePath: string) {
-		await this.page.goto(
-			`${basePath}?mode=new&_recordScope=${basePath}`,
-		)
+		await this.page.goto(`${basePath}?mode=new&_recordScope=${basePath}`)
 		await this.page.waitForSelector('[data-slot="view-component"]', {
 			timeout: 10_000,
 		})
@@ -62,9 +60,9 @@ export class RecordCardFixture {
 
 	/** Verify a heading is visible on the card. */
 	async expectHeading(name: string | RegExp) {
-		await expect(
-			this.page.getByRole('heading', { name }),
-		).toBeVisible({ timeout: 10_000 })
+		await expect(this.page.getByRole('heading', { name })).toBeVisible({
+			timeout: 10_000,
+		})
 	}
 
 	/** Change the status via a select/dropdown on the card. */

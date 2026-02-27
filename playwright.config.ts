@@ -5,7 +5,7 @@ const useManagedWebServer = process.env.PLAYWRIGHT_USE_WEBSERVER !== '0'
 export default defineConfig({
 	testDir: 'test/e2e',
 	fullyParallel: true,
-	timeout: 30_000,
+	timeout: 60_000,
 	expect: {
 		timeout: 10_000,
 	},

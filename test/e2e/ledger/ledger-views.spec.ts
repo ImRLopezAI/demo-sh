@@ -25,7 +25,7 @@ test.describe('ledger module views @functional', () => {
 	test('collections & compliance page renders', async ({ page }) => {
 		await page.goto('/ledger/collections-compliance')
 		await expect(
-			page.getByRole('heading', { name: /collection|compliance/i }),
+			page.getByRole('heading', { name: /collection|compliance/i }).first(),
 		).toBeVisible({ timeout: 10_000 })
 	})
 })

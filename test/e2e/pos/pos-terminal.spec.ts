@@ -54,7 +54,9 @@ test.describe('POS terminal @functional', () => {
 		await expect(page.locator('[data-slot="view-component"]')).toBeVisible({
 			timeout: 15_000,
 		})
-		await expect(page.getByRole('heading', { name: /shift/i })).toBeVisible({
+		await expect(
+			page.getByRole('heading', { name: /shift/i }).first(),
+		).toBeVisible({
 			timeout: 10_000,
 		})
 	})

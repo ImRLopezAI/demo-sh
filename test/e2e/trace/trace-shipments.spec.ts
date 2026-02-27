@@ -20,7 +20,9 @@ test.describe('trace shipments @functional', () => {
 
 	test('carrier ops page renders', async ({ page }) => {
 		await page.goto('/trace/carrier-ops')
-		await expect(page.getByRole('heading', { name: /carrier/i })).toBeVisible({
+		await expect(
+			page.getByRole('heading', { name: /carrier/i }).first(),
+		).toBeVisible({
 			timeout: 10_000,
 		})
 	})

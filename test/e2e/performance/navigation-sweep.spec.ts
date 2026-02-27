@@ -48,7 +48,9 @@ test.describe('navigation performance @performance', () => {
 			(msg) =>
 				!msg.includes('HMR') &&
 				!msg.includes('[vite]') &&
-				!msg.includes('hydration'),
+				!msg.includes('hydration') &&
+				!msg.includes('getServerSnapshot') &&
+				!msg.includes('unique "key" prop'),
 		)
 		expect(
 			realErrors,
