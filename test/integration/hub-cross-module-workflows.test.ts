@@ -1,6 +1,6 @@
 import { db } from '@server/db'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { createCaller } from '../../../../../../../test/uplink/helpers'
+import { createCaller } from '../uplink/helpers'
 
 describe('cross-module workflows', () => {
 	const createApprovedSalesOrder = async () => {
