@@ -92,51 +92,51 @@ export async function resolveFlowFields<DataModel extends GenericDataModel>(
 			// Build namespaced key: fieldName::parentId
 			const ns = `${fieldName}::${String(doc._id)}`
 
-				switch (config.type) {
-					case 'count':
-						return aggregate?.count?.(ctx, {
-							namespace: ns,
-						})
+			switch (config.type) {
+				case 'count':
+					return aggregate?.count?.(ctx, {
+						namespace: ns,
+					})
 
-					case 'sum':
-						return aggregate?.sum?.(ctx, {
-							namespace: ns,
-						})
+				case 'sum':
+					return aggregate?.sum?.(ctx, {
+						namespace: ns,
+					})
 
-					case 'average': {
-						const [sum, count] = await Promise.all([
-							aggregate?.sum?.(ctx, {
-								namespace: ns,
-							}),
-							aggregate?.count?.(ctx, {
-								namespace: ns,
-							}),
-						])
-						const normalizedCount = count ?? 0
-						const normalizedSum = sum ?? 0
-						return normalizedCount > 0 ? normalizedSum / normalizedCount : 0
-					}
-
-					case 'min': {
-						const minItem = await aggregate?.min?.(ctx, {
+				case 'average': {
+					const [sum, count] = await Promise.all([
+						aggregate?.sum?.(ctx, {
 							namespace: ns,
-						})
-						return minItem?.key ?? null
-					}
-
-					case 'max': {
-						const maxItem = await aggregate?.max?.(ctx, {
+						}),
+						aggregate?.count?.(ctx, {
 							namespace: ns,
-						})
-						return maxItem?.key ?? null
-					}
+						}),
+					])
+					const normalizedCount = count ?? 0
+					const normalizedSum = sum ?? 0
+					return normalizedCount > 0 ? normalizedSum / normalizedCount : 0
+				}
 
-					case 'exist': {
-						const count = await aggregate?.count?.(ctx, {
-							namespace: ns,
-						})
-						return (count ?? 0) > 0
-					}
+				case 'min': {
+					const minItem = await aggregate?.min?.(ctx, {
+						namespace: ns,
+					})
+					return minItem?.key ?? null
+				}
+
+				case 'max': {
+					const maxItem = await aggregate?.max?.(ctx, {
+						namespace: ns,
+					})
+					return maxItem?.key ?? null
+				}
+
+				case 'exist': {
+					const count = await aggregate?.count?.(ctx, {
+						namespace: ns,
+					})
+					return (count ?? 0) > 0
+				}
 
 				case 'lookup': {
 					const fkValue = doc[config.key] as GenericId<string> | undefined

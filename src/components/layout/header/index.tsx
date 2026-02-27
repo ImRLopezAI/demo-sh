@@ -1,12 +1,12 @@
 'use client'
 
 import { AnimatedThemeToggler } from '@ui/animated-theme-toggler'
-import { Link } from '@/components/ui/link'
+import { ArrowUpRight } from 'lucide-react'
 import { MobileNav } from '@/components/layout/header/mobile-nav'
 import Search from '@/components/layout/header/search'
 import { TopNav } from '@/components/layout/header/top-nav'
+import { Link } from '@/components/ui/link'
 import { Separator } from '@/components/ui/separator'
-import { ArrowUpRight } from 'lucide-react'
 
 export function SiteHeader() {
 	return (
@@ -22,7 +22,7 @@ export function SiteHeader() {
 								<ArrowUpRight className='size-3 text-white' />
 							</div>
 						</div>
-						<span className='font-extrabold text-sm text-foreground'>
+						<span className='font-extrabold text-foreground text-sm'>
 							Uplink
 						</span>
 					</div>

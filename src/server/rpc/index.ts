@@ -39,4 +39,9 @@ const handler = new RPCHandler(rpcRouter, {
 	],
 })
 
-export { createRpcContext, handler, resolveServerBootstrapAuthIdentity, rpcRouter }
+export {
+	createRpcContext,
+	handler,
+	resolveServerBootstrapAuthIdentity,
+	rpcRouter,
+}

@@ -4,8 +4,8 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { Suspense, useMemo } from 'react'
 import { NotFoundComponent } from '@/components/layout/errors/not-found'
 import { parseRouterSearch } from '@/lib/router/search'
-import { isViewRouteKey, VIEW_COMPONENTS } from './view-components'
 import { ShellLayout } from './shell-layout'
+import { isViewRouteKey, VIEW_COMPONENTS } from './view-components'
 
 interface ModuleRoutePageProps {
 	moduleId: string

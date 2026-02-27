@@ -476,7 +476,8 @@ export function SalesOrderCard({
 															<Form.Select.Value
 																placeholder={
 																	DOCUMENT_APPROVAL_STATUS_LABELS[
-																		(field.value as DocumentApprovalStatus) ?? 'DRAFT'
+																		(field.value as DocumentApprovalStatus) ??
+																			'DRAFT'
 																	] ?? String(field.value ?? 'DRAFT')
 																}
 															/>
@@ -486,7 +487,8 @@ export function SalesOrderCard({
 																value={(field.value as string) ?? 'DRAFT'}
 															>
 																{DOCUMENT_APPROVAL_STATUS_LABELS[
-																	(field.value as DocumentApprovalStatus) ?? 'DRAFT'
+																	(field.value as DocumentApprovalStatus) ??
+																		'DRAFT'
 																] ?? String(field.value ?? 'DRAFT')}
 															</Form.Select.Item>
 															{statusOptions.map((opt) => (

@@ -1,9 +1,6 @@
 import * as React from 'react'
 
-type LinkProps = Omit<
-	React.AnchorHTMLAttributes<HTMLAnchorElement>,
-	'href'
-> & {
+type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
 	href: string | URL
 }
 

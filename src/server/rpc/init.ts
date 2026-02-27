@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Orpc plugin to handle Routes */
 
-import { ORPCError, type AnyRouter, os, type Route } from '@orpc/server'
+import { type AnyRouter, ORPCError, os, type Route } from '@orpc/server'
 import { db } from '@server/db'
 
 const RPC_AUTH_ROLES = ['VIEWER', 'AGENT', 'MANAGER', 'ADMIN'] as const
@@ -48,7 +48,8 @@ export function resolveServerBootstrapAuthIdentity(): RpcAuthIdentity | null {
 	const isProduction = process.env.NODE_ENV === 'production'
 
 	const tenantId =
-		process.env.RPC_SERVER_TENANT_ID ?? (isProduction ? undefined : 'demo-tenant')
+		process.env.RPC_SERVER_TENANT_ID ??
+		(isProduction ? undefined : 'demo-tenant')
 	const userId =
 		process.env.RPC_SERVER_USER_ID ?? (isProduction ? undefined : 'demo-user')
 	const role = normalizeRole(process.env.RPC_SERVER_ROLE ?? 'MANAGER')
@@ -74,9 +75,7 @@ export async function createRpcContext(ctx: RpcContext) {
 
 	// In non-production, allow E2E tests to override the role via header
 	const isProduction = process.env.NODE_ENV === 'production'
-	const testRoleHeader = !isProduction
-		? ctx.headers.get('x-test-role')
-		: null
+	const testRoleHeader = !isProduction ? ctx.headers.get('x-test-role') : null
 	const effectiveRole = testRoleHeader
 		? normalizeRole(testRoleHeader)
 		: identity.role

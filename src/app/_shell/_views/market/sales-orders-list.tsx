@@ -1,7 +1,7 @@
+import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
 import { Plus } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
-import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
@@ -73,20 +73,17 @@ export default function SalesOrdersList() {
 		return null
 	}, [locationSearch, pathname])
 
-	const clearRecordSearchState = React.useCallback(
-		(previous: unknown) => {
-			if (!previous || typeof previous !== 'object' || Array.isArray(previous)) {
-				return {}
-			}
+	const clearRecordSearchState = React.useCallback((previous: unknown) => {
+		if (!previous || typeof previous !== 'object' || Array.isArray(previous)) {
+			return {}
+		}
 
-			const nextSearch = { ...(previous as Record<string, unknown>) }
-			delete nextSearch.mode
-			delete nextSearch.recordId
-			delete nextSearch._recordScope
-			return nextSearch
-		},
-		[],
-	)
+		const nextSearch = { ...(previous as Record<string, unknown>) }
+		delete nextSearch.mode
+		delete nextSearch.recordId
+		delete nextSearch._recordScope
+		return nextSearch
+	}, [])
 
 	const handleEdit = React.useCallback(
 		(row: SalesOrder) => {
@@ -166,7 +163,7 @@ export default function SalesOrdersList() {
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
 				<DataGrid
 					variant='lined'
-					height={Math.max(windowSize.height - 240, 400)}
+					height={Math.max(windowSize.height - 150, 400)}
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />

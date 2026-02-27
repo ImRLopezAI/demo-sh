@@ -138,7 +138,6 @@ const footerLinks: Record<string, string[]> = {
 	Legal: ['Privacy', 'Terms', 'Security'],
 }
 
-
 function LandingPage() {
 	return (
 		<div className='min-h-screen bg-black font-sans antialiased'>

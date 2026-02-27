@@ -78,7 +78,7 @@ function createHttpRPCClient(): RouterClient<RPCRouter> {
 	const link = new RPCLink({
 		url:
 			typeof window !== 'undefined'
-				? window.location.origin + '/api/rpc'
+				? `${window.location.origin}/api/rpc`
 				: '/api/rpc',
 		plugins: [
 			new BatchLinkPlugin({

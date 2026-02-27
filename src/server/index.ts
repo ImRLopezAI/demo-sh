@@ -1,14 +1,18 @@
 import {
 	createRpcContext,
-	handler as rpcHandler,
 	resolveServerBootstrapAuthIdentity,
+	handler as rpcHandler,
 } from '@server/rpc'
 import { Hono } from 'hono'
+import { compress } from 'hono/compress'
 import { logger } from 'hono/logger'
-
+import { requestId } from 'hono/request-id'
+import { handle } from 'hono/vercel'
 const app = new Hono()
 
-app.use('*', logger())
+app.use(requestId())
+app.use(compress())
+app.use(logger())
 
 app.use('/api/rpc/*', async (c, next) => {
 	const request = c.req.raw
@@ -28,16 +32,14 @@ app.use('/api/rpc/*', async (c, next) => {
 	await next()
 })
 
-export const handler = app.fetch
-
 export function toNextHandler() {
 	return {
-		GET: (req: Request) => app.fetch(req),
-		POST: (req: Request) => app.fetch(req),
-		PUT: (req: Request) => app.fetch(req),
-		DELETE: (req: Request) => app.fetch(req),
-		PATCH: (req: Request) => app.fetch(req),
-		OPTIONS: (req: Request) => app.fetch(req),
-		HEAD: (req: Request) => app.fetch(req),
+		GET: handle(app),
+		POST: handle(app),
+		PUT: handle(app),
+		DELETE: handle(app),
+		PATCH: handle(app),
+		OPTIONS: handle(app),
+		HEAD: handle(app),
 	}
 }

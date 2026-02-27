@@ -27,7 +27,11 @@ function collectHrefs(): string[] {
 
 const MODULE_EXPECTED_ROUTES: Record<string, string[]> = {
 	hub: ['/hub/dashboard', '/hub/notifications', '/hub/order-fulfillment'],
-	market: ['/market/dashboard', '/market/sales-orders', '/market/pricing-returns'],
+	market: [
+		'/market/dashboard',
+		'/market/sales-orders',
+		'/market/pricing-returns',
+	],
 	pos: ['/pos/dashboard', '/pos/terminal', '/pos/shift-controls'],
 	replenishment: [
 		'/replenishment/dashboard',

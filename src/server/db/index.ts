@@ -29,9 +29,9 @@ import {
 } from './constants'
 import { defineSchema, flowField } from './definitions'
 
-const DOCUMENT_SEED = 200
+const DOCUMENT_SEED = 1000
 const ENTITY_SEED = DOCUMENT_SEED
-const SUPPORTING_SEED = Math.max(25, Math.floor(DOCUMENT_SEED / 4))
+const SUPPORTING_SEED = Math.max(25, Math.floor(DOCUMENT_SEED / 8))
 
 export const db = defineSchema(
 	({ createTable }) => ({
@@ -2220,7 +2220,6 @@ export const db = defineSchema(
 			.index('shipmentTrackingEvents_occurredAt_idx', ['occurredAt']),
 	}),
 	{
-		
 		relations: (r) => ({
 			// Hub relations
 			orderWorkflows: {

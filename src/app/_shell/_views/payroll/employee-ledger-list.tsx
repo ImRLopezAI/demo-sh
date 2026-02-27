@@ -32,7 +32,7 @@ export default function EmployeeLedgerList() {
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
 				<DataGrid
 					variant='flat'
-					height={Math.max(windowSize.height - 240, 400)}
+					height={Math.max(windowSize.height - 150, 400)}
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />

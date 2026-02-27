@@ -6,23 +6,35 @@ export const VIEW_COMPONENTS = {
 	'hub/notifications': lazy(() => import('./_views/hub/notifications-list')),
 	'hub/order-fulfillment': lazy(() => import('./_views/hub/order-fulfillment')),
 	'market/dashboard': lazy(() => import('./_views/market/dashboard')),
-	'market/sales-orders': lazy(() => import('./_views/market/sales-orders-list')),
+	'market/sales-orders': lazy(
+		() => import('./_views/market/sales-orders-list'),
+	),
 	'market/items': lazy(() => import('./_views/market/items-list')),
 	'market/customers': lazy(() => import('./_views/market/customers-list')),
 	'market/carts': lazy(() => import('./_views/market/carts-list')),
-	'market/pricing-returns': lazy(() => import('./_views/market/pricing-returns')),
+	'market/pricing-returns': lazy(
+		() => import('./_views/market/pricing-returns'),
+	),
 	'insight/dashboard': lazy(() => import('./_views/insight/dashboard')),
-	'insight/item-ledger': lazy(() => import('./_views/insight/item-ledger-list')),
+	'insight/item-ledger': lazy(
+		() => import('./_views/insight/item-ledger-list'),
+	),
 	'insight/locations': lazy(() => import('./_views/insight/locations-list')),
-	'insight/value-entries': lazy(() => import('./_views/insight/value-entries-list')),
+	'insight/value-entries': lazy(
+		() => import('./_views/insight/value-entries-list'),
+	),
 	'insight/forecast-workbench': lazy(
 		() => import('./_views/insight/forecast-workbench'),
 	),
-	'replenishment/dashboard': lazy(() => import('./_views/replenishment/dashboard')),
+	'replenishment/dashboard': lazy(
+		() => import('./_views/replenishment/dashboard'),
+	),
 	'replenishment/purchase-orders': lazy(
 		() => import('./_views/replenishment/purchase-orders-list'),
 	),
-	'replenishment/vendors': lazy(() => import('./_views/replenishment/vendors-list')),
+	'replenishment/vendors': lazy(
+		() => import('./_views/replenishment/vendors-list'),
+	),
 	'replenishment/transfers': lazy(
 		() => import('./_views/replenishment/transfers-list'),
 	),
@@ -55,7 +67,9 @@ export const VIEW_COMPONENTS = {
 		() => import('./_views/payroll/payroll-journal'),
 	),
 	'payroll/gl-entries': lazy(() => import('./_views/payroll/gl-entries-list')),
-	'payroll/bank-ledger': lazy(() => import('./_views/payroll/bank-ledger-list')),
+	'payroll/bank-ledger': lazy(
+		() => import('./_views/payroll/bank-ledger-list'),
+	),
 	'payroll/adjustments-offcycle': lazy(
 		() => import('./_views/payroll/adjustments-offcycle'),
 	),
