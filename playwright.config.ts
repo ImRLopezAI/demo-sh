@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const useManagedWebServer = process.env.PLAYWRIGHT_USE_WEBSERVER === '1'
+const useManagedWebServer = process.env.PLAYWRIGHT_USE_WEBSERVER !== '0'
 
 export default defineConfig({
 	testDir: 'test/e2e',

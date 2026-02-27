@@ -1,5 +1,5 @@
-import { stringifyRouterSearch } from '@lib/router/search'
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 
 export type RecordSearchMode = 'new' | 'detail'
@@ -102,13 +102,19 @@ export function useRecordSearchState(
 		[options.modeKey, options.recordIdKey, options.scopeKey],
 	)
 
-	const navigate = useNavigate()
-	const location = useRouterState({ select: (state) => state.location })
-	const search = location.search
+	const pathname = usePathname()
+	const router = useRouter()
+	const searchParams = useSearchParams()
+	const searchString = searchParams.toString()
+	const search = React.useMemo(
+		() => parseRouterSearch(searchString),
+		[searchString],
+	)
+	const currentPathname = pathname || '/'
 
 	const recordSearchState = React.useMemo(
-		() => readRecordSearchState(search, keys, location.pathname),
-		[keys, location.pathname, search],
+		() => readRecordSearchState(search, keys, currentPathname),
+		[keys, currentPathname, search],
 	)
 
 	const selectedId =
@@ -124,16 +130,15 @@ export function useRecordSearchState(
 				search,
 				nextState,
 				keys,
-				location.pathname,
+				currentPathname,
 			)
-			const searchString = stringifyRouterSearch(nextSearch)
-			const hash = location.hash ?? ''
+			const nextSearchString = stringifyRouterSearch(nextSearch)
+			const hash =
+				typeof window !== 'undefined' ? window.location.hash || '' : ''
 
-			void navigate({
-				href: `${location.pathname}${searchString}${hash}`,
-			})
+			router.push(`${currentPathname}${nextSearchString}${hash}`)
 		},
-		[keys, location.hash, location.pathname, navigate, search],
+		[currentPathname, keys, router, search],
 	)
 
 	const openCreate = React.useCallback(() => {

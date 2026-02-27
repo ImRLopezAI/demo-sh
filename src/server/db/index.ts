@@ -30,6 +30,8 @@ import {
 import { defineSchema, flowField } from './definitions'
 
 const DOCUMENT_SEED = 200
+const ENTITY_SEED = DOCUMENT_SEED
+const SUPPORTING_SEED = Math.max(25, Math.floor(DOCUMENT_SEED / 4))
 
 export const db = defineSchema(
 	({ createTable }) => ({
@@ -56,7 +58,7 @@ export const db = defineSchema(
 				statusReason: z.string().optional(),
 				statusUpdatedAt: z.date().optional(),
 			},
-			seed: 8,
+			seed: ENTITY_SEED,
 			noSeries: { pattern: 'TASK0000001', field: 'taskNo' },
 		})
 			.table()
@@ -72,7 +74,7 @@ export const db = defineSchema(
 				severity: z.enum(['INFO', 'WARNING', 'ERROR']).default('INFO'),
 				targetUserId: z.string().optional(),
 			},
-			seed: 12,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('moduleNotifications_moduleId_idx', ['moduleId'])
@@ -373,7 +375,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 20,
+			seed: ENTITY_SEED,
 			noSeries: { pattern: 'ITEM0000001', field: 'itemNo' },
 		})
 			.table()
@@ -413,7 +415,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 15,
+			seed: ENTITY_SEED,
 			noSeries: { pattern: 'CUST0000001', field: 'customerNo' },
 		})
 			.table()
@@ -475,7 +477,7 @@ export const db = defineSchema(
 						}),
 					}),
 			}),
-			seed: 10,
+			seed: DOCUMENT_SEED,
 			noSeries: { pattern: 'SO0000001', field: 'documentNo' },
 		})
 			.table()
@@ -650,7 +652,7 @@ export const db = defineSchema(
 						}),
 					}),
 			}),
-			seed: 5,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('carts_customerId_idx', ['customerId'])
@@ -724,7 +726,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 5,
+			seed: SUPPORTING_SEED,
 			noSeries: { pattern: 'LOC0001', field: 'code' },
 		})
 			.table()
@@ -763,7 +765,7 @@ export const db = defineSchema(
 				sourceDocumentType: z.string().optional(),
 				sourceDocumentNo: z.string().optional(),
 			}),
-			seed: 30,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('itemLedgerEntries_itemId_idx', ['itemId'])
@@ -852,7 +854,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 10,
+			seed: ENTITY_SEED,
 			noSeries: { pattern: 'VEND0000001', field: 'vendorNo' },
 		})
 			.table()
@@ -1138,7 +1140,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 5,
+			seed: DOCUMENT_SEED,
 			noSeries: { pattern: 'TR0000001', field: 'transferNo' },
 		})
 			.table()
@@ -1477,7 +1479,7 @@ export const db = defineSchema(
 					.default('USD')
 					.meta({ field: 'finance.currencyCode' }),
 			}),
-			seed: 15,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('custLedgerEntries_customerId_idx', ['customerId'])
@@ -1501,7 +1503,7 @@ export const db = defineSchema(
 				debitAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 				creditAmount: z.number().default(0).meta({ min: 0, max: 10000 }),
 			},
-			seed: 25,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('glEntries_accountNo_idx', ['accountNo'])
@@ -1549,7 +1551,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 6,
+			seed: SUPPORTING_SEED,
 			noSeries: { pattern: 'BANK0000001', field: 'accountNo' },
 		})
 			.table()
@@ -1655,7 +1657,7 @@ export const db = defineSchema(
 				statusUpdatedAt: z.date().optional(),
 				sourceModule: z.string().default('FLOW'),
 			},
-			seed: 24,
+			seed: ENTITY_SEED,
 		})
 			.table()
 			.index('genJournalLines_status_idx', ['status'])
@@ -1715,7 +1717,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 18,
+			seed: ENTITY_SEED,
 			noSeries: { pattern: 'EMP0000001', field: 'employeeNo' },
 		})
 			.table()
@@ -1865,7 +1867,7 @@ export const db = defineSchema(
 						}),
 					}),
 			}),
-			seed: 3,
+			seed: SUPPORTING_SEED,
 			noSeries: { pattern: 'PRUN0000001', field: 'runNo' },
 		})
 			.table()
@@ -1935,7 +1937,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 4,
+			seed: SUPPORTING_SEED,
 			noSeries: { pattern: 'TERM001', field: 'terminalCode' },
 		})
 			.table()
@@ -2096,7 +2098,7 @@ export const db = defineSchema(
 						}),
 					}),
 			},
-			seed: 10,
+			seed: DOCUMENT_SEED,
 			noSeries: { pattern: 'SHIP0000001', field: 'shipmentNo' },
 		})
 			.table()
@@ -2142,7 +2144,7 @@ export const db = defineSchema(
 				description: z.string().meta({ type: 'sentence' }),
 				active: z.boolean().default(true),
 			},
-			seed: 4,
+			seed: SUPPORTING_SEED,
 			noSeries: { pattern: 'SM001', field: 'code' },
 		})
 			.table()

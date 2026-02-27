@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from '@tanstack/react-router'
 import { Button } from '@ui/button'
 import {
 	Command,
@@ -13,6 +12,7 @@ import {
 	CommandSeparator,
 } from '@ui/command'
 import { CommandIcon, SearchIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { useAppSidebar } from '@/components/layout/sidebar/context'
 
@@ -114,10 +114,15 @@ export default function Search() {
 					<SearchIcon />
 				</Button>
 			</div>
-			<CommandDialog open={open} onOpenChange={setOpen}>
-				<Command>
+			<CommandDialog
+				open={open}
+				onOpenChange={setOpen}
+				className='!top-0 !left-1/2 !w-[min(98vw,1200px)] !max-w-[1200px] !-translate-x-1/2 !-translate-y-0 rounded-xl border-border/60 bg-background/95 p-0 shadow-2xl'
+				showCloseButton
+			>
+				<Command className='rounded-xl border border-border/60 bg-background/95 p-2'>
 					<CommandInput placeholder='Jump to a page...' />
-					<CommandList>
+					<CommandList className='max-h-[65vh]'>
 						<CommandEmpty>No results found.</CommandEmpty>
 						{groupedEntries.map(([groupTitle, groupEntries], index) => (
 							<React.Fragment key={groupTitle}>
@@ -128,7 +133,7 @@ export default function Search() {
 											value={`${entry.group} ${entry.module} ${entry.title}`}
 											onSelect={() => {
 												setOpen(false)
-												router.navigate({ to: entry.href })
+												router.push(entry.href)
 											}}
 										>
 											{entry.icon && (

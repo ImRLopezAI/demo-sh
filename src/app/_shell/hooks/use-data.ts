@@ -4,7 +4,7 @@ import { useGrid } from '@/components/data-grid/compound'
 import { useWindowSize } from '@/components/data-grid/hooks/use-window-size'
 
 const PAGE_SIZE = 25
-const DEFAULT_WINDOW_SIZE = { defaultWidth: 1200, defaultHeight: 800 }
+const DEFAULT_WINDOW_SIZE = { defaultWidth: 1200, defaultHeight: 760 }
 /** Uplink module keys (excludes health + ORPC internals) */
 type UplinkModule = Exclude<keyof typeof $rpc, 'key' | 'health'>
 

@@ -6,7 +6,6 @@ import type {
 	NOTIFICATIONS_STATUSES,
 } from '@lib/constants'
 import { convexQuery, rpc, useQuery } from '@lib/rpc'
-import { useRouter } from '@tanstack/react-router'
 import { Button } from '@ui/button'
 import {
 	DropdownMenu,
@@ -28,6 +27,7 @@ import {
 import { Spinner } from '@ui/spinner'
 import { format } from 'date-fns'
 import { Bell, ClockIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -94,7 +94,7 @@ export function Notifications() {
 								className='group flex flex-col gap-1 data-highlighted:bg-card-foreground/50'
 								onSelect={() => {
 									setOpen(false)
-									router.navigate({ to: `/alerts/${item._id}` })
+									router.push(`/alerts/${item._id}`)
 								}}
 							>
 								<div className='flex w-full flex-1 flex-col gap-1'>

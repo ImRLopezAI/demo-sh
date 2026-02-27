@@ -1,4 +1,3 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import {
 	ArrowRight,
@@ -24,10 +23,7 @@ import {
 	Wallet,
 	Zap,
 } from 'lucide-react'
-
-export const Route = createFileRoute('/')({
-	component: LandingPage,
-})
+import { Link } from '@/components/ui/link'
 
 /* ─── Data ─────────────────────────────────────────── */
 
@@ -142,7 +138,6 @@ const footerLinks: Record<string, string[]> = {
 	Legal: ['Privacy', 'Terms', 'Security'],
 }
 
-/* ─── Page ─────────────────────────────────────────── */
 
 function LandingPage() {
 	return (
@@ -612,3 +607,4 @@ function Footer() {
 		</footer>
 	)
 }
+export default LandingPage

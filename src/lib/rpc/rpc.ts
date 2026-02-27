@@ -1,25 +1,22 @@
+'use client'
+
 import { createORPCClient, onError } from '@orpc/client'
 import { RPCLink } from '@orpc/client/fetch'
 import { BatchLinkPlugin } from '@orpc/client/plugins'
 import { StandardRPCJsonSerializer } from '@orpc/client/standard'
-import { createRouterClient, type RouterClient } from '@orpc/server'
+import type { RouterClient } from '@orpc/server'
 import { createTanstackQueryUtils } from '@orpc/tanstack-query'
-import { type RPCRouter, rpcRouter } from '@server/rpc'
-import {
-	createRpcContext,
-	resolveServerBootstrapAuthIdentity,
-} from '@server/rpc/init'
+import type { RPCRouter } from '@server/rpc'
 import {
 	defaultShouldDehydrateQuery,
 	QueryCache,
 	QueryClient,
 } from '@tanstack/react-query'
-import { createIsomorphicFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
 
 const serializer = new StandardRPCJsonSerializer({
 	customJsonSerializers: [],
 })
+
 const isAbortError = (error: unknown) => {
 	if (!error) {
 		return false
@@ -51,6 +48,7 @@ const isAbortError = (error: unknown) => {
 
 	return false
 }
+
 export const queryClient = new QueryClient({
 	queryCache: new QueryCache({}),
 	defaultOptions: {
@@ -59,7 +57,7 @@ export const queryClient = new QueryClient({
 				const [json, meta] = serializer.serialize(queryKey)
 				return JSON.stringify({ json, meta })
 			},
-			staleTime: 60 * 1000, // > 0 to prevent immediate refetching on mount
+			staleTime: 60 * 1000,
 			gcTime: 30 * 1000,
 		},
 		dehydrate: {
@@ -76,64 +74,54 @@ export const queryClient = new QueryClient({
 	},
 })
 
-export const getRPCClient = createIsomorphicFn()
-	.server(() =>
-		createRouterClient(rpcRouter, {
-			context: createRpcContext({
-				headers: getRequestHeaders(),
-				auth: resolveServerBootstrapAuthIdentity() ?? undefined,
+function createHttpRPCClient(): RouterClient<RPCRouter> {
+	const link = new RPCLink({
+		url:
+			typeof window !== 'undefined'
+				? window.location.origin + '/api/rpc'
+				: '/api/rpc',
+		plugins: [
+			new BatchLinkPlugin({
+				groups: [
+					{
+						condition: () => true,
+						context: {},
+					},
+				],
 			}),
-		}),
-	)
-	.client((): RouterClient<RPCRouter> => {
-		const link = new RPCLink({
-			url: `${window.location.origin}/api/rpc`,
-			plugins: [
-				new BatchLinkPlugin({
-					groups: [
-						{
-							condition: () => true,
-							context: {},
-						},
-					],
-				}),
-			],
-			method: ({ context }, path) => {
-				// Use GET for cached responses
-				if (context?.cache) {
-					return 'GET'
-				}
+		],
+		method: ({ context }, path) => {
+			if (context?.cache) {
+				return 'GET'
+			}
 
-				// Use GET for rendering requests
-				if (typeof window === 'undefined') {
-					return 'GET'
-				}
+			if (path.at(-1)?.match(/^(?:get|find|list|search)(?:[A-Z].*)?$/)) {
+				return 'GET'
+			}
 
-				// Use GET for read-like operations
-				if (path.at(-1)?.match(/^(?:get|find|list|search)(?:[A-Z].*)?$/)) {
-					return 'GET'
+			return 'POST'
+		},
+		fetch: (url, options: RequestInit) => {
+			return fetch(url, {
+				...options,
+				credentials: 'include',
+				signal: options?.signal,
+			})
+		},
+		interceptors: [
+			onError((error) => {
+				if (isAbortError(error)) {
+					return
 				}
-
-				return 'POST'
-			},
-			fetch: (url, options: RequestInit) => {
-				return fetch(url, {
-					...options,
-					credentials: 'include',
-					signal: options?.signal,
-				})
-			},
-			interceptors: [
-				onError((error) => {
-					if (isAbortError(error)) {
-						return
-					}
-					console.error('RPC Error:', error)
-				}),
-			],
-		})
-		return createORPCClient(link)
+				console.error('RPC Error:', error)
+			}),
+		],
 	})
+
+	return createORPCClient(link) as RouterClient<RPCRouter>
+}
+
+export const getRPCClient = (): RouterClient<RPCRouter> => createHttpRPCClient()
 
 export const caller: RouterClient<RPCRouter> = getRPCClient()
 

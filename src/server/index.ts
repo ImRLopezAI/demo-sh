@@ -29,3 +29,15 @@ app.use('/api/rpc/*', async (c, next) => {
 })
 
 export const handler = app.fetch
+
+export function toNextHandler() {
+	return {
+		GET: (req: Request) => app.fetch(req),
+		POST: (req: Request) => app.fetch(req),
+		PUT: (req: Request) => app.fetch(req),
+		DELETE: (req: Request) => app.fetch(req),
+		PATCH: (req: Request) => app.fetch(req),
+		OPTIONS: (req: Request) => app.fetch(req),
+		HEAD: (req: Request) => app.fetch(req),
+	}
+}

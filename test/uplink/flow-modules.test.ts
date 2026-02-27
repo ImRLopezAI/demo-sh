@@ -291,6 +291,14 @@ describe('flow module', () => {
 
 	test('builds rolling cash forecast with variance and adverse-threshold alerts', async () => {
 		const caller = createCaller()
+
+		for (const entry of db.schemas.bankAccountLedgerEntries.toArray()) {
+			db.schemas.bankAccountLedgerEntries.delete(entry._id)
+		}
+		for (const account of db.schemas.bankAccounts.toArray()) {
+			db.schemas.bankAccounts.delete(account._id)
+		}
+
 		const bankAccount = insertBankAccount({
 			accountNo: 'BANK-FLOW-FORECAST-001',
 			currentBalance: 0,

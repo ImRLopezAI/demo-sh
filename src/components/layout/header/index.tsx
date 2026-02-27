@@ -1,27 +1,29 @@
 'use client'
 
-import { Link } from '@tanstack/react-router'
 import { AnimatedThemeToggler } from '@ui/animated-theme-toggler'
+import { Link } from '@/components/ui/link'
 import { MobileNav } from '@/components/layout/header/mobile-nav'
 import Search from '@/components/layout/header/search'
 import { TopNav } from '@/components/layout/header/top-nav'
 import { Separator } from '@/components/ui/separator'
+import { ArrowUpRight } from 'lucide-react'
 
 export function SiteHeader() {
 	return (
-		<header className='sticky top-0 z-50 flex h-[var(--header-height)] shrink-0 items-center border-border/50 border-b bg-background/50 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40'>
-			<div className='mx-auto flex w-full max-w-[1680px] items-center gap-2 px-4 lg:gap-3 lg:px-6'>
+		<header className='sticky top-0 z-50 flex h-(--header-height) shrink-0 items-center border-border/50 border-b bg-background/50 backdrop-blur-xl supports-backdrop-filter:bg-background/40'>
+			<div className='mx-auto flex w-full max-w-420 items-center gap-2 px-4 lg:gap-3 lg:px-6'>
 				<Link
 					to='/'
-					className='flex items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring/50'
+					className='flex items-center gap-2.5 rounded-md bg-transparent hover:bg-transparent'
 				>
-					<div className='flex size-9 items-center justify-center rounded-md border border-primary/35 bg-linear-to-br from-primary to-primary/80 text-primary-foreground shadow-xs'>
-						<span className='font-bold text-xs tracking-wider'>U</span>
-					</div>
-					<div className='hidden flex-col leading-none sm:flex'>
-						<span className='font-semibold text-sm tracking-tight'>Uplink</span>
-						<span className='text-[10px] text-muted-foreground uppercase tracking-[0.16em]'>
-							Operations Suite
+					<div className='flex items-center gap-3'>
+						<div className='flex size-7 items-center justify-center rounded-xl bg-linear-to-br from-white to-zinc-400'>
+							<div className='flex size-5 items-center justify-center rounded-lg bg-black'>
+								<ArrowUpRight className='size-3 text-white' />
+							</div>
+						</div>
+						<span className='font-extrabold text-sm text-foreground'>
+							Uplink
 						</span>
 					</div>
 				</Link>

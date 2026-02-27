@@ -31,7 +31,9 @@ type ChartContextProps = {
 	config: ChartConfig
 }
 
-export type CustomTooltipProps = TooltipContentProps<ValueType, NameType> & {
+export type CustomTooltipProps = Partial<
+	TooltipContentProps<ValueType, NameType>
+> & {
 	className?: string
 	hideLabel?: boolean
 	hideIndicator?: boolean

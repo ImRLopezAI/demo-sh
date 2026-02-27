@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
@@ -21,8 +22,13 @@ interface SalesOrder {
 }
 
 export default function SalesOrdersList() {
-	const navigate = useNavigate()
-	const location = useRouterState({ select: (state) => state.location })
+	const router = useRouter()
+	const pathname = usePathname() || '/market/sales-orders'
+	const searchParams = useSearchParams()
+	const locationSearch = React.useMemo(
+		() => parseRouterSearch(searchParams.toString()),
+		[searchParams],
+	)
 
 	const { DataGrid, windowSize } = useModuleData<'market', SalesOrder>(
 		'market',
@@ -30,17 +36,25 @@ export default function SalesOrdersList() {
 		'all',
 	)
 
-	const selectedId = React.useMemo(() => {
-		if (!location.search || typeof location.search !== 'object') {
-			return null
-		}
+	const pushWithSearch = React.useCallback(
+		(
+			searchUpdater: (
+				previous: Record<string, unknown>,
+			) => Record<string, unknown>,
+		) => {
+			const nextSearch = searchUpdater(locationSearch)
+			router.push(`/market/sales-orders${stringifyRouterSearch(nextSearch)}`)
+		},
+		[locationSearch, router],
+	)
 
-		const searchRecord = location.search as Record<string, unknown>
+	const selectedId = React.useMemo(() => {
+		const searchRecord = locationSearch as Record<string, unknown>
 		const scopeValue = searchRecord._recordScope
 		const modeValue = searchRecord.mode
 		const recordIdValue = searchRecord.recordId
 
-		if (typeof scopeValue === 'string' && scopeValue !== location.pathname) {
+		if (typeof scopeValue === 'string' && scopeValue !== pathname) {
 			return null
 		}
 
@@ -57,7 +71,7 @@ export default function SalesOrdersList() {
 		}
 
 		return null
-	}, [location.pathname, location.search])
+	}, [locationSearch, pathname])
 
 	const clearRecordSearchState = React.useCallback(
 		(previous: unknown) => {
@@ -75,86 +89,47 @@ export default function SalesOrdersList() {
 	)
 
 	const handleEdit = React.useCallback(
-		(row: SalesOrder) =>
-			navigate({
-				to: '/market/sales-orders',
-				search: (previous) => {
-					const baseSearch =
-						!previous ||
-						typeof previous !== 'object' ||
-						Array.isArray(previous)
-							? {}
-							: { ...(previous as Record<string, unknown>) }
-
-					return {
-						...baseSearch,
-						mode: 'detail',
-						recordId: row._id,
-						_recordScope: '/market/sales-orders',
-					}
-				},
-			}),
-		[navigate],
+		(row: SalesOrder) => {
+			pushWithSearch((previous) => ({
+				...previous,
+				mode: 'detail',
+				recordId: row._id,
+				_recordScope: '/market/sales-orders',
+			}))
+		},
+		[pushWithSearch],
 	)
 	const handleNew = React.useCallback(() => {
-		void navigate({
-			to: '/market/sales-orders',
-			search: (previous) => {
-				const baseSearch =
-					!previous ||
-					typeof previous !== 'object' ||
-					Array.isArray(previous)
-						? {}
-						: { ...(previous as Record<string, unknown>) }
-
-				delete baseSearch.recordId
-
-				return {
-					...baseSearch,
-					mode: 'new',
-					_recordScope: '/market/sales-orders',
-				}
-			},
+		pushWithSearch((previous) => {
+			const nextSearch = { ...previous }
+			delete nextSearch.recordId
+			return {
+				...nextSearch,
+				mode: 'new',
+				_recordScope: '/market/sales-orders',
+			}
 		})
-	}, [navigate])
+	}, [pushWithSearch])
 
 	const handleClose = React.useCallback(() => {
-		void navigate({
-			to: '/market/sales-orders',
-			search: clearRecordSearchState,
-		})
-	}, [clearRecordSearchState, navigate])
+		pushWithSearch(clearRecordSearchState)
+	}, [clearRecordSearchState, pushWithSearch])
 
 	const handleCreated = React.useCallback(
 		(recordId: string) => {
 			if (!recordId) {
-				void navigate({
-					to: '/market/sales-orders',
-					search: clearRecordSearchState,
-				})
+				pushWithSearch(clearRecordSearchState)
 				return
 			}
 
-			void navigate({
-				to: '/market/sales-orders',
-				search: (previous) => {
-					const baseSearch =
-						!previous ||
-						typeof previous !== 'object' ||
-						Array.isArray(previous)
-							? {}
-							: { ...(previous as Record<string, unknown>) }
-
-					return {
-						...baseSearch,
-						mode: 'detail',
-						recordId,
-						_recordScope: '/market/sales-orders',
-					}
-				},
-			})
+			pushWithSearch((previous) => ({
+				...previous,
+				mode: 'detail',
+				recordId,
+				_recordScope: '/market/sales-orders',
+			}))
 		},
-		[clearRecordSearchState, navigate],
+		[clearRecordSearchState, pushWithSearch],
 	)
 
 	if (selectedId !== null) {

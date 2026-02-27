@@ -11,6 +11,70 @@ import {
 import type { FieldMeta, FieldType } from '../types/field.types'
 import type { ForeignKeyInfo, GenerationContext } from './types'
 
+function resolveNumericBounds(schema: z.ZodType): { min: number; max: number } {
+	const DEFAULT_MIN = 0
+	const DEFAULT_MAX = 1000
+	let min = DEFAULT_MIN
+	let max = DEFAULT_MAX
+
+	const checks = (
+		schema as {
+			_def?: {
+				checks?: unknown[]
+			}
+		}
+	)._def?.checks
+
+	if (!Array.isArray(checks)) {
+		return { min, max }
+	}
+
+	for (const check of checks) {
+		const checkDef = (
+			check as {
+				_zod?: {
+					def?: {
+						check?: string
+						value?: number
+						inclusive?: boolean
+					}
+				}
+			}
+		)._zod?.def
+
+		if (!checkDef || typeof checkDef.value !== 'number') {
+			continue
+		}
+
+		if (checkDef.check === 'greater_than') {
+			const lowerBound =
+				checkDef.inclusive === false ? checkDef.value + 1 : checkDef.value
+			min = Math.max(min, lowerBound)
+			continue
+		}
+
+		if (checkDef.check === 'less_than') {
+			const upperBound =
+				checkDef.inclusive === false ? checkDef.value - 1 : checkDef.value
+			max = Math.min(max, upperBound)
+		}
+	}
+
+	if (!Number.isFinite(min)) {
+		min = DEFAULT_MIN
+	}
+
+	if (!Number.isFinite(max)) {
+		max = DEFAULT_MAX
+	}
+
+	if (max < min) {
+		max = min
+	}
+
+	return { min, max }
+}
+
 /**
  * Generate a value based on the shorthand field type.
  *
@@ -139,7 +203,8 @@ export function generateFromZodType(schema: z.ZodType): unknown {
 		return faker.lorem.words(3)
 	}
 	if (hasZodTrait(workingSchema, 'ZodNumber')) {
-		return faker.number.int({ min: 0, max: 1000 })
+		const { min, max } = resolveNumericBounds(workingSchema)
+		return faker.number.int({ min, max })
 	}
 	if (hasZodTrait(workingSchema, 'ZodBoolean')) {
 		return faker.datatype.boolean()
