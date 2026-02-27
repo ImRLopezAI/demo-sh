@@ -10,7 +10,10 @@ import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 import { useStatusTransition } from '../../_shared/use-status-transition'
@@ -211,12 +214,80 @@ export function ShipmentCard({
 		? 'New Shipment'
 		: `Shipment ${(resolvedRecord as ShipmentHeader | undefined)?.shipmentNo ?? ''}`
 
+	const shipmentHeader = resolvedRecord as ShipmentHeader | undefined
+
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Track Delivery',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !shipmentHeader?.trackingNo,
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Sales Order',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !shipmentHeader?.sourceDocumentNo,
+					},
+					{
+						label: 'Customer',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Shipment Method',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !shipmentHeader?.shipmentMethodCode,
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Shipment Lines',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Delivery Status',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [
+		isNew,
+		shipmentHeader?.trackingNo,
+		shipmentHeader?.sourceDocumentNo,
+		shipmentHeader?.shipmentMethodCode,
+	])
+
 	return (
 		<>
 			<RecordDialog
 				open={isOpen}
 				onOpenChange={(open) => !open && onClose()}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={dialogTitle}
 				description='Shipment header and line details'
 				footer={
@@ -350,6 +421,14 @@ export function ShipmentCard({
 													<Form.Combo
 														value={field.value as string}
 														onValueChange={field.onChange}
+														itemToStringLabel={(code: string) => {
+															const method = (methodsList?.items ?? []).find(
+																(m: Record<string, unknown>) => m.code === code,
+															) as Record<string, unknown> | undefined
+															return method
+																? `${method.code as string} - ${method.description as string}`
+																: code
+														}}
 													>
 														<Form.Combo.Input
 															showClear

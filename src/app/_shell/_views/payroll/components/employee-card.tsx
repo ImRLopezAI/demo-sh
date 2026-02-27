@@ -7,8 +7,12 @@ import {
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -54,6 +58,10 @@ export function EmployeeCard({
 		'payroll',
 		'employees',
 	)
+
+	const { data: bankAccountsList } = useModuleList('flow', 'bankAccounts', {
+		limit: 100,
+	})
 
 	const [Form, form] = useCreateForm<EmployeeFormValues>(
 		() => ({
@@ -175,12 +183,66 @@ export function EmployeeCard({
 		EMPLOYEE_STATUS_LABELS,
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Run Payroll',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'ACTIVE',
+					},
+					{
+						label: 'Generate Pay Stub',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'ACTIVE',
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Bank Account',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Employee Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Pay History',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, currentStatus])
+
 	return (
 		<>
 			<RecordDialog
 				open={open}
 				onOpenChange={onOpenChange}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={isNew ? 'New Employee' : `Employee ${record?.employeeNo ?? ''}`}
 				description={
 					isNew
@@ -535,16 +597,46 @@ export function EmployeeCard({
 											name='bankAccountId'
 											render={({ field }) => (
 												<Form.Item>
-													<Form.Label>Bank Account ID</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='Bank account for salary disbursement…'
-																autoComplete='off'
+													<Form.Label>Bank Account</Form.Label>
+													<Form.Control>
+														<Form.Combo
+															value={field.value}
+															onValueChange={field.onChange}
+															itemToStringLabel={(id: string) => {
+																const acc = (
+																	bankAccountsList?.items ?? []
+																).find(
+																	(a: Record<string, unknown>) => a._id === id,
+																) as Record<string, unknown> | undefined
+																return acc
+																	? `${acc.accountNo as string} - ${acc.name as string}`
+																	: id
+															}}
+														>
+															<Form.Combo.Input
+																showClear
+																placeholder='Search bank accounts…'
 															/>
-														}
-													/>
+															<Form.Combo.Content>
+																<Form.Combo.List>
+																	{(bankAccountsList?.items ?? []).map(
+																		(a: Record<string, unknown>) => (
+																			<Form.Combo.Item
+																				key={a._id as string}
+																				value={a._id as string}
+																			>
+																				{a.accountNo as string} -{' '}
+																				{a.name as string}
+																			</Form.Combo.Item>
+																		),
+																	)}
+																	<Form.Combo.Empty>
+																		No bank accounts found
+																	</Form.Combo.Empty>
+																</Form.Combo.List>
+															</Form.Combo.Content>
+														</Form.Combo>
+													</Form.Control>
 												</Form.Item>
 											)}
 										/>

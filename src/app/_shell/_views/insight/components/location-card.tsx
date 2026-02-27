@@ -8,7 +8,10 @@ import {
 	MarkerPopup,
 	Map as UplinkMap,
 } from '@/components/ui/map'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 type LocationFormValues = {
@@ -170,6 +173,57 @@ export function LocationCard({
 		],
 	]
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Stock Count',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Transfer Stock',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Inventory at Location',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Item Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Transfer Orders',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew])
+
 	if (isLoading) return null
 
 	return (
@@ -184,6 +238,7 @@ export function LocationCard({
 					: 'View and edit location information.'
 			}
 			size='md'
+			actionGroups={actionGroups}
 			footer={
 				<>
 					<Button

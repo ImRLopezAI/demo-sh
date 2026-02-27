@@ -13,7 +13,10 @@ import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -351,6 +354,66 @@ export function InvoiceCard({
 		],
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Post Invoice',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'DRAFT',
+					},
+					{
+						label: 'Print',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Customer Card',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !invoice?.customerId,
+					},
+					{
+						label: 'Invoice Lines',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Customer Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !invoice?.customerId,
+					},
+					{
+						label: 'G/L Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, currentStatus, invoice?.customerId])
+
 	return (
 		<>
 			<RecordDialog
@@ -359,6 +422,7 @@ export function InvoiceCard({
 					if (!isOpen) onClose()
 				}}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={isNew ? 'New Invoice' : `Invoice ${invoice?.invoiceNo ?? ''}`}
 				description={
 					isNew
@@ -506,6 +570,15 @@ export function InvoiceCard({
 														<Form.Combo
 															value={field.value as string}
 															onValueChange={field.onChange}
+															itemToStringLabel={(id: string) => {
+																const c = (customersList?.items ?? []).find(
+																	(item: Record<string, unknown>) =>
+																		item._id === id,
+																) as Record<string, unknown> | undefined
+																return c
+																	? `${c.customerNo as string} - ${c.name as string}`
+																	: id
+															}}
 														>
 															<Form.Combo.Input
 																showClear

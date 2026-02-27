@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
+import { ChevronDownIcon } from 'lucide-react'
 import type * as React from 'react'
 import {
 	Dialog,
@@ -7,6 +8,15 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 const recordDialogVariants = cva(
@@ -30,7 +40,55 @@ const recordDialogVariants = cva(
 	},
 )
 
+export interface RecordDialogAction {
+	label: string
+	onClick: () => void
+	icon?: React.ReactNode
+	disabled?: boolean
+	variant?: 'default' | 'destructive'
+}
+
+export interface RecordDialogActionGroup {
+	label: string
+	items: RecordDialogAction[]
+}
+
 export type RecordDialogPresentation = 'dialog' | 'page'
+
+function ActionGroupBar({ groups }: { groups: RecordDialogActionGroup[] }) {
+	const nonEmpty = groups.filter((g) => g.items.length > 0)
+	if (nonEmpty.length === 0) return null
+
+	return (
+		<div className='flex items-center gap-1 border-border/50 border-b bg-muted/5 px-8 py-1.5'>
+			{nonEmpty.map((group) => (
+				<DropdownMenu key={group.label}>
+					<DropdownMenuTrigger className='inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'>
+						{group.label}
+						<ChevronDownIcon className='size-3' />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align='start' sideOffset={4}>
+						<DropdownMenuGroup>
+							<DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							{group.items.map((action) => (
+								<DropdownMenuItem
+									key={action.label}
+									disabled={action.disabled}
+									variant={action.variant}
+									onClick={action.onClick}
+								>
+									{action.icon}
+									{action.label}
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuGroup>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			))}
+		</div>
+	)
+}
 
 export function RecordDialog({
 	open,
@@ -39,6 +97,7 @@ export function RecordDialog({
 	description,
 	children,
 	footer,
+	actionGroups,
 	size = 'lg',
 	presentation = 'dialog',
 	className,
@@ -49,6 +108,7 @@ export function RecordDialog({
 	description?: string
 	children: React.ReactNode
 	footer?: React.ReactNode
+	actionGroups?: RecordDialogActionGroup[]
 	className?: string
 	presentation?: RecordDialogPresentation
 } & VariantProps<typeof recordDialogVariants>) {
@@ -81,6 +141,7 @@ export function RecordDialog({
 						)}
 					</div>
 				</div>
+				{actionGroups && <ActionGroupBar groups={actionGroups} />}
 				<div className='flex-1 overflow-auto px-8 py-6'>{children}</div>
 			</section>
 		)
@@ -109,6 +170,7 @@ export function RecordDialog({
 						)}
 					</div>
 				</DialogHeader>
+				{actionGroups && <ActionGroupBar groups={actionGroups} />}
 				<div className='flex-1 overflow-auto px-8 py-6'>{children}</div>
 			</DialogContent>
 		</Dialog>

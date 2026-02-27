@@ -9,9 +9,13 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { toSelectItemsMap } from '@/lib/select-items'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -150,6 +154,16 @@ export function PurchaseOrderCard({
 	const [draftLines, setDraftLines] = React.useState<PurchaseLine[]>([])
 	const vendorOptions = (vendorsList?.items ?? []) as VendorOption[]
 	const itemOptions = (itemsList?.items ?? []) as ItemOption[]
+	const vendorItemsMap = React.useMemo(
+		() =>
+			toSelectItemsMap(
+				vendorOptions,
+				(v) => v._id,
+				(v) =>
+					`${v.name ?? 'Unnamed vendor'}${v.vendorNo ? ` (${v.vendorNo})` : ''}`,
+			),
+		[vendorOptions],
+	)
 	const lines = React.useMemo(
 		() => (isNew ? draftLines : linesFromApi),
 		[draftLines, isNew, linesFromApi],
@@ -380,6 +394,76 @@ export function PurchaseOrderCard({
 		],
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: receivePurchaseOrder.isPending
+							? 'Receiving...'
+							: 'Receive Remaining',
+						onClick: () => void handleReceive(),
+						disabled: !canReceive || receivePurchaseOrder.isPending,
+					},
+					{
+						label: createInvoiceFromOrder.isPending
+							? 'Creating...'
+							: 'Create Invoice',
+						onClick: () => void handleCreateInvoice(),
+						disabled: !canCreateInvoice || createInvoiceFromOrder.isPending,
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Vendor Card',
+						onClick: () => {
+							/* TODO: navigate to vendor card */
+						},
+						disabled: !header?.vendorId,
+					},
+					{
+						label: 'Purchase Lines',
+						onClick: () => {
+							/* TODO: scroll to lines section */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Vendor Ledger Entries',
+						onClick: () => {
+							/* TODO: navigate to vendor ledger entries */
+						},
+						disabled: !header?.vendorId,
+					},
+					{
+						label: 'Posted Invoices',
+						onClick: () => {
+							/* TODO: navigate to posted invoices */
+						},
+					},
+				],
+			},
+		]
+	}, [
+		isNew,
+		canReceive,
+		canCreateInvoice,
+		handleReceive,
+		handleCreateInvoice,
+		receivePurchaseOrder.isPending,
+		createInvoiceFromOrder.isPending,
+		header?.vendorId,
+	])
+
 	return (
 		<>
 			<RecordDialog
@@ -394,6 +478,7 @@ export function PurchaseOrderCard({
 						: `Purchase Order ${header?.documentNo ?? ''}`
 				}
 				description='Manage purchase order header and lines.'
+				actionGroups={actionGroups}
 				footer={
 					<>
 						{!isNew && (
@@ -539,6 +624,7 @@ export function PurchaseOrderCard({
 													<Form.Select
 														value={field.value}
 														onValueChange={field.onChange}
+														items={vendorItemsMap}
 													>
 														<Form.Select.Trigger
 															className='w-full bg-background/50'

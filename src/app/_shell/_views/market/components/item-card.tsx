@@ -2,7 +2,10 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface ItemRecord {
@@ -82,6 +85,69 @@ export function ItemCard({
 		? 'New Item'
 		: `Item ${(resolvedRecord as ItemRecord | undefined)?.itemNo ?? ''}`
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Adjust Inventory',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Create Sales Order',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Item Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Value Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Sales History',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Purchase History',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Inventory by Location',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew])
+
 	return (
 		<RecordDialog
 			open={isOpen}
@@ -89,6 +155,7 @@ export function ItemCard({
 			presentation={presentation}
 			title={dialogTitle}
 			description='Item details, pricing, and inventory'
+			actionGroups={actionGroups}
 			footer={
 				<>
 					<Button

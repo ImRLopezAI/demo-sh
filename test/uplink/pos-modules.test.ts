@@ -279,6 +279,48 @@ describe('pos module', () => {
 		expect(scopedLines.items.some((row) => row._id === line._id)).toBe(true)
 	})
 
+	test('generates receipt PDF for completed transaction', async () => {
+		const caller = createCaller()
+		const session = db.schemas.posSessions.toArray()[0]
+		const item = db.schemas.items.toArray()[0]
+		const sessionId = session?._id
+		const itemId = item?._id
+		if (!sessionId || !itemId) {
+			throw new Error('Missing seeded POS session or item')
+		}
+
+		const transaction = await caller.pos.transactions.create({
+			receiptNo: '',
+			posSessionId: sessionId,
+			totalAmount: 88,
+			taxAmount: 12,
+			discountAmount: 0,
+			paidAmount: 88,
+			paymentMethod: 'CARD',
+		})
+		await caller.pos.transactionLines.create({
+			transactionId: transaction._id,
+			itemId,
+			quantity: 1,
+			unitPrice: 88,
+			lineAmount: 88,
+			discountPercent: 0,
+		})
+		await caller.pos.transactions.transitionStatus({
+			id: transaction._id,
+			toStatus: 'COMPLETED',
+		})
+
+		const receipt = await caller.pos.transactions.generateReceipt({
+			transactionId: transaction._id,
+			builtInLayout: 'THERMAL_RECEIPT',
+		})
+
+		expect(receipt).toBeInstanceOf(File)
+		expect(receipt.type).toBe('application/pdf')
+		expect(receipt.size).toBeGreaterThan(0)
+	})
+
 	test('rejects transaction line create when transaction parent is invalid', async () => {
 		const caller = createCaller()
 		const item = db.schemas.items.toArray()[0]

@@ -10,7 +10,10 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -149,12 +152,59 @@ export function TaskCard({
 		OPERATION_TASK_STATUS_LABELS,
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Assign',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Escalate',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						variant: 'destructive',
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Module Records',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Task History',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew])
+
 	return (
 		<>
 			<RecordDialog
 				open={open}
 				onOpenChange={onOpenChange}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={isNew ? 'New Task' : `Task ${record?.taskNo ?? ''}`}
 				description={
 					isNew

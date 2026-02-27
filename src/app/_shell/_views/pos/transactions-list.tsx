@@ -1,6 +1,8 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
-import { Ban, RotateCcw } from 'lucide-react'
+import { Ban, Printer, RotateCcw } from 'lucide-react'
 import * as React from 'react'
+import { toast } from 'sonner'
+import { downloadBinaryPayload } from '@/lib/download-file'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import {
@@ -48,6 +50,9 @@ export default function TransactionsList() {
 			onSuccess: invalidate,
 		}),
 	})
+	const generateReceipt = useMutation(
+		$rpc.pos.transactions.generateReceipt.mutationOptions(),
+	)
 
 	const handleBulkTransition = React.useCallback(
 		async (ids: string[], toStatus: string) => {
@@ -63,6 +68,26 @@ export default function TransactionsList() {
 			openDetail(row._id)
 		},
 		[openDetail],
+	)
+
+	const handleBulkReprintReceipt = React.useCallback(
+		async (records: PosTransaction[]) => {
+			let successCount = 0
+			for (const record of records) {
+				const receipt = await generateReceipt.mutateAsync({
+					transactionId: record._id,
+					builtInLayout: 'THERMAL_RECEIPT',
+				})
+				await downloadBinaryPayload(receipt, `ticket-${record.receiptNo}.pdf`)
+				successCount += 1
+			}
+			if (successCount > 0) {
+				toast.success(
+					`${successCount} receipt${successCount === 1 ? '' : 's'} downloaded`,
+				)
+			}
+		},
+		[generateReceipt],
 	)
 
 	if (selectedId !== null) {
@@ -175,7 +200,8 @@ export default function TransactionsList() {
 								)
 								const ids = records.map((r) => r._id)
 								const hasSelection = ids.length > 0
-								const isBusy = transitionStatus.isPending
+								const isBusy =
+									transitionStatus.isPending || generateReceipt.isPending
 								const allOpen = records.every((r) => r.status === 'OPEN')
 								const allCompleted = records.every(
 									(r) => r.status === 'COMPLETED',
@@ -200,6 +226,24 @@ export default function TransactionsList() {
 										>
 											<RotateCcw className='size-3.5' aria-hidden='true' />
 											Refund
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy}
+											onClick={() => {
+												void handleBulkReprintReceipt(records).catch(
+													(error) => {
+														toast.error('Receipt download failed', {
+															description:
+																error instanceof Error
+																	? error.message
+																	: 'Unable to download selected receipts',
+														})
+													},
+												)
+											}}
+										>
+											<Printer className='size-3.5' aria-hidden='true' />
+											Reprint
 										</DataGrid.ActionBar.Item>
 									</>
 								)

@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { formatCurrency } from '@/lib/utils'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -143,6 +146,52 @@ export function BankAccountCard({
 		BANK_ACCOUNT_STATUS_LABELS,
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Reconcile',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'ACTIVE',
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Bank Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'G/L Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Payments',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, currentStatus])
+
 	return (
 		<>
 			<RecordDialog
@@ -151,6 +200,7 @@ export function BankAccountCard({
 					if (!isOpen) onClose()
 				}}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={
 					isNew ? 'New Bank Account' : `Bank Account ${record?.accountNo ?? ''}`
 				}

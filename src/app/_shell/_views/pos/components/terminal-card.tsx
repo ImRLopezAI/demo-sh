@@ -7,7 +7,11 @@ import {
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
-import { RecordDialog } from '../../_shared/record-dialog'
+import { useModuleList } from '../../../hooks/use-data'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -113,12 +117,70 @@ export function TerminalCard({
 		onTransition: handleTransition,
 	})
 
+	const { data: locationsList } = useModuleList('insight', 'locations', {
+		limit: 100,
+	})
+
 	const currentStatus = record?.status ?? 'OFFLINE'
 	const statusOptions = getLabeledTransitions(
 		currentStatus as TerminalStatus,
 		TERMINAL_TRANSITIONS,
 		TERMINAL_STATUS_LABELS,
 	)
+
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Activate Terminal',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus === 'ONLINE',
+					},
+					{
+						label: 'Deactivate Terminal',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus === 'OFFLINE',
+						variant: 'destructive',
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Location',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Sessions',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Transactions',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, currentStatus])
 
 	const dialogTitle = isNew
 		? 'New Terminal'
@@ -130,6 +192,7 @@ export function TerminalCard({
 				open={isOpen}
 				onOpenChange={(open) => !open && onClose()}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={dialogTitle}
 				description={
 					isNew
@@ -196,12 +259,43 @@ export function TerminalCard({
 									rules={{ required: 'Location is required' }}
 									render={({ field }) => (
 										<Form.Item>
-											<Form.Label>Location Code</Form.Label>
-											<Form.Control
-												render={
-													<Form.Input {...field} placeholder='Location code…' />
-												}
-											/>
+											<Form.Label>Location</Form.Label>
+											<Form.Control>
+												<Form.Combo
+													value={field.value}
+													onValueChange={field.onChange}
+													itemToStringLabel={(code: string) => {
+														const loc = (locationsList?.items ?? []).find(
+															(l: Record<string, unknown>) => l.code === code,
+														) as Record<string, unknown> | undefined
+														return loc
+															? `${loc.code as string} - ${loc.name as string}`
+															: code
+													}}
+												>
+													<Form.Combo.Input
+														showClear
+														placeholder='Search locations…'
+													/>
+													<Form.Combo.Content>
+														<Form.Combo.List>
+															{(locationsList?.items ?? []).map(
+																(l: Record<string, unknown>) => (
+																	<Form.Combo.Item
+																		key={l._id as string}
+																		value={l.code as string}
+																	>
+																		{l.code as string} - {l.name as string}
+																	</Form.Combo.Item>
+																),
+															)}
+															<Form.Combo.Empty>
+																No locations found
+															</Form.Combo.Empty>
+														</Form.Combo.List>
+													</Form.Combo.Content>
+												</Form.Combo>
+											</Form.Control>
 											<Form.Message />
 										</Form.Item>
 									)}

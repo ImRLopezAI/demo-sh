@@ -2,7 +2,10 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData } from '../../../hooks/use-data'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
 
@@ -90,6 +93,71 @@ export function TransactionCard({
 
 	const resolvedRecord = record as PosTransactionHeader | undefined
 
+	const isVoided = resolvedRecord?.status === 'VOIDED'
+	const isRefunded = resolvedRecord?.status === 'REFUNDED'
+	const isTerminal = isVoided || isRefunded
+
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (!selectedId) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Void Transaction',
+						variant: 'destructive',
+						disabled: isTerminal,
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Issue Refund',
+						disabled: isTerminal,
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Session',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Customer',
+						disabled: !resolvedRecord?.customerId,
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Receipt Details',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Payment History',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [selectedId, isTerminal, resolvedRecord?.customerId])
+
 	return (
 		<RecordDialog
 			open={isOpen}
@@ -97,6 +165,7 @@ export function TransactionCard({
 			presentation={presentation}
 			title={`Transaction ${resolvedRecord?.receiptNo ?? ''}`}
 			description='POS transaction details and line items'
+			actionGroups={actionGroups}
 		>
 			{recordLoading ? (
 				<div className='space-y-3'>

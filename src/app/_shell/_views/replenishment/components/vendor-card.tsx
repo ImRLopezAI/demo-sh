@@ -2,7 +2,10 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface VendorRecord {
@@ -152,6 +155,46 @@ export function VendorCard({
 		}
 	}, [vendor, form, isNew])
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Create Purchase Order',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: vendor?.blocked === true,
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Purchase Orders',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Vendor Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, vendor?.blocked])
+
 	return (
 		<RecordDialog
 			open={open}
@@ -159,6 +202,7 @@ export function VendorCard({
 				if (!next) onClose()
 			}}
 			presentation={presentation}
+			actionGroups={actionGroups}
 			title={isNew ? 'New Vendor' : `Vendor ${vendor?.vendorNo ?? ''}`}
 			description='Manage vendor details, address, and purchasing information.'
 			footer={

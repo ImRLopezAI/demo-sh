@@ -3,7 +3,10 @@ import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
 
@@ -93,11 +96,66 @@ export function SessionCard({
 
 	const resolvedRecord = record as PosSessionRecord | undefined
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (!selectedId) return []
+		const sessionStatus = resolvedRecord?.status ?? 'OPEN'
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Close Session',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: sessionStatus === 'CLOSED',
+						variant: 'destructive',
+					},
+					{
+						label: 'Print Z-Report',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Terminal',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Cashier',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Transactions',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [selectedId, resolvedRecord?.status])
+
 	return (
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
 			presentation={presentation}
+			actionGroups={actionGroups}
 			title={`Session ${resolvedRecord?.sessionNo ?? ''}`}
 			description='POS session details and transactions'
 		>
@@ -141,6 +199,14 @@ export function SessionCard({
 													<Form.Combo
 														value={field.value as string}
 														onValueChange={field.onChange}
+														itemToStringLabel={(id: string) => {
+															const term = (terminalsList?.items ?? []).find(
+																(t: Record<string, unknown>) => t._id === id,
+															) as Record<string, unknown> | undefined
+															return term
+																? `${term.terminalCode as string} - ${term.name as string}`
+																: id
+														}}
 													>
 														<Form.Combo.Input
 															showClear

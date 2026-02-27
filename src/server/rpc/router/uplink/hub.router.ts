@@ -12,6 +12,7 @@ import {
 	listEffectivePermissionCodes,
 } from '../authz'
 import { createTenantScopedCrudRouter } from '../helpers'
+import { reportingRouter } from './reporting.router'
 
 const operationTasksCrudRouter = createTenantScopedCrudRouter({
 	moduleName: 'hub',
@@ -3829,4 +3830,5 @@ export const hubRouter = createRPCRouter({
 	scheduledJobs: scheduledJobsRouter,
 	scheduledJobRuns: scheduledJobRunsRouter,
 	orderFulfillment: orderFulfillmentRouter,
+	reporting: reportingRouter,
 })

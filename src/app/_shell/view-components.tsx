@@ -4,6 +4,7 @@ export const VIEW_COMPONENTS = {
 	'hub/dashboard': lazy(() => import('./_views/hub/dashboard')),
 	'hub/tasks': lazy(() => import('./_views/hub/tasks-list')),
 	'hub/notifications': lazy(() => import('./_views/hub/notifications-list')),
+	'hub/reporting': lazy(() => import('./_views/hub/reporting-center')),
 	'hub/order-fulfillment': lazy(() => import('./_views/hub/order-fulfillment')),
 	'market/dashboard': lazy(() => import('./_views/market/dashboard')),
 	'market/sales-orders': lazy(

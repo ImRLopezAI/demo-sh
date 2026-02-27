@@ -2,7 +2,10 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface CustomerRecord {
@@ -78,6 +81,57 @@ export function CustomerCard({
 		? 'New Customer'
 		: `Customer ${(resolvedRecord as CustomerRecord | undefined)?.name ?? ''}`
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Create Sales Order',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Create Invoice',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Sales Orders',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Posted Invoices',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Customer Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew])
+
 	return (
 		<RecordDialog
 			open={isOpen}
@@ -85,6 +139,7 @@ export function CustomerCard({
 			presentation={presentation}
 			title={dialogTitle}
 			description='Customer details, address, and statistics'
+			actionGroups={actionGroups}
 			footer={
 				<>
 					<Button

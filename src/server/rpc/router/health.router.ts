@@ -9,7 +9,8 @@ export const healthRouter = createRPCRouter(
 				summary: 'Ping endpoint',
 				description: 'Health check for the Health API router',
 			})
-			.handler(() => {
+			.handler(({ context }) => {
+				context.resHeaders.set('X-Health-Check', 'pong')
 				return 'pong'
 			}),
 		reset: publicProcedure

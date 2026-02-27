@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@ui/sonner'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/react'
+import { Toaster as SileoToaster } from 'sileo'
 
 interface ProvidersProps extends React.PropsWithChildren {}
 export function Providers({ children }: ProvidersProps) {
@@ -14,6 +15,18 @@ export function Providers({ children }: ProvidersProps) {
 				<ThemeProvider attribute='class' defaultTheme='system' enableSystem>
 					{children}
 					<Toaster position='top-right' richColors />
+					<SileoToaster
+						position='top-center'
+						theme='system'
+						options={{
+							duration: 4500,
+							autopilot: {
+								expand: 1800,
+								collapse: 9000,
+							},
+							roundness: 22,
+						}}
+					/>
 				</ThemeProvider>
 			</NuqsAdapter>
 		</QueryClientProvider>

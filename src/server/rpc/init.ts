@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Orpc plugin to handle Routes */
 
 import { type AnyRouter, ORPCError, os, type Route } from '@orpc/server'
+import type { ResponseHeadersPluginContext } from '@orpc/server/plugins'
 import { db } from '@server/db'
 
 const RPC_AUTH_ROLES = ['VIEWER', 'AGENT', 'MANAGER', 'ADMIN'] as const
@@ -12,7 +13,7 @@ export interface RpcAuthIdentity {
 	role: RpcAuthRole
 }
 
-interface RpcContext {
+export interface RpcContext extends ResponseHeadersPluginContext {
 	headers: Headers
 	auth?: {
 		tenantId?: string
@@ -89,6 +90,7 @@ export async function createRpcContext(ctx: RpcContext) {
 			userId: identity.userId,
 			role: effectiveRole,
 		},
+		resHeaders: ctx.resHeaders || new Headers(),
 	}
 }
 

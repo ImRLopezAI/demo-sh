@@ -88,6 +88,7 @@ export function listEffectivePermissionCodes(
 	context: RpcContextType,
 	externalUserId = context.auth.userId,
 ) {
+	if (!externalUserId) return [] as string[]
 	const hubUser = findHubUserByExternalId(context, externalUserId)
 	if (!hubUser?._id) return [] as string[]
 

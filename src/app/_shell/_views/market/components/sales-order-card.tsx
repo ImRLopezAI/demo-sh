@@ -9,9 +9,13 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { toSelectItemsMap } from '@/lib/select-items'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -133,6 +137,16 @@ export function SalesOrderCard({
 	})
 	const customerOptions = (customersList?.items ?? []) as CustomerOption[]
 	const itemOptions = (itemsList?.items ?? []) as ItemOption[]
+	const customerItemsMap = React.useMemo(
+		() =>
+			toSelectItemsMap(
+				customerOptions,
+				(c) => c._id,
+				(c) =>
+					`${c.name ?? 'Unnamed customer'}${c.customerNo ? ` (${c.customerNo})` : ''}`,
+			),
+		[customerOptions],
+	)
 	const lineFilters = React.useMemo(
 		() => ({
 			documentNo:
@@ -360,6 +374,50 @@ export function SalesOrderCard({
 		],
 	)
 
+	const header = resolvedRecord as SalesOrderHeader | undefined
+
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Customer Card',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !header?.customerId,
+					},
+					{
+						label: 'Order Lines',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Customer Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !header?.customerId,
+					},
+					{
+						label: 'Posted Invoices',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, header?.customerId])
+
 	const dialogTitle = isNew
 		? 'New Sales Order'
 		: `Sales Order ${(resolvedRecord as SalesOrderHeader | undefined)?.documentNo ?? ''}`
@@ -511,6 +569,7 @@ export function SalesOrderCard({
 													<Form.Select
 														value={field.value as string}
 														onValueChange={field.onChange}
+														items={customerItemsMap}
 													>
 														<Form.Select.Trigger
 															className='w-full bg-background/50'
@@ -654,6 +713,7 @@ export function SalesOrderCard({
 				title={dialogTitle}
 				description='Sales order header and line details'
 				footer={footerActions}
+				actionGroups={actionGroups}
 				presentation={presentation}
 			>
 				{cardBody}

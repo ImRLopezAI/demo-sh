@@ -196,6 +196,73 @@ export const db = defineSchema(
 				'settingKey',
 			]),
 
+		reportLayouts: createTable('reportLayouts', {
+			schema: {
+				moduleId: z.string(),
+				entityId: z.string(),
+				name: z.string().meta({ type: 'sentence' }),
+				baseTemplate: z.string().default('A4_SUMMARY'),
+				schemaJson: z.string().default('{}'),
+				isSystem: z.boolean().default(false),
+				active: z.boolean().default(true),
+				versionNo: z.number().int().min(1).default(1),
+				createdByUserId: z.string().optional(),
+				updatedByUserId: z.string().optional(),
+				updatedAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+		})
+			.table()
+			.index('reportLayouts_module_entity_idx', ['moduleId', 'entityId'])
+			.index('reportLayouts_active_idx', ['active']),
+
+		reportLayoutVersions: createTable('reportLayoutVersions', {
+			schema: {
+				layoutId: z.string(),
+				versionNo: z.number().int().min(1).default(1),
+				schemaJson: z.string().default('{}'),
+				changedByUserId: z.string().optional(),
+				changedAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('reportLayoutVersions_layout_version_uq', ['layoutId', 'versionNo'])
+			.index('reportLayoutVersions_layout_idx', ['layoutId']),
+
+		reportDefaults: createTable('reportDefaults', {
+			schema: {
+				moduleId: z.string(),
+				entityId: z.string(),
+				defaultLayoutRef: z.string(),
+				updatedByUserId: z.string().optional(),
+				updatedAt: z.string().optional().meta({ type: 'date' }),
+			},
+			seed: false,
+		})
+			.table()
+			.unique('reportDefaults_module_entity_uq', ['moduleId', 'entityId']),
+
+		reportRuns: createTable('reportRuns', {
+			schema: {
+				moduleId: z.string(),
+				entityId: z.string(),
+				layoutRef: z.string(),
+				requestedByUserId: z.string().optional(),
+				filtersJson: z.string().default('{}'),
+				status: z
+					.enum(['PENDING', 'GENERATED', 'FAILED'])
+					.default('GENERATED'),
+				outputFileName: z.string().optional(),
+				generatedAt: z.string().optional().meta({ type: 'date' }),
+				errorSummary: z.string().optional(),
+			},
+			seed: false,
+		})
+			.table()
+			.index('reportRuns_module_entity_idx', ['moduleId', 'entityId'])
+			.index('reportRuns_status_idx', ['status']),
+
 		hubAuditLogs: createTable('hubAuditLogs', {
 			schema: {
 				auditNo: z.string(),

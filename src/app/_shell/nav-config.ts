@@ -40,6 +40,7 @@ export const navGroups: NavGroup[] = [
 					{ title: 'Dashboard', href: '/hub/dashboard', icon: LayoutDashboard },
 					{ title: 'Operation Tasks', href: '/hub/tasks', icon: ClipboardList },
 					{ title: 'Notifications', href: '/hub/notifications', icon: Bell },
+					{ title: 'Reporting', href: '/hub/reporting', icon: FileText },
 					{
 						title: 'Order Fulfillment',
 						href: '/hub/order-fulfillment',

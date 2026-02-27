@@ -1,5 +1,7 @@
-import { $rpc, useQueryClient } from '@lib/rpc'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
 import * as React from 'react'
+import { toast } from 'sonner'
+import { downloadBinaryPayload } from '@/lib/download-file'
 import { useEntityMutations } from '../../_shared/use-entity'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -463,6 +465,9 @@ export function usePosTerminal() {
 	const { create: createLine } = useEntityMutations('pos', 'transactionLines', {
 		enableOptimistic: false,
 	})
+	const generateReceipt = useMutation(
+		$rpc.pos.transactions.generateReceipt.mutationOptions(),
+	)
 
 	const syncSaleToBackend = React.useCallback(
 		async (queuedSale: OfflineQueuedSale) => {
@@ -534,6 +539,13 @@ export function usePosTerminal() {
 					toStatus: 'COMPLETED',
 				})
 			}
+
+			return {
+				transactionId: headerId,
+				receiptNo:
+					(header as { receiptNo?: string }).receiptNo ??
+					queuedSale.idempotencyKey,
+			}
 		},
 		[createLine, createTransaction, queryClient, transitionStatus],
 	)
@@ -555,7 +567,9 @@ export function usePosTerminal() {
 			const result = await processOfflineQueueBatch({
 				queuedSales,
 				initialProcessedKeys: readProcessedOfflineSales(),
-				syncSale: syncSaleToBackend,
+				syncSale: async (queuedSale) => {
+					await syncSaleToBackend(queuedSale)
+				},
 			})
 
 			writeOfflineQueue(result.remainingQueue)
@@ -639,7 +653,7 @@ export function usePosTerminal() {
 			}
 
 			try {
-				await syncSaleToBackend(queuedSale)
+				const synced = await syncSaleToBackend(queuedSale)
 				const processedKeys = new Set(readProcessedOfflineSales())
 				processedKeys.add(idempotencyKey)
 				writeProcessedOfflineSales(Array.from(processedKeys).slice(-1000))
@@ -650,6 +664,25 @@ export function usePosTerminal() {
 				writeOfflineQueue(queueAfterSuccess)
 				setPendingSyncCount(queueAfterSuccess.length)
 				setLastSyncError(null)
+
+				try {
+					const receiptFile = await generateReceipt.mutateAsync({
+						transactionId: synced.transactionId,
+						builtInLayout: 'THERMAL_RECEIPT',
+					})
+					await downloadBinaryPayload(
+						receiptFile,
+						`ticket-${synced.receiptNo}.pdf`,
+					)
+					toast.success('Sale completed and ticket downloaded')
+				} catch (receiptError) {
+					toast.error('Sale completed but ticket download failed', {
+						description: getErrorMessage(
+							receiptError,
+							'Use Transactions > Reprint receipt to retry',
+						),
+					})
+				}
 			} catch (error) {
 				const updatedQueue = enqueueOfflineSale(readOfflineQueue(), queuedSale)
 				writeOfflineQueue(updatedQueue)
@@ -660,11 +693,19 @@ export function usePosTerminal() {
 						'Sale queued for offline retry due to backend availability',
 					),
 				)
+				toast.info('Sale queued for offline sync')
 			}
 
 			dispatch({ type: 'COMPLETE_SALE' })
 		},
-		[state.session, state.cart, state.customer, totals, syncSaleToBackend],
+		[
+			state.session,
+			state.cart,
+			state.customer,
+			totals,
+			syncSaleToBackend,
+			generateReceipt,
+		],
 	)
 
 	React.useEffect(() => {

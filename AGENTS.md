@@ -1,5 +1,5 @@
 
-This repo is a Bun + Vite + TanStack React Start app with Convex/Redis.
+This repo is a Bun + Vite + vinext app (Vite-based, Next.js-compatible) with Convex/Redis.
 Follow the commands and style rules below when working here.
 
 # UI/UX Guidelines
@@ -18,11 +18,16 @@ Install deps:
 - `bun install`
 
 Development servers:(Normally you wouldn't need to run cause I always run in dev mode, but here you go)
-- `bun run dev` (Vite/TanStack Start dev server on :3000)
+- `bun run dev` (vinext dev server on :3000)
 
-Build & preview:
+Build & run:
 - `bun run build`
-- `bun run start` (runs `.output/server/index.mjs`)
+- `bun run start` (vinext start on :3000)
+- `bun run preview` (Vite preview server)
+
+Tests:
+- `bun run test`
+- `bun run test:e2e`
 
 Typecheck:
 - `bun run typecheck`
@@ -34,33 +39,36 @@ Lint/format (Biome):
 
 ## Project Layout
 
-- `src/app/**` TanStack Start file-based routes
-- `src/app/_shell/**` App-level Routes and layout
+- `src/app/**` vinext App Router routes, layouts, and API handlers
+- `src/app/_shell/**` Shell routing, navigation config, and per-module view loading
 
 - `src/components/**` UI + layout components (REUSABLE COMPONENTS ONLY, no module-specific components)
-- `src/lib/**` shared utilities, env helpers, Redis, RPC
-- `src/server/**` server-side helpers and DB schema definitions
-- `test/**` Vitest tests
+- `src/lib/**` shared utilities, env helpers, Redis, router helpers, RPC client
+- `src/server/**` server-side helpers, Hono API wiring, DB schema definitions, RPC routers
+- `test/**` Vitest + Playwright tests
 ```text
 src/
-├── app/                       # TanStack Start routes and app shell
-│   ├── __root.tsx
+├── app/                       # vinext App Router routes and shell entrypoints
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── not-found.tsx
+│   ├── index.tsx
 │   ├── styles.css
+│   ├── [[...view]]/
+│   │   └── page.tsx           # Catch-all module/view route (single-route shell entry)
 │   ├── api/
-│   │   └── $.ts
+│   │   └── rpc/
+│   │       └── [...path]/route.ts
 │   └── _shell/
-│       ├── $.tsx              # Shell route with shared layout and providers it renders the per-module views based on the route loading the lazy-loaded view from the _views directory
-│       ├── _views/            # Per-module views and UI (market, ledger, replenishment, flow, pos, insight, trace, payroll)
-│       ├──── [module]/
-│       │       └── components/
-│       │       └── __test__/
-│       │           └── e2e/
-│       │           └── unit/
-│       │       └── hooks/
-│       │       └── utils/
-│       │       [view-name].tsx
-│       └── hooks/             # Shared shell hooks (e.g. useSession, useNotifications)
-│           └── use-data.ts
+│       ├── shell-layout.tsx
+│       ├── module-route-page.tsx
+│       ├── view-components.tsx
+│       ├── nav-config.ts
+│       ├── hooks/
+│       │   └── use-data.ts
+│       ├── __test__/
+│       │   └── nav-routes.test.ts
+│       └── _views/            # Per-module views and module-local UI
 │
 ├── components/                # Reusable UI and layout components
 │   ├── data-grid/
@@ -72,32 +80,28 @@ src/
 ├── lib/                       # Shared utilities and RPC client setup
 │   ├── env.ts
 │   ├── redis.ts
+│   ├── router/
+│   │   └── search.ts
 │   ├── utils.ts
 │   └── rpc/
-│       ├── context.ts
 │       ├── index.tsx
 │       └── rpc.ts
 │
 └── server/                    # Server-side database and RPC
     ├── index.ts
+    ├── convex/
     ├── db/
+    │   ├── constants.ts
     │   ├── index.ts
-    │   └── definitions/
+    │   └── definitions/...
     └── rpc/
-        ├── index.ts
-        ├── init.ts
-        └── router/
-            ├── health.router.ts
-            ├── helpers.ts
-            └── uplink/
-                ├── index.ts
-                └── [module].router.ts # market, ledger, pos, flow, payroll, insight, replenishment, trace, hub
+        └── router/uplink/*.router.ts  # market, ledger, pos, flow, payroll, insight, replenishment, trace, hub
 
 test/
-├── db/                        # DB/core unit and integration tests
-└── uplink/                    # Per-module uplink integration tests
-    ├── [module]-modules.test.ts
-    └── helpers.ts
+├── db/                        # DB/core unit tests
+├── uplink/                    # Per-module uplink integration tests
+├── integration/               # Cross-module integration tests
+└── e2e/                       # Playwright end-to-end suites
 ```
 
 # Components & Code Style

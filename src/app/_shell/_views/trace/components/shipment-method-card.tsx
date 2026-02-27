@@ -1,7 +1,10 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface ShipmentMethod {
@@ -72,6 +75,34 @@ export function ShipmentMethodCard({
 		}
 	}, [method, isNew, form])
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'Shipments Using Method',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Active Shipments',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew])
+
 	return (
 		<RecordDialog
 			open={open}
@@ -83,6 +114,7 @@ export function ShipmentMethodCard({
 				isNew ? 'New Shipment Method' : `Shipment Method ${method?.code ?? ''}`
 			}
 			description='Manage shipment method carrier configuration.'
+			actionGroups={actionGroups}
 			footer={
 				<>
 					<Button variant='outline' size='sm' onClick={onClose}>

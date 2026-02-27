@@ -1,6 +1,13 @@
 import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
 import { useOptimistic } from 'react'
-import { toast } from 'sonner'
+import type { ToastModuleId } from '@/lib/toast'
+import {
+	type MutationOperation,
+	type MutationToastPolicy,
+	notifyMutationError,
+	notifyMutationSuccess,
+	resolveMutationToastPolicy,
+} from './use-mutation-feedback'
 
 /** Uplink module keys (excludes health + ORPC internals) */
 export type UplinkModule = Exclude<keyof typeof $rpc, 'key' | 'health'>
@@ -19,32 +26,6 @@ function getRpc<M extends UplinkModule>(
 	entityId: EntityOf<M> & string,
 ): EntityRpc {
 	return ($rpc[moduleId] as unknown as Record<string, EntityRpc>)[entityId]
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-type MutationOperation = 'create' | 'update' | 'delete' | 'transitionStatus'
-
-function extractErrorMessage(error: unknown): string {
-	if (error instanceof Error) return error.message
-	if (typeof error === 'object' && error && 'message' in error)
-		return String((error as { message: unknown }).message)
-	return 'An unexpected error occurred'
-}
-
-function operationLabel(op: MutationOperation): string {
-	switch (op) {
-		case 'create':
-			return 'Create'
-		case 'update':
-			return 'Update'
-		case 'delete':
-			return 'Delete'
-		case 'transitionStatus':
-			return 'Status transition'
-	}
 }
 
 function applyToItems(
@@ -122,19 +103,57 @@ export function useEntityRecord<M extends UplinkModule>(
 export function useEntityMutations<M extends UplinkModule>(
 	moduleId: M,
 	entityId: EntityOf<M> & string,
-	opts?: { enableOptimistic?: boolean },
+	opts?: { enableOptimistic?: boolean; toastPolicy?: MutationToastPolicy },
 ) {
 	const rpc = getRpc(moduleId, entityId)
 	const queryClient = useQueryClient()
 	const optimistic = opts?.enableOptimistic ?? true
+	const toastModuleId = moduleId as ToastModuleId
+	const mutationToastPolicy = resolveMutationToastPolicy(
+		toastModuleId,
+		opts?.toastPolicy,
+	)
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: rpc.key() })
 	}
 
 	function createOptimisticCallbacks(operation: MutationOperation) {
+		const handleError = (
+			error: unknown,
+			context:
+				| {
+						snapshot?: readonly [readonly unknown[], unknown][]
+				  }
+				| undefined,
+		) => {
+			if (context?.snapshot) {
+				for (const [key, data] of context.snapshot) {
+					queryClient.setQueryData(key, data)
+				}
+			}
+			notifyMutationError({
+				moduleId: toastModuleId,
+				operation,
+				error,
+			})
+		}
+		const handleSuccess = () => {
+			notifyMutationSuccess({
+				moduleId: toastModuleId,
+				operation,
+				policy: mutationToastPolicy,
+			})
+		}
+
 		if (!optimistic) {
-			return { onSuccess: invalidate }
+			return {
+				onError: (error: unknown) => {
+					handleError(error, undefined)
+				},
+				onSuccess: handleSuccess,
+				onSettled: invalidate,
+			}
 		}
 		return {
 			onMutate: async (variables: Record<string, unknown>) => {
@@ -154,15 +173,9 @@ export function useEntityMutations<M extends UplinkModule>(
 					  }
 					| undefined,
 			) => {
-				if (context?.snapshot) {
-					for (const [key, data] of context.snapshot) {
-						queryClient.setQueryData(key, data)
-					}
-				}
-				toast.error(`${operationLabel(operation)} failed`, {
-					description: extractErrorMessage(error),
-				})
+				handleError(error, context)
 			},
+			onSuccess: handleSuccess,
 			onSettled: invalidate,
 		}
 	}

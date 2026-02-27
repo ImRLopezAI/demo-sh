@@ -9,7 +9,10 @@ import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
-import { RecordDialog } from '../../_shared/record-dialog'
+import {
+	RecordDialog,
+	type RecordDialogActionGroup,
+} from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -271,6 +274,67 @@ export function TransferCard({
 		],
 	)
 
+	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
+		if (isNew) return []
+		return [
+			{
+				label: 'Actions',
+				items: [
+					{
+						label: 'Ship Transfer',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'RELEASED',
+					},
+					{
+						label: 'Receive Transfer',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: currentStatus !== 'IN_TRANSIT',
+					},
+				],
+			},
+			{
+				label: 'Related',
+				items: [
+					{
+						label: 'From Location',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !header?.fromLocationCode,
+					},
+					{
+						label: 'To Location',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+						disabled: !header?.toLocationCode,
+					},
+				],
+			},
+			{
+				label: 'Navigate',
+				items: [
+					{
+						label: 'Transfer Lines',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+					{
+						label: 'Item Ledger Entries',
+						onClick: () => {
+							/* TODO: implement navigation */
+						},
+					},
+				],
+			},
+		]
+	}, [isNew, currentStatus, header?.fromLocationCode, header?.toLocationCode])
+
 	return (
 		<>
 			<RecordDialog
@@ -279,6 +343,7 @@ export function TransferCard({
 					if (!next) onClose()
 				}}
 				presentation={presentation}
+				actionGroups={actionGroups}
 				title={isNew ? 'New Transfer' : `Transfer ${header?.transferNo ?? ''}`}
 				description='Manage transfer header and lines.'
 				footer={
@@ -352,6 +417,14 @@ export function TransferCard({
 												<Form.Combo
 													value={field.value}
 													onValueChange={field.onChange}
+													itemToStringLabel={(code: string) => {
+														const loc = (locationsList?.items ?? []).find(
+															(l: Record<string, unknown>) => l.code === code,
+														) as Record<string, unknown> | undefined
+														return loc
+															? `${loc.code as string} - ${loc.name as string}`
+															: code
+													}}
 												>
 													<Form.Combo.Input
 														showClear
@@ -389,6 +462,14 @@ export function TransferCard({
 												<Form.Combo
 													value={field.value}
 													onValueChange={field.onChange}
+													itemToStringLabel={(code: string) => {
+														const loc = (locationsList?.items ?? []).find(
+															(l: Record<string, unknown>) => l.code === code,
+														) as Record<string, unknown> | undefined
+														return loc
+															? `${loc.code as string} - ${loc.name as string}`
+															: code
+													}}
 												>
 													<Form.Combo.Input
 														showClear

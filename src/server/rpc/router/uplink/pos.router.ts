@@ -4,6 +4,12 @@ import {
 	POS_TRANSACTION_TRANSITIONS,
 	TERMINAL_TRANSITIONS,
 } from '@server/db/constants'
+import {
+	BUILT_IN_LAYOUT_KEYS,
+	getBuiltInLayout,
+	renderReportFile,
+} from '@server/reporting'
+import { buildPosReceiptDataSet } from '@server/reporting/entity-adapters/pos-receipt'
 import { createRPCRouter, publicProcedure } from '@server/rpc/init'
 import z from 'zod'
 import { appendAuditLog, assertRole } from '../authz'
@@ -85,6 +91,11 @@ const governTransactionInputSchema = z.object({
 	reason: z.string().trim().min(1),
 	idempotencyKey: z.string().trim().optional(),
 	offlineOperationId: z.string().trim().optional(),
+})
+
+const generateReceiptInputSchema = z.object({
+	transactionId: z.string(),
+	builtInLayout: z.enum(BUILT_IN_LAYOUT_KEYS).default('THERMAL_RECEIPT'),
 })
 
 const readTenantId = (row: unknown) =>
@@ -255,6 +266,30 @@ const transactionsRouter = createRPCRouter({
 				idempotent: false,
 				conflict: null,
 			}
+		}),
+	generateReceipt: publicProcedure
+		.input(generateReceiptInputSchema)
+		.route({
+			method: 'POST',
+			summary: 'Generate POS receipt PDF for a transaction',
+		})
+		.handler(async ({ input, context }) => {
+			assertRole(context, 'AGENT', 'pos receipt generation')
+
+			const dataSet = buildPosReceiptDataSet(context, input.transactionId)
+			const layout = getBuiltInLayout(input.builtInLayout)
+			const file = await renderReportFile({
+				layout,
+				dataSet,
+				filenameSuffix: 'receipt',
+			})
+
+			context.resHeaders?.set('Content-Type', 'application/pdf')
+			context.resHeaders?.set(
+				'Content-Disposition',
+				`attachment; filename="${file.name}"`,
+			)
+			return file
 		}),
 })
 

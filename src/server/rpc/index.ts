@@ -1,11 +1,12 @@
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins'
 import { onError } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
-import { BatchHandlerPlugin } from '@orpc/server/plugins'
+import { BatchHandlerPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import {
 	createRPCRouter,
 	createRpcContext,
+	type RpcContext,
 	resolveServerBootstrapAuthIdentity,
 } from './init'
 import { healthRouter } from './router/health.router'
@@ -24,6 +25,7 @@ const handler = new RPCHandler(rpcRouter, {
 		}),
 	],
 	plugins: [
+		new ResponseHeadersPlugin<RpcContext>(),
 		new BatchHandlerPlugin(),
 		new OpenAPIReferencePlugin({
 			schemaConverters: [new ZodToJsonSchemaConverter()],
