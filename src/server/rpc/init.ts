@@ -72,6 +72,15 @@ export async function createRpcContext(ctx: RpcContext) {
 		})
 	}
 
+	// In non-production, allow E2E tests to override the role via header
+	const isProduction = process.env.NODE_ENV === 'production'
+	const testRoleHeader = !isProduction
+		? ctx.headers.get('x-test-role')
+		: null
+	const effectiveRole = testRoleHeader
+		? normalizeRole(testRoleHeader)
+		: identity.role
+
 	return {
 		db,
 		services: {},
@@ -79,7 +88,7 @@ export async function createRpcContext(ctx: RpcContext) {
 		auth: {
 			tenantId: identity.tenantId,
 			userId: identity.userId,
-			role: identity.role,
+			role: effectiveRole,
 		},
 	}
 }

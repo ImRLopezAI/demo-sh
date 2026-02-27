@@ -4,11 +4,13 @@ const useManagedWebServer = process.env.PLAYWRIGHT_USE_WEBSERVER !== '0'
 
 export default defineConfig({
 	testDir: 'test/e2e',
-	timeout: 60_000,
+	fullyParallel: true,
+	timeout: 30_000,
 	expect: {
 		timeout: 10_000,
 	},
-	retries: process.env.CI ? 1 : 0,
+	retries: process.env.CI ? 2 : 0,
+	workers: process.env.CI ? 2 : undefined,
 	reporter: [
 		['list'],
 		['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -16,7 +18,7 @@ export default defineConfig({
 	outputDir: 'test-results/playwright',
 	use: {
 		baseURL: 'http://localhost:3000',
-		trace: 'retain-on-failure',
+		trace: process.env.CI ? 'on' : 'retain-on-failure',
 		video: 'retain-on-failure',
 		screenshot: 'only-on-failure',
 	},
@@ -24,6 +26,11 @@ export default defineConfig({
 		{
 			name: 'chromium',
 			use: { ...devices['Desktop Chrome'] },
+		},
+		{
+			name: 'mobile',
+			use: { ...devices['iPhone 13'] },
+			grep: /@mobile/,
 		},
 	],
 	...(useManagedWebServer
