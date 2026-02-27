@@ -1,9 +1,13 @@
-import { useMutation, useQueryClient } from '@lib/rpc'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import { ShoppingCart, XCircle } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
-import { $rpc } from '@/lib/rpc'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface Cart {
@@ -45,6 +49,16 @@ export default function CartsList() {
 		}),
 	})
 
+	const transitionStatus = useMutation({
+		...$rpc.market.carts.transitionStatus.mutationOptions({
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: $rpc.market.carts.key(),
+				})
+			},
+		}),
+	})
+
 	const handleCheckout = async (cartId: string) => {
 		setActiveCheckoutId(cartId)
 		try {
@@ -53,6 +67,24 @@ export default function CartsList() {
 			setActiveCheckoutId(null)
 		}
 	}
+
+	const handleBulkCheckout = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await checkoutCart.mutateAsync({ cartId: id })
+			}
+		},
+		[checkoutCart],
+	)
+
+	const handleBulkAbandon = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await transitionStatus.mutateAsync({ id, toStatus: 'ABANDONED' })
+			}
+		},
+		[transitionStatus],
+	)
 
 	return (
 		<div className='space-y-8 pb-8'>
@@ -65,6 +97,7 @@ export default function CartsList() {
 				<DataGrid
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -115,6 +148,53 @@ export default function CartsList() {
 							}
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy =
+									checkoutCart.isPending || transitionStatus.isPending
+								const allOpen = records.every((r) => r.status === 'OPEN')
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpen}
+											onClick={() => {
+												void handleBulkCheckout(ids)
+											}}
+										>
+											<ShoppingCart className='size-3.5' aria-hidden='true' />
+											Checkout
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpen}
+											onClick={() => {
+												void handleBulkAbandon(ids)
+											}}
+										>
+											<XCircle className='size-3.5' aria-hidden='true' />
+											Abandon
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

@@ -1,8 +1,13 @@
-import { Plus } from 'lucide-react'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import { Ban, CheckCircle, Package, Plus } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { PurchaseOrderCard } from './components/purchase-order-card'
@@ -29,11 +34,48 @@ interface PurchaseOrder {
 
 export default function PurchaseOrdersList() {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
+	const queryClient = useQueryClient()
 
 	const { DataGrid, windowSize } = useModuleData<
 		'replenishment',
 		PurchaseOrder
 	>('replenishment', 'purchaseOrders', 'all')
+
+	const invalidate = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.replenishment.purchaseOrders.key(),
+		})
+	}, [queryClient])
+
+	const transitionStatus = useMutation({
+		...$rpc.replenishment.purchaseOrders.transitionStatus.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const receivePO = useMutation({
+		...$rpc.replenishment.purchaseOrders.receive.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
+			for (const id of ids) {
+				await transitionStatus.mutateAsync({ id, toStatus })
+			}
+		},
+		[transitionStatus],
+	)
+
+	const handleBulkReceive = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await receivePO.mutateAsync({ purchaseOrderId: id })
+			}
+		},
+		[receivePO],
+	)
 
 	const handleEdit = React.useCallback(
 		(row: PurchaseOrder) => {
@@ -78,6 +120,7 @@ export default function PurchaseOrdersList() {
 				<DataGrid
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -132,6 +175,70 @@ export default function PurchaseOrdersList() {
 							formatter={(v, f) => f.currency(v.totalAmount)}
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy = transitionStatus.isPending || receivePO.isPending
+								const allPending = records.every(
+									(r) => r.status === 'PENDING_APPROVAL',
+								)
+								const allApproved = records.every(
+									(r) => r.status === 'APPROVED',
+								)
+								const allCancellable = records.every(
+									(r) =>
+										r.status === 'DRAFT' || r.status === 'PENDING_APPROVAL',
+								)
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allPending}
+											onClick={() => {
+												void handleBulkTransition(ids, 'APPROVED')
+											}}
+										>
+											<CheckCircle className='size-3.5' aria-hidden='true' />
+											Approve
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allApproved}
+											onClick={() => {
+												void handleBulkReceive(ids)
+											}}
+										>
+											<Package className='size-3.5' aria-hidden='true' />
+											Receive
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allCancellable}
+											onClick={() => {
+												void handleBulkTransition(ids, 'CANCELED')
+											}}
+										>
+											<Ban className='size-3.5' aria-hidden='true' />
+											Cancel
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

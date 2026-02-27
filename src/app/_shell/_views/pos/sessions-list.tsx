@@ -1,6 +1,12 @@
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import { Lock, Pause } from 'lucide-react'
 import * as React from 'react'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { SessionCard } from './components/session-card'
@@ -22,11 +28,33 @@ interface PosSession {
 
 export default function SessionsList() {
 	const { close, openDetail, selectedId } = useRecordSearchState()
+	const queryClient = useQueryClient()
 
 	const { DataGrid, windowSize } = useModuleData<'pos', PosSession>(
 		'pos',
 		'sessions',
 		'all',
+	)
+
+	const invalidate = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.pos.sessions.key(),
+		})
+	}, [queryClient])
+
+	const transitionStatus = useMutation({
+		...$rpc.pos.sessions.transitionStatus.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
+			for (const id of ids) {
+				await transitionStatus.mutateAsync({ id, toStatus })
+			}
+		},
+		[transitionStatus],
 	)
 
 	const handleEdit = React.useCallback(
@@ -59,6 +87,7 @@ export default function SessionsList() {
 				<DataGrid
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -114,6 +143,55 @@ export default function SessionsList() {
 							formatter={(v, f) => f.currency(v.totalSales)}
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy = transitionStatus.isPending
+								const allOpenOrPaused = records.every(
+									(r) => r.status === 'OPEN' || r.status === 'PAUSED',
+								)
+								const allOpen = records.every((r) => r.status === 'OPEN')
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpenOrPaused}
+											onClick={() => {
+												void handleBulkTransition(ids, 'CLOSED')
+											}}
+										>
+											<Lock className='size-3.5' aria-hidden='true' />
+											Close Shift
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpen}
+											onClick={() => {
+												void handleBulkTransition(ids, 'PAUSED')
+											}}
+										>
+											<Pause className='size-3.5' aria-hidden='true' />
+											Pause
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

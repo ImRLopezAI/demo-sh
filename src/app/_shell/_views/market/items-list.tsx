@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ItemCard } from './components/item-card'
 
@@ -62,6 +63,7 @@ export default function ItemsList() {
 				<DataGrid
 					variant='card'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -98,6 +100,16 @@ export default function ItemsList() {
 						<DataGrid.Column accessorKey='uom' title='UOM' />
 						<DataGrid.Column accessorKey='barcode' title='Barcode' />
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

@@ -1,5 +1,12 @@
 import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
-import { Plus, Save } from 'lucide-react'
+import {
+	CheckCircle,
+	Play,
+	Plus,
+	RotateCcw,
+	Save,
+	ShieldAlert,
+} from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +27,10 @@ import {
 } from '@/components/ui/select'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TaskCard } from './components/task-card'
 
@@ -67,6 +78,27 @@ export default function TasksList() {
 		'hub',
 		'operationTasks',
 		'all',
+	)
+
+	const invalidateTasks = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.hub.operationTasks.key(),
+		})
+	}, [queryClient])
+
+	const transitionStatus = useMutation({
+		...$rpc.hub.operationTasks.transitionStatus.mutationOptions({
+			onSuccess: invalidateTasks,
+		}),
+	})
+
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
+			for (const id of ids) {
+				await transitionStatus.mutateAsync({ id, toStatus })
+			}
+		},
+		[transitionStatus],
 	)
 
 	const handleEdit = React.useCallback(
@@ -214,6 +246,7 @@ export default function TasksList() {
 				<DataGrid
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -259,6 +292,79 @@ export default function TasksList() {
 							cellVariant='select'
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy = transitionStatus.isPending
+								const allOpen = records.every((r) => r.status === 'OPEN')
+								const allInProgress = records.every(
+									(r) => r.status === 'IN_PROGRESS',
+								)
+								const allOpenOrInProgress = records.every(
+									(r) => r.status === 'OPEN' || r.status === 'IN_PROGRESS',
+								)
+								const allBlockedOrDone = records.every(
+									(r) => r.status === 'BLOCKED' || r.status === 'DONE',
+								)
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpen}
+											onClick={() => {
+												void handleBulkTransition(ids, 'IN_PROGRESS')
+											}}
+										>
+											<Play className='size-3.5' aria-hidden='true' />
+											Start
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allInProgress}
+											onClick={() => {
+												void handleBulkTransition(ids, 'DONE')
+											}}
+										>
+											<CheckCircle className='size-3.5' aria-hidden='true' />
+											Complete
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allOpenOrInProgress}
+											onClick={() => {
+												void handleBulkTransition(ids, 'BLOCKED')
+											}}
+										>
+											<ShieldAlert className='size-3.5' aria-hidden='true' />
+											Block
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allBlockedOrDone}
+											onClick={() => {
+												void handleBulkTransition(ids, 'OPEN')
+											}}
+										>
+											<RotateCcw className='size-3.5' aria-hidden='true' />
+											Reopen
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 

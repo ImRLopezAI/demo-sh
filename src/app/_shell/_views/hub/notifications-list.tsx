@@ -1,5 +1,4 @@
 import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
-import type { Table } from '@tanstack/react-table'
 import {
 	AlertTriangle,
 	Archive,
@@ -10,7 +9,6 @@ import {
 	ShieldAlert,
 } from 'lucide-react'
 import * as React from 'react'
-import type { SelectionState } from '@/components/data-grid/types/data-grid'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -30,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface ModuleNotification {
@@ -108,39 +107,6 @@ const canTransitionTo = (
 	status: ModuleNotification['status'],
 	toStatus: 'READ' | 'ARCHIVED',
 ) => NOTIFICATION_TRANSITIONS[status].includes(toStatus)
-
-const resolveSelectedNotificationIds = (
-	table: Table<ModuleNotification>,
-	selectionState?: SelectionState,
-) => {
-	const selectedByRows = table
-		.getSelectedRowModel()
-		.rows.map((row) => row.original._id)
-		.filter(Boolean)
-
-	if (selectedByRows.length > 0) {
-		return selectedByRows
-	}
-
-	if (!selectionState || selectionState.selectedCells.size === 0) {
-		return []
-	}
-
-	const rowModel = table.getRowModel().rows
-	const selectedIds = new Set<string>()
-
-	for (const cellKey of selectionState.selectedCells) {
-		const [rowIndexRaw] = cellKey.split(':')
-		const rowIndex = Number.parseInt(rowIndexRaw ?? '', 10)
-		if (!Number.isFinite(rowIndex) || rowIndex < 0) continue
-		const rowId = rowModel[rowIndex]?.original?._id
-		if (rowId) {
-			selectedIds.add(rowId)
-		}
-	}
-
-	return Array.from(selectedIds)
-}
 
 export default function NotificationsList() {
 	const queryClient = useQueryClient()
@@ -868,10 +834,7 @@ export default function NotificationsList() {
 						<DataGrid.ActionBar.Selection>
 							{(table, state) => (
 								<span data-testid='notifications-selected-count'>
-									{
-										resolveSelectedNotificationIds(table, state.selectionState)
-											.length
-									}{' '}
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
 									selected
 								</span>
 							)}
@@ -879,7 +842,7 @@ export default function NotificationsList() {
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
 							{(table, state) => {
-								const selectedIds = resolveSelectedNotificationIds(
+								const selectedIds = resolveSelectedIds(
 									table,
 									state.selectionState,
 								)

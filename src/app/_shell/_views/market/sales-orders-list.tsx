@@ -1,10 +1,15 @@
 import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
-import { Plus } from 'lucide-react'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import { Ban, Plus, Send, Unlock } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
@@ -30,10 +35,63 @@ export default function SalesOrdersList() {
 		[searchParams],
 	)
 
+	const queryClient = useQueryClient()
+
 	const { DataGrid, windowSize } = useModuleData<'market', SalesOrder>(
 		'market',
 		'salesOrders',
 		'all',
+	)
+
+	const invalidate = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.market.salesOrders.key(),
+		})
+	}, [queryClient])
+
+	const submitForApproval = useMutation({
+		...$rpc.market.salesOrders.submitForApproval.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const transitionStatus = useMutation({
+		...$rpc.market.salesOrders.transitionStatus.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const cancelWithRelease = useMutation({
+		...$rpc.market.salesOrders.cancelWithRelease.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const handleBulkSubmit = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await submitForApproval.mutateAsync({ id })
+			}
+		},
+		[submitForApproval],
+	)
+
+	const handleBulkRelease = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await transitionStatus.mutateAsync({ id, toStatus: 'RELEASED' })
+			}
+		},
+		[transitionStatus],
+	)
+
+	const handleBulkCancel = React.useCallback(
+		async (ids: string[]) => {
+			for (const id of ids) {
+				await cancelWithRelease.mutateAsync({ id })
+			}
+		},
+		[cancelWithRelease],
 	)
 
 	const pushWithSearch = React.useCallback(
@@ -164,6 +222,7 @@ export default function SalesOrdersList() {
 				<DataGrid
 					variant='lined'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -204,6 +263,71 @@ export default function SalesOrdersList() {
 							formatter={(v, f) => f.currency(v.totalAmount)}
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy =
+									submitForApproval.isPending ||
+									transitionStatus.isPending ||
+									cancelWithRelease.isPending
+								const allDraft = records.every((r) => r.status === 'DRAFT')
+								const allApproved = records.every(
+									(r) => r.status === 'APPROVED',
+								)
+								const allCancellable = records.every(
+									(r) =>
+										r.status === 'DRAFT' || r.status === 'PENDING_APPROVAL',
+								)
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allDraft}
+											onClick={() => {
+												void handleBulkSubmit(ids)
+											}}
+										>
+											<Send className='size-3.5' aria-hidden='true' />
+											Submit for Approval
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allApproved}
+											onClick={() => {
+												void handleBulkRelease(ids)
+											}}
+										>
+											<Unlock className='size-3.5' aria-hidden='true' />
+											Release
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !allCancellable}
+											onClick={() => {
+												void handleBulkCancel(ids)
+											}}
+										>
+											<Ban className='size-3.5' aria-hidden='true' />
+											Cancel
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

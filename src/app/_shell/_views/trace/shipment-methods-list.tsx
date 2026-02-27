@@ -1,8 +1,13 @@
-import { Plus } from 'lucide-react'
+import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import { CheckCircle, Plus, XCircle } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import {
+	resolveSelectedIds,
+	resolveSelectedRecords,
+} from '../_shared/resolve-selected-ids'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ShipmentMethodCard } from './components/shipment-method-card'
 
@@ -15,10 +20,32 @@ interface ShipmentMethod {
 
 export default function ShipmentMethodsList() {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
+	const queryClient = useQueryClient()
 	const { DataGrid, windowSize } = useModuleData<'trace', ShipmentMethod>(
 		'trace',
 		'shipmentMethods',
 		'all',
+	)
+
+	const invalidate = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.trace.shipmentMethods.key(),
+		})
+	}, [queryClient])
+
+	const updateMethod = useMutation({
+		...$rpc.trace.shipmentMethods.update.mutationOptions({
+			onSuccess: invalidate,
+		}),
+	})
+
+	const handleBulkActive = React.useCallback(
+		async (ids: string[], active: boolean) => {
+			for (const id of ids) {
+				await updateMethod.mutateAsync({ id, data: { active } })
+			}
+		},
+		[updateMethod],
 	)
 
 	const handleEdit = React.useCallback(
@@ -59,6 +86,7 @@ export default function ShipmentMethodsList() {
 				<DataGrid
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
+					withSelect
 				>
 					<DataGrid.Header className='border-border/50 border-b bg-muted/20 px-6 py-4'>
 						<DataGrid.Toolbar filter sort search export />
@@ -79,6 +107,53 @@ export default function ShipmentMethodsList() {
 							cellVariant='checkbox'
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => {
+								const records = resolveSelectedRecords(
+									table,
+									state.selectionState,
+								)
+								const ids = records.map((r) => r._id)
+								const hasSelection = ids.length > 0
+								const isBusy = updateMethod.isPending
+								const hasInactive = records.some((r) => !r.active)
+								const hasActive = records.some((r) => r.active)
+
+								return (
+									<>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !hasInactive}
+											onClick={() => {
+												void handleBulkActive(ids, true)
+											}}
+										>
+											<CheckCircle className='size-3.5' aria-hidden='true' />
+											Activate
+										</DataGrid.ActionBar.Item>
+										<DataGrid.ActionBar.Item
+											disabled={!hasSelection || isBusy || !hasActive}
+											onClick={() => {
+												void handleBulkActive(ids, false)
+											}}
+										>
+											<XCircle className='size-3.5' aria-hidden='true' />
+											Deactivate
+										</DataGrid.ActionBar.Item>
+									</>
+								)
+							}}
+						</DataGrid.ActionBar.Group>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>

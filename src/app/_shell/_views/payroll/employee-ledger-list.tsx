@@ -1,5 +1,6 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
 
 interface EmployeeLedgerEntry {
 	_id: string
@@ -31,6 +32,7 @@ export default function EmployeeLedgerList() {
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
 				<DataGrid
+					withSelect
 					variant='flat'
 					height={Math.max(windowSize.height - 150, 400)}
 				>
@@ -88,6 +90,16 @@ export default function EmployeeLedgerList() {
 							title='Payroll Period'
 						/>
 					</DataGrid.Columns>
+					<DataGrid.ActionBar>
+						<DataGrid.ActionBar.Selection>
+							{(table, state) => (
+								<span>
+									{resolveSelectedIds(table, state.selectionState).length}{' '}
+									selected
+								</span>
+							)}
+						</DataGrid.ActionBar.Selection>
+					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>
 		</div>
