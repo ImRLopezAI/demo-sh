@@ -192,6 +192,8 @@ export function useDataGridSearch<TData>({
 				}
 			})
 
+			tableRef.current?.setGlobalFilter('')
+
 			if (
 				dataGridRef.current &&
 				document.activeElement !== dataGridRef.current
@@ -199,7 +201,7 @@ export function useDataGridSearch<TData>({
 				dataGridRef.current.focus()
 			}
 		},
-		[store],
+		[store, tableRef],
 	)
 
 	const compileCurrentQuery = React.useCallback(
@@ -405,8 +407,11 @@ export function useDataGridSearch<TData>({
 	)
 
 	const onSearchQueryChange = React.useCallback(
-		(query: string) => store.setState('searchQuery', query),
-		[store],
+		(query: string) => {
+			store.setState('searchQuery', query)
+			tableRef.current?.setGlobalFilter(query)
+		},
+		[store, tableRef],
 	)
 
 	const onSearchCaseSensitiveChange = React.useCallback(

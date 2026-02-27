@@ -249,13 +249,13 @@ function Hero() {
 				</div>
 
 				<div className='flex w-full flex-col gap-4 lg:w-120'>
-					<div className='grid  grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
+					<div className='grid grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
 						{heroModules.map((mod) => (
 							<Link
 								to='/$'
 								params={{ _splat: `${mod.name}/dashboard` }}
 								key={mod.name}
-								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5 '
+								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5'
 							>
 								<mod.icon className='size-5 text-zinc-400' />
 								<span className='font-medium text-[13px] text-white'>

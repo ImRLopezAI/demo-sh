@@ -125,6 +125,23 @@ function resolveSchemas(config: CrudRouterConfig) {
 	return { createSchema, updateSchema }
 }
 
+const filterValueSchema = z.object({
+	operator: z.string(),
+	value: z
+		.union([z.string(), z.number(), z.boolean(), z.array(z.string())])
+		.optional(),
+	endValue: z.union([z.string(), z.number()]).optional(),
+})
+
+const structuredFiltersSchema = z
+	.array(
+		z.object({
+			id: z.string(),
+			value: filterValueSchema,
+		}),
+	)
+	.optional()
+
 const queryOptsSchema = z.object({
 	with: z.record(z.string(), z.boolean()).optional(),
 	filters: z
@@ -133,6 +150,7 @@ const queryOptsSchema = z.object({
 			z.union([z.string(), z.number(), z.boolean(), z.null()]),
 		)
 		.optional(),
+	structuredFilters: structuredFiltersSchema,
 	orderBy: z
 		.object({
 			field: z.string(),
@@ -141,6 +159,19 @@ const queryOptsSchema = z.object({
 		.optional(),
 	columns: z.record(z.string(), z.boolean()).optional(),
 })
+
+function isDateStr(value: unknown): boolean {
+	if (value instanceof Date) return !Number.isNaN(value.getTime())
+	if (typeof value === 'string') {
+		const d = new Date(value)
+		return !Number.isNaN(d.getTime())
+	}
+	return false
+}
+
+function toDateStr(value: unknown): string {
+	return new Date(value as string | Date).toDateString()
+}
 
 export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 	const { createSchema, updateSchema } = resolveSchemas(config)
@@ -160,11 +191,168 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 		return true
 	}
 
+	const matchesStructuredFilters = (
+		row: Record<string, any>,
+		filters:
+			| Array<{
+					id: string
+					value: { operator: string; value?: any; endValue?: any }
+			  }>
+			| undefined,
+	) => {
+		if (!filters || filters.length === 0) return true
+		for (const filter of filters) {
+			const cellValue = row[filter.id]
+			const { operator, value, endValue } = filter.value
+
+			// Empty/not-empty checks
+			if (operator === 'isEmpty') {
+				const empty =
+					cellValue == null ||
+					cellValue === '' ||
+					(Array.isArray(cellValue) && cellValue.length === 0)
+				if (!empty) return false
+				continue
+			}
+			if (operator === 'isNotEmpty') {
+				const empty =
+					cellValue == null ||
+					cellValue === '' ||
+					(Array.isArray(cellValue) && cellValue.length === 0)
+				if (empty) return false
+				continue
+			}
+
+			// Boolean operators
+			if (operator === 'isTrue') {
+				if (cellValue !== true) return false
+				continue
+			}
+			if (operator === 'isFalse') {
+				if (cellValue !== false && cellValue) return false
+				continue
+			}
+
+			// Skip if no filter value provided
+			if (value === undefined || value === null || value === '') continue
+
+			const cellStr = String(cellValue ?? '').toLowerCase()
+			const valStr =
+				typeof value === 'string' ? value.toLowerCase() : String(value)
+
+			// Text operators
+			if (operator === 'contains') {
+				if (!cellStr.includes(valStr)) return false
+				continue
+			}
+			if (operator === 'notContains') {
+				if (cellStr.includes(valStr)) return false
+				continue
+			}
+			if (operator === 'startsWith') {
+				if (!cellStr.startsWith(valStr)) return false
+				continue
+			}
+			if (operator === 'endsWith') {
+				if (!cellStr.endsWith(valStr)) return false
+				continue
+			}
+
+			// Equality (handles number, date, string)
+			if (operator === 'equals') {
+				if (typeof cellValue === 'number' && typeof value === 'number') {
+					if (cellValue !== value) return false
+				} else if (typeof value === 'string' && isDateStr(cellValue)) {
+					if (toDateStr(cellValue) !== toDateStr(value)) return false
+				} else {
+					if (cellStr !== valStr) return false
+				}
+				continue
+			}
+			if (operator === 'notEquals') {
+				if (typeof cellValue === 'number' && typeof value === 'number') {
+					if (cellValue === value) return false
+				} else if (typeof value === 'string' && isDateStr(cellValue)) {
+					if (toDateStr(cellValue) === toDateStr(value)) return false
+				} else {
+					if (cellStr === valStr) return false
+				}
+				continue
+			}
+
+			// Numeric operators
+			if (typeof cellValue === 'number' && typeof value === 'number') {
+				if (operator === 'greaterThan' && !(cellValue > value)) return false
+				if (operator === 'greaterThanOrEqual' && !(cellValue >= value))
+					return false
+				if (operator === 'lessThan' && !(cellValue < value)) return false
+				if (operator === 'lessThanOrEqual' && !(cellValue <= value))
+					return false
+				if (
+					operator === 'isBetween' &&
+					typeof endValue === 'number' &&
+					!(cellValue >= value && cellValue <= endValue)
+				)
+					return false
+				continue
+			}
+
+			// Date operators
+			if (typeof value === 'string' && isDateStr(cellValue)) {
+				const cellDate = new Date(cellValue)
+				const filterDate = new Date(value)
+				if (operator === 'before' && !(cellDate < filterDate)) return false
+				if (operator === 'after' && !(cellDate > filterDate)) return false
+				if (operator === 'onOrBefore' && !(cellDate <= filterDate)) return false
+				if (operator === 'onOrAfter' && !(cellDate >= filterDate)) return false
+				if (operator === 'isBetween' && typeof endValue === 'string') {
+					const endDate = new Date(endValue)
+					if (!(cellDate >= filterDate && cellDate <= endDate)) return false
+				}
+				continue
+			}
+
+			// Select operators
+			if (operator === 'is') {
+				const match = Array.isArray(cellValue)
+					? cellValue.some((v: any) => String(v) === String(value))
+					: String(cellValue) === String(value)
+				if (!match) return false
+				continue
+			}
+			if (operator === 'isNot') {
+				const match = Array.isArray(cellValue)
+					? cellValue.some((v: any) => String(v) === String(value))
+					: String(cellValue) === String(value)
+				if (match) return false
+				continue
+			}
+			if (operator === 'isAnyOf' && Array.isArray(value)) {
+				const match = Array.isArray(cellValue)
+					? cellValue.some((v: any) =>
+							value.some((fv: string) => String(v) === String(fv)),
+						)
+					: value.some((fv: string) => String(cellValue) === String(fv))
+				if (!match) return false
+				continue
+			}
+			if (operator === 'isNoneOf' && Array.isArray(value)) {
+				const match = Array.isArray(cellValue)
+					? cellValue.some((v: any) =>
+							value.some((fv: string) => String(v) === String(fv)),
+						)
+					: value.some((fv: string) => String(cellValue) === String(fv))
+				if (match) return false
+			}
+		}
+		return true
+	}
+
 	const listInputSchema = z
 		.object({
-			limit: z.number().default(25),
-			offset: z.number().default(0),
-			search: z.string().optional(),
+			limit: z.number().min(1).max(200).default(25),
+			offset: z.number().min(0).default(0),
+			search: z.string().max(200).optional(),
 		})
 		.merge(queryOptsSchema)
 		.default({ limit: 25, offset: 0 })
@@ -188,9 +376,9 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 	const viewListInputSchema = z
 		.object({
 			viewId: z.string(),
-			limit: z.number().default(25),
-			offset: z.number().default(0),
-			search: z.string().optional(),
+			limit: z.number().min(1).max(200).default(25),
+			offset: z.number().min(0).default(0),
+			search: z.string().max(200).optional(),
 		})
 		.merge(queryOptsSchema)
 		.default({ viewId: 'overview', limit: 25, offset: 0 })
@@ -257,6 +445,8 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 						where: (row) => {
 							if ((row.tenantId ?? 'demo-tenant') !== tenantId) return false
 							if (!matchesFilters(row, input.filters)) return false
+							if (!matchesStructuredFilters(row, input.structuredFilters))
+								return false
 							if (search) {
 								return Object.values(row).some((v: any) => {
 									if (v == null) return false
@@ -301,6 +491,8 @@ export function createTenantScopedCrudRouter(config: CrudRouterConfig) {
 						where: (row) => {
 							if ((row.tenantId ?? 'demo-tenant') !== tenantId) return false
 							if (!matchesFilters(row, input.filters)) return false
+							if (!matchesStructuredFilters(row, input.structuredFilters))
+								return false
 							if (search) {
 								return Object.values(row).some((v: any) => {
 									if (v == null) return false
