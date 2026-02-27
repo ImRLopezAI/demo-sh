@@ -2,10 +2,25 @@ import type { Locator, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 async function selectFirstOption(trigger: Locator, page: Page) {
-	await trigger.click()
-	const firstOption = page.getByRole('option').first()
-	await expect(firstOption).toBeVisible()
-	await firstOption.click()
+	const option = page.locator('[role="option"]').first()
+
+	// Options load asynchronously — retry open/close cycle until they populate
+	await expect
+		.poll(
+			async () => {
+				if (await option.isVisible().catch(() => false)) return true
+				// Close any open dropdown first, then re-open to check for loaded data
+				await page.keyboard.press('Escape')
+				await page.waitForTimeout(300)
+				await trigger.click()
+				await page.waitForTimeout(500)
+				return option.isVisible().catch(() => false)
+			},
+			{ timeout: 15_000, intervals: [500, 1_000, 1_500, 2_000] },
+		)
+		.toBe(true)
+
+	await option.click()
 }
 
 async function openEditorFromNewButton(
