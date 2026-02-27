@@ -28,9 +28,9 @@ test.describe('ledger invoice lifecycle @functional', () => {
 			// Click first invoice row's document number cell
 			await grid.clickCell(0, 'Document No.')
 			// Detail card should show
-			await expect(
-				page.getByRole('heading', { name: /invoice/i }),
-			).toBeVisible({ timeout: 10_000 })
+			await expect(page.getByRole('heading', { name: /invoice/i })).toBeVisible(
+				{ timeout: 10_000 },
+			)
 		}
 	})
 
@@ -44,9 +44,9 @@ test.describe('ledger invoice lifecycle @functional', () => {
 		const newButton = page.getByRole('button', { name: /new/i })
 		if (await newButton.isVisible()) {
 			await newButton.click()
-			await expect(
-				page.getByRole('heading', { name: /invoice/i }),
-			).toBeVisible({ timeout: 10_000 })
+			await expect(page.getByRole('heading', { name: /invoice/i })).toBeVisible(
+				{ timeout: 10_000 },
+			)
 		}
 	})
 })

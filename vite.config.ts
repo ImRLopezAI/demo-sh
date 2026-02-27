@@ -11,11 +11,11 @@ const config = defineConfig({
 	plugins: [
 		vinext(),
 		// this is the plugin that enables path aliases
+		viteReact(),
 		viteTsConfigPaths({
 			projects: ['./tsconfig.json'],
 		}),
 		tailwindcss(),
-		viteReact(),
 	],
 	server: {
 		allowedHosts: true,

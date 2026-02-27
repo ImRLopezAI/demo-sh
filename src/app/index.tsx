@@ -163,7 +163,9 @@ function Header() {
 						<ArrowUpRight className='size-5 text-white' />
 					</div>
 				</div>
-				<span className='font-extrabold text-[28px] text-white'>Uplink</span>
+				<span className='font-extrabold font-heading text-[28px] text-white'>
+					Uplink
+				</span>
 			</div>
 
 			<nav className='hidden items-center gap-10 md:flex'>
@@ -213,13 +215,13 @@ function Hero() {
 					</div>
 
 					<div className='flex flex-col'>
-						<span className='font-extrabold text-5xl text-white leading-[1.05] tracking-[-3px] lg:text-[72px]'>
+						<span className='font-extrabold font-heading text-5xl text-white leading-[1.05] tracking-[-3px] lg:text-[72px]'>
 							Unify your
 						</span>
-						<span className='font-extrabold text-5xl text-[#32D583] leading-[1.05] tracking-[-3px] lg:text-[72px]'>
+						<span className='font-extrabold font-heading text-5xl text-[#32D583] leading-[1.05] tracking-[-3px] lg:text-[72px]'>
 							business
 						</span>
-						<span className='font-extrabold text-5xl text-white leading-[1.05] tracking-[-3px] lg:text-[72px]'>
+						<span className='font-extrabold font-heading text-5xl text-white leading-[1.05] tracking-[-3px] lg:text-[72px]'>
 							operations
 						</span>
 					</div>
@@ -246,14 +248,14 @@ function Hero() {
 					</div>
 				</div>
 
-				<div className='flex w-full flex-col gap-4 lg:w-[480px]'>
-					<div className='grid grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
+				<div className='flex w-full flex-col gap-4 lg:w-120'>
+					<div className='grid  grid-cols-3 gap-0.5 rounded-xl bg-zinc-800 p-0.5'>
 						{heroModules.map((mod) => (
 							<Link
 								to='/$'
 								params={{ _splat: `${mod.name}/dashboard` }}
 								key={mod.name}
-								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5'
+								className='flex flex-col gap-2 rounded-[10px] bg-zinc-900 p-5 '
 							>
 								<mod.icon className='size-5 text-zinc-400' />
 								<span className='font-medium text-[13px] text-white'>
@@ -321,7 +323,7 @@ function Services() {
 							Platform Modules
 						</span>
 					</div>
-					<h2 className='font-bold text-3xl text-white leading-[1.1] tracking-[-1px] lg:text-5xl'>
+					<h2 className='font-bold font-heading text-3xl text-white leading-[1.1] tracking-[-1px] lg:text-5xl'>
 						Nine modules.
 						<br />
 						One platform.
@@ -382,7 +384,7 @@ function Stats() {
 							Platform Scale
 						</span>
 					</div>
-					<h2 className='max-w-[380px] font-bold text-[40px] text-white leading-[1.2] tracking-[-1px]'>
+					<h2 className='max-w-[380px] font-bold font-heading text-[40px] text-white leading-[1.2] tracking-[-1px]'>
 						Built for enterprises that demand reliability
 					</h2>
 					<p className='max-w-[360px] text-base text-zinc-500 leading-[1.6]'>
@@ -398,7 +400,7 @@ function Stats() {
 							className={`flex flex-col justify-end gap-3 bg-black ${i < 2 ? 'p-8' : 'p-10'}`}
 						>
 							<span
-								className={`font-extrabold text-4xl leading-none tracking-[-2px] lg:text-[56px] ${stat.accent ? 'text-[#32D583]' : 'text-white'}`}
+								className={`font-extrabold font-heading text-4xl leading-none tracking-[-2px] lg:text-[56px] ${stat.accent ? 'text-[#32D583]' : 'text-white'}`}
 							>
 								{stat.value}
 							</span>
@@ -426,14 +428,14 @@ function Testimonial() {
 							Customer Stories
 						</span>
 					</div>
-					<h2 className='font-bold text-4xl text-zinc-900 leading-[1.2] tracking-[-1px]'>
+					<h2 className='font-bold font-heading text-4xl text-zinc-900 leading-[1.2] tracking-[-1px]'>
 						Hear from teams who made the switch
 					</h2>
 					<div className='flex items-center gap-6'>
 						{['Meridian', 'Arcwise', 'Lumina'].map((name) => (
 							<span
 								key={name}
-								className='font-semibold text-base text-zinc-400'
+								className='font-heading font-semibold text-base text-zinc-400'
 							>
 								{name}
 							</span>
@@ -441,9 +443,9 @@ function Testimonial() {
 					</div>
 				</div>
 
-				<div className='flex flex-1 flex-col gap-8 rounded-sm border border-zinc-200 bg-white p-8 lg:p-12'>
+				<div className='flex flex-1 flex-col gap-8 rounded-sm border border-zinc-200 bg-white p-8 lg:px-12 lg:pt-12 lg:pb-10'>
 					<div className='flex items-start justify-between'>
-						<span className='font-light text-[80px] text-zinc-200 leading-[0.6]'>
+						<span className='font-heading font-light text-[80px] text-zinc-200 leading-[0.6]'>
 							&ldquo;
 						</span>
 						<div className='flex gap-0.5'>
@@ -455,7 +457,7 @@ function Testimonial() {
 						</div>
 					</div>
 
-					<p className='text-[22px] text-zinc-900 leading-[1.6]'>
+					<p className='font-heading text-[22px] text-zinc-900 leading-[1.6]'>
 						We switched from three separate systems to Uplink and cut our
 						operational overhead by 40%. The integration between modules means
 						we are no longer reconciling data across platforms.
@@ -499,7 +501,7 @@ function CallToAction() {
 				</div>
 
 				<div className='flex flex-col items-center gap-5'>
-					<h2 className='text-center font-black text-4xl text-black tracking-[-2px] lg:text-[52px]'>
+					<h2 className='text-center font-black font-heading text-4xl text-black tracking-[-2px] lg:text-[52px]'>
 						Ready to Unify Your Operations?
 					</h2>
 					<p className='max-w-[600px] text-center text-lg text-zinc-500 leading-[1.5]'>
@@ -551,11 +553,11 @@ function Footer() {
 				<div className='flex flex-col gap-4'>
 					<div className='flex items-center gap-3'>
 						<div className='flex size-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-white to-zinc-400'>
-							<div className='flex size-[22px] items-center justify-center rounded-md bg-black'>
+							<div className='flex size-6 items-center justify-center rounded-md bg-black'>
 								<ArrowUpRight className='size-4 text-white' />
 							</div>
 						</div>
-						<span className='font-extrabold text-[22px] text-white'>
+						<span className='font-extrabold font-heading text-[22px] text-white'>
 							Uplink
 						</span>
 					</div>

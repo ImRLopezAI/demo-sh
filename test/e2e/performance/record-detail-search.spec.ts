@@ -23,9 +23,7 @@ test.describe('record detail & search performance @performance', () => {
 			expect(page.url()).toMatch(/recordId=/)
 
 			// The view component should still be visible (detail card within same view)
-			await expect(
-				page.locator('[data-slot="view-component"]'),
-			).toBeVisible()
+			await expect(page.locator('[data-slot="view-component"]')).toBeVisible()
 		}
 	})
 
@@ -65,9 +63,7 @@ test.describe('record detail & search performance @performance', () => {
 			await page.waitForURL(/mode=detail/, { timeout: 5_000 })
 
 			// The view-component should still be mounted
-			await expect(
-				page.locator('[data-slot="view-component"]'),
-			).toBeVisible()
+			await expect(page.locator('[data-slot="view-component"]')).toBeVisible()
 		}
 	})
 
@@ -89,9 +85,7 @@ test.describe('record detail & search performance @performance', () => {
 			await page.waitForTimeout(1_000) // debounce + filter
 
 			// View component should remain visible (no full reload)
-			await expect(
-				page.locator('[data-slot="view-component"]'),
-			).toBeVisible()
+			await expect(page.locator('[data-slot="view-component"]')).toBeVisible()
 		}
 	})
 })

@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/outfit";
 @source "../../nodes_modules/streamdown/dist/*.js";
 @custom-variant dark (&:is(.dark *));
 
@@ -187,6 +188,7 @@ html {
 	--font-sans: var(--font-sans);
 	--font-mono: var(--font-mono);
 	--font-serif: var(--font-serif);
+	--font-heading: "Outfit Variable", "Outfit", sans-serif;
 
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);

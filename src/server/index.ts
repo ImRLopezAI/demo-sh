@@ -8,6 +8,7 @@ import { compress } from 'hono/compress'
 import { logger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
 import { handle } from 'hono/vercel'
+
 const app = new Hono()
 
 app.use(requestId())
@@ -25,11 +26,7 @@ app.use('/api/rpc/*', async (c, next) => {
 		context, // Provide initial context if needed
 	})
 
-	if (matched) {
-		return c.newResponse(response.body, response)
-	}
-
-	await next()
+	return matched ? c.newResponse(response.body, response) : next()
 })
 
 export function toNextHandler() {
