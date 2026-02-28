@@ -7,6 +7,7 @@ import {
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface ItemRecord {
 	_id: string
@@ -81,6 +82,13 @@ export function ItemCard({
 		form.reset((resolvedRecord ?? {}) as Record<string, unknown>)
 	}, [resolvedRecord, form])
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'market',
+		entityId: 'items',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const dialogTitle = isNew
 		? 'New Item'
 		: `Item ${(resolvedRecord as ItemRecord | undefined)?.itemNo ?? ''}`
@@ -145,8 +153,9 @@ export function ItemCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew])
+	}, [isNew, reportGroup])
 
 	return (
 		<RecordDialog

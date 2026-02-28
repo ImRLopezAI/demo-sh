@@ -7,6 +7,7 @@ import {
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface VendorRecord {
 	_id: string
@@ -155,6 +156,13 @@ export function VendorCard({
 		}
 	}, [vendor, form, isNew])
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'replenishment',
+		entityId: 'vendors',
+		recordId: recordId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -192,8 +200,9 @@ export function VendorCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, vendor?.blocked])
+	}, [isNew, vendor?.blocked, reportGroup])
 
 	return (
 		<RecordDialog

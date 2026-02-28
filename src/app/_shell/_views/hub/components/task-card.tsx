@@ -9,6 +9,7 @@ import {
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { FormSection } from '../../_shared/form-section'
 import {
 	RecordDialog,
@@ -152,6 +153,13 @@ export function TaskCard({
 		OPERATION_TASK_STATUS_LABELS,
 	)
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'hub',
+		entityId: 'operationTasks',
+		recordId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -195,8 +203,9 @@ export function TaskCard({
 					},
 				],
 			},
+			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew])
+	}, [isNew, reportGroup])
 
 	return (
 		<>

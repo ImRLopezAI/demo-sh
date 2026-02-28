@@ -18,6 +18,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PurchaseOrderHeader {
 	_id: string
@@ -320,6 +321,13 @@ export function PurchaseOrderCard({
 		onTransition: handleTransition,
 	})
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'replenishment',
+		entityId: 'purchaseOrders',
+		recordId: recordId,
+		isNew,
+	})
+
 	const LinesGrid = useGrid(
 		() => ({
 			data: lines,
@@ -452,6 +460,7 @@ export function PurchaseOrderCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
 	}, [
 		isNew,
@@ -462,6 +471,7 @@ export function PurchaseOrderCard({
 		receivePurchaseOrder.isPending,
 		createInvoiceFromOrder.isPending,
 		header?.vendorId,
+		reportGroup,
 	])
 
 	return (

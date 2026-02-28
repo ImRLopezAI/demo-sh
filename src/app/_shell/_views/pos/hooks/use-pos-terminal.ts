@@ -1,4 +1,9 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
+import {
+	useAsyncRateLimitedCallback,
+	useAsyncThrottler,
+	useDebouncedCallback,
+} from '@tanstack/react-pacer'
 import * as React from 'react'
 import { toast } from 'sonner'
 import { downloadBinaryPayload } from '@/lib/download-file'
@@ -550,6 +555,23 @@ export function usePosTerminal() {
 		[createLine, createTransaction, queryClient, transitionStatus],
 	)
 
+	const rateLimitedSync = useAsyncRateLimitedCallback(syncSaleToBackend, {
+		limit: 3,
+		window: 10_000,
+	})
+
+	const invalidateTransactionQueries = useDebouncedCallback(
+		() => {
+			void queryClient.invalidateQueries({
+				queryKey: $rpc.pos.transactions.key(),
+			})
+			void queryClient.invalidateQueries({
+				queryKey: $rpc.pos.transactionLines.key(),
+			})
+		},
+		{ wait: 1000 },
+	)
+
 	const flushOfflineQueue = React.useCallback(async () => {
 		if (!isOnline || syncInProgressRef.current) return
 		const queuedSales = readOfflineQueue()
@@ -568,7 +590,7 @@ export function usePosTerminal() {
 				queuedSales,
 				initialProcessedKeys: readProcessedOfflineSales(),
 				syncSale: async (queuedSale) => {
-					await syncSaleToBackend(queuedSale)
+					await rateLimitedSync(queuedSale)
 				},
 			})
 
@@ -576,17 +598,12 @@ export function usePosTerminal() {
 			writeProcessedOfflineSales(result.processedKeys.slice(-1000))
 			setPendingSyncCount(result.remainingQueue.length)
 			setLastSyncError(result.lastError)
-			void queryClient.invalidateQueries({
-				queryKey: $rpc.pos.transactions.key(),
-			})
-			void queryClient.invalidateQueries({
-				queryKey: $rpc.pos.transactionLines.key(),
-			})
+			invalidateTransactionQueries()
 		} finally {
 			syncInProgressRef.current = false
 			setIsSyncingQueue(false)
 		}
-	}, [isOnline, queryClient, syncSaleToBackend])
+	}, [isOnline, queryClient, rateLimitedSync, invalidateTransactionQueries])
 
 	const totals = React.useMemo<Totals>(() => {
 		const subtotal = state.cart.reduce(
@@ -726,19 +743,20 @@ export function usePosTerminal() {
 		}
 	}, [])
 
-	React.useEffect(() => {
-		if (!isOnline) return
-		void flushOfflineQueue()
-	}, [isOnline, flushOfflineQueue])
+	const flushThrottler = useAsyncThrottler(flushOfflineQueue, {
+		wait: 5000,
+		leading: true,
+		trailing: true,
+	})
 
 	React.useEffect(() => {
-		if (!isOnline) return
-		if (pendingSyncCount === 0) return
+		if (!isOnline || pendingSyncCount === 0) return
+		void flushThrottler.maybeExecute()
 		const id = window.setInterval(() => {
-			void flushOfflineQueue()
+			void flushThrottler.maybeExecute()
 		}, 5000)
 		return () => window.clearInterval(id)
-	}, [isOnline, pendingSyncCount, flushOfflineQueue])
+	}, [isOnline, pendingSyncCount, flushThrottler])
 
 	return {
 		state,

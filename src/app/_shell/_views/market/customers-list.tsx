@@ -8,6 +8,7 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { CustomerCard } from './components/customer-card'
 
@@ -179,6 +180,13 @@ export default function CustomersList() {
 											<ShieldCheck className='size-3.5' aria-hidden='true' />
 											Unblock
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="market"
+											entityId="customers"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

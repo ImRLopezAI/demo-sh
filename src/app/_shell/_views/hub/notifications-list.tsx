@@ -29,6 +29,7 @@ import {
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface ModuleNotification {
@@ -873,6 +874,13 @@ export default function NotificationsList() {
 											<Archive className='size-3.5' aria-hidden='true' />
 											Archive
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="hub"
+											entityId="notifications"
+											isBusy={hasBusyState}
+										/>
 									</>
 								)
 							}}

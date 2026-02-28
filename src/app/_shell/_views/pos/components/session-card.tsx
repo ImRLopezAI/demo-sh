@@ -9,6 +9,7 @@ import {
 } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PosSessionRecord {
 	_id: string
@@ -96,6 +97,13 @@ export function SessionCard({
 
 	const resolvedRecord = record as PosSessionRecord | undefined
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'pos',
+		entityId: 'sessions',
+		recordId: selectedId,
+		isNew: false,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (!selectedId) return []
 		const sessionStatus = resolvedRecord?.status ?? 'OPEN'
@@ -147,8 +155,9 @@ export function SessionCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [selectedId, resolvedRecord?.status])
+	}, [selectedId, resolvedRecord?.status, reportGroup])
 
 	return (
 		<RecordDialog

@@ -15,6 +15,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface BankAccountCardProps {
 	selectedId: string | null
@@ -146,6 +147,13 @@ export function BankAccountCard({
 		BANK_ACCOUNT_STATUS_LABELS,
 	)
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'flow',
+		entityId: 'bankAccounts',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -189,8 +197,9 @@ export function BankAccountCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus])
+	}, [isNew, currentStatus, reportGroup])
 
 	return (
 		<>

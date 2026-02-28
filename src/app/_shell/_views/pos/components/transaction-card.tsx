@@ -8,6 +8,7 @@ import {
 } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PosTransactionHeader {
 	_id: string
@@ -93,6 +94,13 @@ export function TransactionCard({
 
 	const resolvedRecord = record as PosTransactionHeader | undefined
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'pos',
+		entityId: 'transactions',
+		recordId: selectedId,
+		isNew: false,
+	})
+
 	const isVoided = resolvedRecord?.status === 'VOIDED'
 	const isRefunded = resolvedRecord?.status === 'REFUNDED'
 	const isTerminal = isVoided || isRefunded
@@ -155,8 +163,9 @@ export function TransactionCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [selectedId, isTerminal, resolvedRecord?.customerId])
+	}, [selectedId, isTerminal, resolvedRecord?.customerId, reportGroup])
 
 	return (
 		<RecordDialog

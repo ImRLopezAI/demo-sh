@@ -9,6 +9,7 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import {
 	RecordDialog,
@@ -216,6 +217,13 @@ export function ShipmentCard({
 
 	const shipmentHeader = resolvedRecord as ShipmentHeader | undefined
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'trace',
+		entityId: 'shipments',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -273,12 +281,14 @@ export function ShipmentCard({
 					},
 				],
 			},
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [
 		isNew,
 		shipmentHeader?.trackingNo,
 		shipmentHeader?.sourceDocumentNo,
 		shipmentHeader?.shipmentMethodCode,
+		reportGroup,
 	])
 
 	return (

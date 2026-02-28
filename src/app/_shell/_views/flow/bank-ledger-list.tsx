@@ -1,5 +1,6 @@
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
 
@@ -113,6 +114,17 @@ export default function BankLedgerList() {
 								</span>
 							)}
 						</DataGrid.ActionBar.Selection>
+						<DataGrid.ActionBar.Separator />
+						<DataGrid.ActionBar.Group>
+							{(table, state) => (
+								<ReportActionItems
+									table={table}
+									selectionState={state.selectionState}
+									moduleId="flow"
+									entityId="bankLedger"
+								/>
+							)}
+						</DataGrid.ActionBar.Group>
 					</DataGrid.ActionBar>
 				</DataGrid>
 			</div>

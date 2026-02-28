@@ -1,7 +1,15 @@
-import { renderToBuffer } from '@react-pdf/renderer'
 import type { ReportDataSet, ReportLayout } from './contracts'
 import { buildReportFilename } from './filename'
-import { ReportDocument } from './render-document'
+import { renderDocumentStream } from './render-document'
+
+function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = []
+		stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+		stream.on('end', () => resolve(Buffer.concat(chunks)))
+		stream.on('error', reject)
+	})
+}
 
 export async function renderReportFile(params: {
 	layout: ReportLayout
@@ -9,8 +17,8 @@ export async function renderReportFile(params: {
 	filenameSuffix?: string
 }): Promise<File> {
 	const { layout, dataSet, filenameSuffix } = params
-	const document = <ReportDocument layout={layout} dataSet={dataSet} />
-	const buffer = await renderToBuffer(document)
+	const doc = renderDocumentStream(layout, dataSet)
+	const buffer = await streamToBuffer(doc)
 	const filename = buildReportFilename({
 		moduleId: dataSet.moduleId,
 		entityId: dataSet.entityId,

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import {
 	RecordDialog,
 	type RecordDialogActionGroup,
@@ -75,6 +76,13 @@ export function ShipmentMethodCard({
 		}
 	}, [method, isNew, form])
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'trace',
+		entityId: 'shipmentMethods',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -100,8 +108,9 @@ export function ShipmentMethodCard({
 					},
 				],
 			},
+			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew])
+	}, [isNew, reportGroup])
 
 	return (
 		<RecordDialog

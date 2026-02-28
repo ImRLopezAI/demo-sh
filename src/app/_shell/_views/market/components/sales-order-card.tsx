@@ -18,6 +18,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface SalesOrderHeader {
 	_id: string
@@ -374,6 +375,13 @@ export function SalesOrderCard({
 		],
 	)
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'market',
+		entityId: 'salesOrders',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const header = resolvedRecord as SalesOrderHeader | undefined
 
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
@@ -415,8 +423,9 @@ export function SalesOrderCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, header?.customerId])
+	}, [isNew, header?.customerId, reportGroup])
 
 	const dialogTitle = isNew
 		? 'New Sales Order'

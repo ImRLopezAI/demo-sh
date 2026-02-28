@@ -19,6 +19,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface InvoiceCardProps {
 	selectedId: string | null
@@ -354,6 +355,13 @@ export function InvoiceCard({
 		],
 	)
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'ledger',
+		entityId: 'invoices',
+		recordId: selectedId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -411,8 +419,9 @@ export function InvoiceCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, invoice?.customerId])
+	}, [isNew, currentStatus, invoice?.customerId, reportGroup])
 
 	return (
 		<>

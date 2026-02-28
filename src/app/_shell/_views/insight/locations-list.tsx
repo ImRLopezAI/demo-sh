@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
@@ -174,6 +175,13 @@ export default function LocationsList() {
 											<XCircle className='size-3.5' aria-hidden='true' />
 											Deactivate
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="insight"
+											entityId="locations"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

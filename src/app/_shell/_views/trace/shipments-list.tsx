@@ -8,6 +8,7 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ShipmentCard } from './components/shipment-card'
@@ -226,6 +227,13 @@ export default function ShipmentsList() {
 											<AlertTriangle className='size-3.5' aria-hidden='true' />
 											Flag Exception
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="trace"
+											entityId="shipments"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

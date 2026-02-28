@@ -15,6 +15,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface EmployeeCardProps {
 	recordId: string | null
@@ -183,6 +184,13 @@ export function EmployeeCard({
 		EMPLOYEE_STATUS_LABELS,
 	)
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'payroll',
+		entityId: 'employees',
+		recordId: recordId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -233,8 +241,9 @@ export function EmployeeCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus])
+	}, [isNew, currentStatus, reportGroup])
 
 	return (
 		<>

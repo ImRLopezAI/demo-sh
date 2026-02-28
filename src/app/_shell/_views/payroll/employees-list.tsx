@@ -8,6 +8,7 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { EmployeeCard } from './components/employee-card'
@@ -217,6 +218,13 @@ export default function EmployeesList() {
 											<UserX className='size-3.5' aria-hidden='true' />
 											Terminate
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="payroll"
+											entityId="employees"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

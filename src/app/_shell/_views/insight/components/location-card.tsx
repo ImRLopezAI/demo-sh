@@ -8,6 +8,7 @@ import {
 	MarkerPopup,
 	Map as UplinkMap,
 } from '@/components/ui/map'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import {
 	RecordDialog,
 	type RecordDialogActionGroup,
@@ -173,6 +174,13 @@ export function LocationCard({
 		],
 	]
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'insight',
+		entityId: 'locations',
+		recordId: locationId,
+		isNew,
+	})
+
 	const actionGroups = React.useMemo<RecordDialogActionGroup[]>(() => {
 		if (isNew) return []
 		return [
@@ -221,8 +229,9 @@ export function LocationCard({
 					},
 				],
 			},
+			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew])
+	}, [isNew, reportGroup])
 
 	if (isLoading) return null
 

@@ -10,6 +10,7 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
@@ -323,6 +324,13 @@ export default function SalesOrdersList() {
 											<Ban className='size-3.5' aria-hidden='true' />
 											Cancel
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="market"
+											entityId="salesOrders"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

@@ -46,6 +46,7 @@ export interface ReportDataSet {
 	generatedAt: string
 	rows: Array<Record<string, unknown>>
 	summary?: Record<string, unknown>
+	suggestedColumns?: Array<{ key: string; label: string }>
 }
 
 export interface GenerateReportInput {
@@ -55,6 +56,7 @@ export interface GenerateReportInput {
 	builtInLayout?: BuiltInLayoutKey
 	filters?: Record<string, string | number | boolean | null>
 	limit?: number
+	ids?: string[]
 }
 
 export interface PreviewReportInput extends GenerateReportInput {

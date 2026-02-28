@@ -31,6 +31,7 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TaskCard } from './components/task-card'
 
@@ -360,6 +361,13 @@ export default function TasksList() {
 											<RotateCcw className='size-3.5' aria-hidden='true' />
 											Reopen
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="hub"
+											entityId="operationTasks"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

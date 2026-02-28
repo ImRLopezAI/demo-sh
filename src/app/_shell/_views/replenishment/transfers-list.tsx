@@ -9,6 +9,7 @@ import {
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
 import { StatusBadge } from '../_shared/status-badge'
+import { ReportActionItems } from '../_shared/report-action-items'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransferCard } from './components/transfer-card'
 
@@ -203,6 +204,13 @@ export default function TransfersList() {
 											<Ban className='size-3.5' aria-hidden='true' />
 											Cancel
 										</DataGrid.ActionBar.Item>
+										<ReportActionItems
+											table={table}
+											selectionState={state.selectionState}
+											moduleId="replenishment"
+											entityId="transfers"
+											isBusy={isBusy}
+										/>
 									</>
 								)
 							}}

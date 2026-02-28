@@ -15,6 +15,7 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface TransferHeader {
 	_id: string
@@ -203,6 +204,13 @@ export function TransferCard({
 		onTransition: handleTransition,
 	})
 
+	const reportGroup = useRecordReportGroup({
+		moduleId: 'replenishment',
+		entityId: 'transfers',
+		recordId: recordId,
+		isNew,
+	})
+
 	const LinesGrid = useGrid(
 		() => ({
 			data: lines,
@@ -332,8 +340,9 @@ export function TransferCard({
 					},
 				],
 			},
+		...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, header?.fromLocationCode, header?.toLocationCode])
+	}, [isNew, currentStatus, header?.fromLocationCode, header?.toLocationCode, reportGroup])
 
 	return (
 		<>

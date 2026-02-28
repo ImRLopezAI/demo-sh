@@ -32,6 +32,7 @@ const generateReportInputSchema = z.object({
 	builtInLayout: z.enum(BUILT_IN_LAYOUT_KEYS).optional(),
 	filters: z.record(z.string(), filterValueSchema).optional(),
 	limit: z.number().int().min(1).max(5000).default(200),
+	ids: z.array(z.string().trim().min(1)).max(500).optional(),
 })
 
 const previewReportInputSchema = generateReportInputSchema.extend({
@@ -542,6 +543,7 @@ export const reportingRouter = createRPCRouter(
 					builtInLayout: input.builtInLayout,
 					filters: input.filters,
 					limit: Math.min(input.limit, previewLimit),
+					ids: input.ids,
 				})
 
 				if (input.previewOptions?.sampleMode === 'RANDOM') {
@@ -599,8 +601,8 @@ export const reportingRouter = createRPCRouter(
 						generatedAt: new Date().toISOString(),
 					})
 
-					context.resHeaders?.set('Content-Type', 'application/pdf')
-					context.resHeaders?.set(
+					context.resHeaders.set('Content-Type', 'application/pdf')
+					context.resHeaders.set(
 						'Content-Disposition',
 						`attachment; filename="${file.name}"`,
 					)
