@@ -32,6 +32,22 @@ describe('hub.reporting module', () => {
 		expect(file.size).toBeGreaterThan(0)
 	})
 
+	test('keeps 500-row report generation under 2 seconds', async () => {
+		const caller = createCaller()
+		const startedAt = Date.now()
+		const file = await caller.hub.reporting.generateReport({
+			moduleId: 'pos',
+			entityId: 'transactions',
+			builtInLayout: 'A4_SUMMARY',
+			limit: 500,
+		})
+		const durationMs = Date.now() - startedAt
+
+		expect(file).toBeInstanceOf(File)
+		expect(file.size).toBeGreaterThan(0)
+		expect(durationMs).toBeLessThan(2000)
+	})
+
 	test('rejects unsupported module/entity combinations', async () => {
 		const caller = createCaller()
 

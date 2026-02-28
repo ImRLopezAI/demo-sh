@@ -10,7 +10,27 @@ AFTER CREATE A VIEW ANALYZE AND COMPARE IT WITH THE OTHER VIEWS IN THE SAME MODU
 
 AVOID AI-Generated Generic Layouts and Designs that Look Similar Across Modules. INSTEAD, STRIVE FOR CREATIVITY AND UNIQUENESS IN EACH MODULE'S UI TO ENHANCE USER EXPERIENCE AND MAKE IT EASIER FOR USERS TO NAVIGATE AND IDENTIFY DIFFERENT SECTIONS OF THE APPLICATION.
 
-For ui use the skill `frontend-design` `vercel-react-best-practices`, `web-design-guidelines` and `vercel-composition-patterns`. 
+For ui use the skill `frontend-design` `vercel-react-best-practices`, `web-design-guidelines` and `vercel-composition-patterns`.
+
+# Reference Docs
+
+All of these page types are available references for design and layout inspiration, but remember to create unique designs for each module and avoid copying layouts across modules. Use these references as a starting point, but ensure that each view has its own distinctive look and feel that reflects the functionality and purpose of its module.
+
+[Design Details](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-designing-card-pages?tabs=structure)
+[Design List](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-designing-list-pages?tabs=structure)
+
+
+| Page Type | Purpose |
+|-----------|---------|
+| Card | Master, reference, and set up data management |
+| List | Entity overviews and navigation, and inline editing of simple entities |
+| RoleCenter | Overview of business performance and the start page for a specific user profile |
+| CardPart | A page embedded in another page, such as in a FactBox |
+| ListPart | A page embedded in another page, such as in a FactBox |
+| Document | Transaction and other document management |
+| Worksheet | Line-based data entry tasks (such as journals) and inquiries |
+
+
 
 ## Quick Commands
 
