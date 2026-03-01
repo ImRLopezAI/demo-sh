@@ -741,7 +741,6 @@ export const reportingRouter = createRPCRouter(
 				}
 			}),
 		getAvailableTables: publicProcedure
-			.input(z.void())
 			.output(
 				z.array(
 					z.object({
