@@ -10,7 +10,7 @@ export function SpacerConfig({
 }) {
 	return (
 		<div className='space-y-1.5'>
-			<Label className='text-xs text-muted-foreground'>Size</Label>
+			<Label className='text-muted-foreground text-xs'>Size</Label>
 			<ToggleGroup
 				value={[size]}
 				onValueChange={(values) => {

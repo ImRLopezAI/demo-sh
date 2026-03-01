@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { FormSection } from '../../_shared/form-section'
 import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface VendorRecord {
 	_id: string
@@ -200,7 +200,7 @@ export function VendorCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [isNew, vendor?.blocked, reportGroup])
 

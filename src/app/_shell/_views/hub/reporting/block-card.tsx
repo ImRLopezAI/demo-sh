@@ -1,26 +1,26 @@
 import type { ReportBlock } from '@server/reporting/contracts'
+import type { LucideIcon } from 'lucide-react'
 import {
 	AlignLeft,
 	ChevronDown,
 	ChevronUp,
+	Columns2,
 	GripVertical,
 	Heading,
 	KeyRound,
+	List,
+	Minus,
+	PanelTop,
 	SeparatorHorizontal,
 	Table2,
 	Trash2,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import * as React from 'react'
 import { SortableItemHandle } from '@/components/data-grid/ui/sortable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { HeadingConfig } from './block-configs/heading'
-import { KeyValueConfig } from './block-configs/key-value'
-import { ParagraphConfig } from './block-configs/paragraph'
-import { SpacerConfig } from './block-configs/spacer'
-import { TableConfig } from './block-configs/table'
+import { BlockConfigSwitch } from './block-config-switch'
 import type { BlockWithId } from './types'
 
 const BLOCK_ICONS: Record<ReportBlock['kind'], LucideIcon> = {
@@ -29,6 +29,10 @@ const BLOCK_ICONS: Record<ReportBlock['kind'], LucideIcon> = {
 	table: Table2,
 	spacer: SeparatorHorizontal,
 	paragraph: AlignLeft,
+	row: Columns2,
+	sectionHeader: PanelTop,
+	keyValueGroup: List,
+	divider: Minus,
 }
 
 const BLOCK_LABELS: Record<ReportBlock['kind'], string> = {
@@ -37,6 +41,10 @@ const BLOCK_LABELS: Record<ReportBlock['kind'], string> = {
 	table: 'Data Table',
 	spacer: 'Spacer',
 	paragraph: 'Paragraph',
+	row: 'Row',
+	sectionHeader: 'Section Header',
+	keyValueGroup: 'KV Group',
+	divider: 'Divider',
 }
 
 function getBlockSummary(block: BlockWithId): string {
@@ -53,10 +61,23 @@ function getBlockSummary(block: BlockWithId): string {
 				: block.size === 'md'
 					? 'Medium'
 					: 'Large'
-		case 'paragraph':
-			return block.text
-				? `${block.text.slice(0, 50)}${block.text.length > 50 ? '...' : ''}`
+		case 'paragraph': {
+			const alignSuffix =
+				block.align && block.align !== 'left' ? ` [${block.align}]` : ''
+			const boldSuffix = block.bold ? ' [bold]' : ''
+			const preview = block.text
+				? `${block.text.slice(0, 40)}${block.text.length > 40 ? '...' : ''}`
 				: '(empty)'
+			return `${preview}${alignSuffix}${boldSuffix}`
+		}
+		case 'row':
+			return `${block.columns.length} cols (${block.columns.map((c) => `${c.width}%`).join(' / ')})`
+		case 'sectionHeader':
+			return `"${block.text}"`
+		case 'keyValueGroup':
+			return `${block.pairs.length} pair${block.pairs.length !== 1 ? 's' : ''}${block.align === 'right' ? ' [right]' : ''}`
+		case 'divider':
+			return 'Line'
 	}
 }
 
@@ -65,11 +86,15 @@ export function BlockCard({
 	entityKey,
 	onUpdate,
 	onRemove,
+	extraValuePaths,
+	datasetColumns,
 }: {
 	block: BlockWithId
 	entityKey: string
 	onUpdate: (patch: Partial<ReportBlock>) => void
 	onRemove: () => void
+	extraValuePaths?: Array<{ value: string; label: string }>
+	datasetColumns?: Array<{ key: string; label: string }>
 }) {
 	const [expanded, setExpanded] = React.useState(false)
 	const Icon = BLOCK_ICONS[block.kind]
@@ -120,58 +145,18 @@ export function BlockCard({
 			</div>
 
 			{expanded && (
-				<div className='border-t border-border/60 px-3 py-3'>
+				<div className='border-border/60 border-t px-3 py-3'>
 					<BlockConfigSwitch
 						block={block}
 						entityKey={entityKey}
 						onUpdate={onUpdate}
+						extraValuePaths={extraValuePaths}
+						datasetColumns={datasetColumns}
 					/>
 				</div>
 			)}
 		</Card>
 	)
-}
-
-function BlockConfigSwitch({
-	block,
-	entityKey,
-	onUpdate,
-}: {
-	block: BlockWithId
-	entityKey: string
-	onUpdate: (patch: Partial<ReportBlock>) => void
-}) {
-	switch (block.kind) {
-		case 'heading':
-			return (
-				<HeadingConfig
-					text={block.text}
-					level={block.level}
-					onChange={onUpdate}
-				/>
-			)
-		case 'keyValue':
-			return (
-				<KeyValueConfig
-					keyLabel={block.key}
-					valuePath={block.valuePath}
-					onChange={onUpdate}
-				/>
-			)
-		case 'table':
-			return (
-				<TableConfig
-					columns={block.columns}
-					maxRows={block.maxRows}
-					entityKey={entityKey}
-					onChange={onUpdate}
-				/>
-			)
-		case 'spacer':
-			return <SpacerConfig size={block.size} onChange={onUpdate} />
-		case 'paragraph':
-			return <ParagraphConfig text={block.text} onChange={onUpdate} />
-	}
 }
 
 export function BlockCardPreview({ blockId }: { blockId: string | number }) {

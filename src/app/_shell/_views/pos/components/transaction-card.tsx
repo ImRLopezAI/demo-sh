@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { useModuleData } from '../../../hooks/use-data'
 import {
 	RecordDialog,
@@ -8,7 +9,6 @@ import {
 } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PosTransactionHeader {
 	_id: string
@@ -163,7 +163,7 @@ export function TransactionCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [selectedId, isTerminal, resolvedRecord?.customerId, reportGroup])
 

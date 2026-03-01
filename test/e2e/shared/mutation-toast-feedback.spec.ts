@@ -43,7 +43,12 @@ async function openNewSalesOrderDialog(page: Page) {
 async function attemptSalesOrderCreate(page: Page) {
 	await openNewSalesOrderDialog(page)
 	await selectFirstOption(page.getByTestId('sales-order-customer-select'), page)
-	await page.locator('[data-slot="grid-add-row"] [role="gridcell"]').click()
+	// Fill required fields to avoid validation errors
+	await page.getByLabel(/external doc/i).fill('TEST-DOC-123')
+	await page
+		.locator('[data-slot="grid-add-row"] [role="gridcell"]')
+		.first()
+		.click()
 	await page.getByTestId('sales-order-save-button').click()
 }
 

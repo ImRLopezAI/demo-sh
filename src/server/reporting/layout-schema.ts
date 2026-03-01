@@ -1,9 +1,5 @@
 import z from 'zod'
-import {
-	BUILT_IN_LAYOUT_KEYS,
-	type ReportBlock,
-	type ReportLayout,
-} from './contracts'
+import type { ReportBlock, ReportLayout } from './contracts'
 
 const headingBlockSchema = z.object({
 	kind: z.literal('heading'),
@@ -39,6 +35,62 @@ const spacerBlockSchema = z.object({
 const paragraphBlockSchema = z.object({
 	kind: z.literal('paragraph'),
 	text: z.string().trim().min(1).max(5000),
+	align: z.enum(['left', 'center', 'right']).optional(),
+	bold: z.boolean().optional(),
+})
+
+const sectionHeaderBlockSchema = z.object({
+	kind: z.literal('sectionHeader'),
+	text: z.string().trim().min(1).max(200),
+	color: z
+		.string()
+		.regex(/^#[0-9a-fA-F]{6}$/)
+		.optional(),
+})
+
+const keyValueGroupBlockSchema = z.object({
+	kind: z.literal('keyValueGroup'),
+	pairs: z
+		.array(
+			z.object({
+				key: z.string().trim().min(1).max(120),
+				valuePath: z.string().trim().min(1).max(200),
+			}),
+		)
+		.min(1)
+		.max(20),
+	align: z.enum(['left', 'right']).optional(),
+})
+
+const dividerBlockSchema = z.object({
+	kind: z.literal('divider'),
+	color: z
+		.string()
+		.regex(/^#[0-9a-fA-F]{6}$/)
+		.optional(),
+	thickness: z.number().min(0.5).max(5).optional(),
+})
+
+// Non-recursive block schema (everything except row)
+const leafBlockSchema = z.discriminatedUnion('kind', [
+	headingBlockSchema,
+	keyValueBlockSchema,
+	tableBlockSchema,
+	spacerBlockSchema,
+	paragraphBlockSchema,
+	sectionHeaderBlockSchema,
+	keyValueGroupBlockSchema,
+	dividerBlockSchema,
+])
+
+const rowColumnSchema = z.object({
+	width: z.number().min(10).max(90),
+	blocks: z.array(leafBlockSchema).min(0).max(50),
+})
+
+const rowBlockSchema = z.object({
+	kind: z.literal('row'),
+	columns: z.array(rowColumnSchema).min(2).max(4),
 })
 
 export const reportBlockSchema = z.discriminatedUnion('kind', [
@@ -47,10 +99,14 @@ export const reportBlockSchema = z.discriminatedUnion('kind', [
 	tableBlockSchema,
 	spacerBlockSchema,
 	paragraphBlockSchema,
+	sectionHeaderBlockSchema,
+	keyValueGroupBlockSchema,
+	dividerBlockSchema,
+	rowBlockSchema,
 ])
 
 export const reportLayoutSchema = z.object({
-	key: z.enum(BUILT_IN_LAYOUT_KEYS),
+	key: z.string().trim().min(1).max(50),
 	name: z.string().trim().min(1).max(120),
 	pageSize: z.enum(['A4', 'LETTER', 'THERMAL']),
 	orientation: z.enum(['portrait', 'landscape']),

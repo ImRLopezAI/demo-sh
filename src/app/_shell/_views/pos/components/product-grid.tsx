@@ -193,8 +193,7 @@ export function ProductGrid({
 							<DataGrid.ActionBar.Separator />
 							<DataGrid.ActionBar.Group>
 								{(table) => {
-									const selectedRows =
-										table.getSelectedRowModel().rows
+									const selectedRows = table.getSelectedRowModel().rows
 									return (
 										<DataGrid.ActionBar.Item
 											disabled={selectedRows.length === 0}
@@ -205,10 +204,7 @@ export function ProductGrid({
 												table.toggleAllRowsSelected(false)
 											}}
 										>
-											<ShoppingCart
-												className='size-3.5'
-												aria-hidden='true'
-											/>
+											<ShoppingCart className='size-3.5' aria-hidden='true' />
 											Add to Cart
 										</DataGrid.ActionBar.Item>
 									)

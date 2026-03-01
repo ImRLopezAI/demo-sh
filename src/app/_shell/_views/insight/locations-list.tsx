@@ -178,8 +178,8 @@ export default function LocationsList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="insight"
-											entityId="locations"
+											moduleId='insight'
+											entityId='locations'
 											isBusy={isBusy}
 										/>
 									</>

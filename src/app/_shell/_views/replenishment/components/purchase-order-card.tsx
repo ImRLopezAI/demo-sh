@@ -9,6 +9,7 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { toSelectItemsMap } from '@/lib/select-items'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
@@ -18,7 +19,6 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PurchaseOrderHeader {
 	_id: string
@@ -460,7 +460,7 @@ export function PurchaseOrderCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [
 		isNew,

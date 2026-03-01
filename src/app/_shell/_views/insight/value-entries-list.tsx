@@ -109,8 +109,8 @@ export default function ValueEntriesList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="insight"
-									entityId="valueEntries"
+									moduleId='insight'
+									entityId='valueEntries'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

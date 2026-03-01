@@ -14,7 +14,7 @@ export function PreviewPanel({
 }) {
 	return (
 		<div className='flex h-full flex-col'>
-			<div className='flex items-center justify-between border-b border-border/60 px-4 py-2'>
+			<div className='flex items-center justify-between border-border/60 border-b px-4 py-2'>
 				<span className='font-medium text-sm'>Preview</span>
 				<div className='flex items-center gap-2'>
 					<Button
@@ -26,10 +26,7 @@ export function PreviewPanel({
 						className='h-7 gap-1.5 text-xs'
 					>
 						{loading ? (
-							<Loader2
-								className='size-3 animate-spin'
-								aria-hidden='true'
-							/>
+							<Loader2 className='size-3 animate-spin' aria-hidden='true' />
 						) : (
 							<RefreshCcw className='size-3' aria-hidden='true' />
 						)}

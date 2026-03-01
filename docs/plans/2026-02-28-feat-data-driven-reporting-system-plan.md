@@ -379,10 +379,10 @@ Keep existing tables `reportDefaults` and `reportRuns` (they reference by ID). A
 
 **File:** `src/server/reporting/contracts.ts`
 
-- [ ] Add `ReportDataSetField` type (direct field or related field with nested fields — 2-level concrete, not recursive)
-- [ ] Add `ReportDataSetDefinition` type: `{ name, type: 'single'|'list', primaryTable, fields, filters }`
-- [ ] Add `BUILT_IN_DATASET_KEYS` const array (pattern-recognition: mirrors existing `BUILT_IN_LAYOUT_KEYS`)
-- [ ] Add 3 new layout keys to `BUILT_IN_LAYOUT_KEYS` (ship 3, not 7 initially)
+- [x] Add `ReportDataSetField` type (direct field or related field with nested fields — 2-level concrete, not recursive)
+- [x] Add `ReportDataSetDefinition` type: `{ name, type: 'single'|'list', primaryTable, fields, filters }`
+- [x] Add `BUILT_IN_DATASET_KEYS` const array (pattern-recognition: mirrors existing `BUILT_IN_LAYOUT_KEYS`)
+- [x] Add 3 new layout keys to `BUILT_IN_LAYOUT_KEYS` (ship 3, not 7 initially)
 
 #### Research Insights — Type Design
 
@@ -474,10 +474,10 @@ describe('dataSetSchema', () => {
 
 **File:** `src/server/db/index.ts`
 
-- [ ] Add `datasetJson` column (nullable `z.string().optional()`) to `reportLayouts` table
-- [ ] Add `datasetJson` column to `reportLayoutVersions` table alongside existing `schemaJson`
-- [ ] Keep `reportDefaults` and `reportRuns` unchanged (reference by layout ID — still valid)
-- [ ] No new tables needed — purely additive change
+- [x] Add `datasetJson` column (nullable `z.string().optional()`) to `reportLayouts` table
+- [x] Add `datasetJson` column to `reportLayoutVersions` table alongside existing `schemaJson`
+- [x] Keep `reportDefaults` and `reportRuns` unchanged (reference by layout ID — still valid)
+- [x] No new tables needed — purely additive change
 
 #### Research Insights — DB Changes
 
@@ -917,26 +917,26 @@ Add all entity-specific summary value paths. Also add a `TABLE_FIELD_MAP` that l
 
 ## Files to Create
 
-- [ ] `src/server/reporting/dataset-schema.ts` — Zod validation for dataset definitions (2-level concrete, not recursive)
-- [ ] `src/server/reporting/dataset-executor.ts` — generic dataset execution engine with batch resolution
-- [ ] `src/server/reporting/built-in-datasets.ts` — 3 pre-configured dataset definitions (Sales Order, Invoice, POS Receipt)
-- [ ] `src/app/_shell/_views/hub/reporting/dataset-builder.tsx` — dataset builder UI
+- [x] `src/server/reporting/dataset-schema.ts` — Zod validation for dataset definitions (2-level concrete, not recursive)
+- [x] `src/server/reporting/dataset-executor.ts` — generic dataset execution engine with batch resolution
+- [x] `src/server/reporting/built-in-datasets.ts` — 3 pre-configured dataset definitions (Sales Order, Invoice, POS Receipt)
+- [x] `src/app/_shell/_views/hub/reporting/dataset-builder.tsx` — dataset builder UI
 
 ## Files to Modify
 
-- [ ] `src/server/reporting/contracts.ts` — dataset definition types + `BUILT_IN_DATASET_KEYS` const + 3 new layout keys
-- [ ] `src/server/reporting/template-library.ts` — 3 document layout templates
-- [ ] `src/server/reporting/layout-schema.ts` — relax key validation
-- [ ] `src/server/reporting/render-document.ts` — fix keyValue Y bug, multi-page table headers, page numbering, prototype pollution in resolvePath
+- [x] `src/server/reporting/contracts.ts` — dataset definition types + `BUILT_IN_DATASET_KEYS` const + 3 new layout keys
+- [x] `src/server/reporting/template-library.ts` — 3 document layout templates
+- [x] `src/server/reporting/layout-schema.ts` — relax key validation
+- [x] `src/server/reporting/render-document.ts` — fix keyValue Y bug, multi-page table headers, prototype pollution in resolvePath
 - [ ] `src/server/reporting/adapter-registry.ts` — extract `getTable()` accessor, use dataset executor for data fetching
-- [ ] `src/server/reporting/index.ts` — new exports
-- [ ] `src/server/db/index.ts` — add `datasetJson` column to `reportLayouts` + `reportLayoutVersions`
-- [ ] `src/server/rpc/router/uplink/reporting.router.ts` — dataset-aware dispatch + `getAvailableTables` endpoint + `expectedVersion` OCC
-- [ ] `src/app/_shell/_views/hub/reporting-center.tsx` — 3-tab structure (Templates | Builder | Saved Reports)
-- [ ] `src/app/_shell/_views/hub/reporting/template-gallery.tsx` — document templates (3 initially)
-- [ ] `src/app/_shell/_views/hub/reporting/block-configs/key-value.tsx` — dynamic value paths from dataset
-- [ ] `src/app/_shell/_views/hub/reporting/block-configs/table.tsx` — dynamic columns from dataset
-- [ ] `src/app/_shell/_views/hub/reporting/use-report-builder.ts` — dataset state management
+- [x] `src/server/reporting/index.ts` — new exports
+- [x] `src/server/db/index.ts` — add `datasetJson` column to `reportLayouts` + `reportLayoutVersions`
+- [x] `src/server/rpc/router/uplink/reporting.router.ts` — dataset-aware dispatch + `getAvailableTables` endpoint
+- [x] `src/app/_shell/_views/hub/reporting-center.tsx` — dataset builder integrated into Builder tab
+- [x] `src/app/_shell/_views/hub/reporting/template-gallery.tsx` — document templates (3 initially)
+- [x] `src/app/_shell/_views/hub/reporting/block-configs/key-value.tsx` — dynamic value paths from dataset
+- [x] `src/app/_shell/_views/hub/reporting/block-configs/table.tsx` — dynamic columns from dataset
+- [x] `src/app/_shell/_views/hub/reporting/use-report-builder.ts` — dataset state management
 - [ ] `src/app/_shell/_views/hub/reporting/constants.ts` — table field maps, value paths
 - [ ] `data-set.jsonc` — update to camelCase conventions (`relatedModel`, `fields`)
 
@@ -952,20 +952,20 @@ Add all entity-specific summary value paths. Also add a `TABLE_FIELD_MAP` that l
 
 ## Security Checklist
 
-- [ ] Add `REPORTING_ALLOWED_TABLES` allowlist — prevent access to RBAC/credential/session tables
-- [ ] Add `FORBIDDEN_KEYS` check in `resolvePath` — prevent prototype pollution via `__proto__`, `constructor`
-- [ ] Enforce tenant isolation on ALL related entity lookups — not just primary table
-- [ ] `getAvailableTables` requires MANAGER role — don't expose schema to VIEWER
+- [x] Add `REPORTING_ALLOWED_TABLES` allowlist — prevent access to RBAC/credential/session tables
+- [x] Add `FORBIDDEN_KEYS` check in `resolvePath` — prevent prototype pollution via `__proto__`, `constructor`
+- [x] Enforce tenant isolation on ALL related entity lookups — not just primary table
+- [x] `getAvailableTables` requires MANAGER role — don't expose schema to VIEWER
 - [ ] System reports (`isSystem: true`) cannot be modified — only "Copy & Customize"
-- [ ] Validate `primaryTable` and all `relatedModel` values against allowlist before execution
+- [x] Validate `primaryTable` and all `relatedModel` values against allowlist before execution
 
 ## Performance Checklist
 
-- [ ] Batch relation resolution (breadth-first, level-by-level) — target: 4 queries not 4,400
-- [ ] Use `table.get(id)` for single-record lookups (O(1) vs O(n) table scan)
-- [ ] Index related rows by `_id` in `Map` for O(1) join resolution
-- [ ] Hard limits: 5,000 primary rows, 2,000 child lines per relation, depth 3
-- [ ] Operation budget circuit breaker: `rows × fields × depth ≤ 50,000`
+- [x] Batch relation resolution (breadth-first, level-by-level) — target: 4 queries not 4,400
+- [x] Use `table.get(id)` for single-record lookups (O(1) vs O(n) table scan)
+- [x] Index related rows by `_id` in `Map` for O(1) join resolution
+- [x] Hard limits: 5,000 primary rows, 2,000 child lines per relation, depth 3
+- [x] Operation budget circuit breaker: `rows × fields × depth ≤ 50,000`
 - [ ] Remove `bufferPages: true` from PDFKit unless page numbering is needed
 - [ ] Consider dynamic thermal receipt height instead of fixed 1200pt
 

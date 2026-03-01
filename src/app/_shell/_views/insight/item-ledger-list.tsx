@@ -110,8 +110,8 @@ export default function ItemLedgerList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="insight"
-									entityId="itemLedger"
+									moduleId='insight'
+									entityId='itemLedger'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

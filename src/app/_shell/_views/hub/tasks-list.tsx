@@ -27,11 +27,11 @@ import {
 } from '@/components/ui/select'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
-import { ReportActionItems } from '../_shared/report-action-items'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TaskCard } from './components/task-card'
 
@@ -364,8 +364,8 @@ export default function TasksList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="hub"
-											entityId="operationTasks"
+											moduleId='hub'
+											entityId='operationTasks'
 											isBusy={isBusy}
 										/>
 									</>

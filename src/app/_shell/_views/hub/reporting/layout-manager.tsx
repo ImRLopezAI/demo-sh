@@ -35,7 +35,10 @@ export function LayoutManager({
 	if (isLoading) {
 		return (
 			<div className='flex h-40 items-center justify-center'>
-				<Loader2 className='size-5 animate-spin text-muted-foreground' aria-hidden='true' />
+				<Loader2
+					className='size-5 animate-spin text-muted-foreground'
+					aria-hidden='true'
+				/>
 			</div>
 		)
 	}
@@ -62,7 +65,7 @@ export function LayoutManager({
 			<div className='rounded-lg border border-border/60'>
 				<table className='w-full text-xs'>
 					<thead>
-						<tr className='border-b border-border/60 text-left text-muted-foreground'>
+						<tr className='border-border/60 border-b text-left text-muted-foreground'>
 							<th className='px-3 py-2 font-medium'>Name</th>
 							<th className='px-3 py-2 font-medium'>Source</th>
 							<th className='hidden px-3 py-2 font-medium sm:table-cell'>
@@ -82,7 +85,7 @@ export function LayoutManager({
 						{layouts.map((layout) => (
 							<tr
 								key={layout.id}
-								className='border-b border-border/40 last:border-0'
+								className='border-border/40 border-b last:border-0'
 							>
 								<td className='px-3 py-2 font-medium'>{layout.name}</td>
 								<td className='px-3 py-2'>
@@ -122,10 +125,7 @@ export function LayoutManager({
 												className='h-7 w-7 p-0'
 												title='Edit layout'
 											>
-												<Edit
-													className='size-3.5'
-													aria-hidden='true'
-												/>
+												<Edit className='size-3.5' aria-hidden='true' />
 											</Button>
 										)}
 										<Button
@@ -137,10 +137,7 @@ export function LayoutManager({
 											className='h-7 w-7 p-0'
 											title='Set as default'
 										>
-											<Star
-												className='size-3.5'
-												aria-hidden='true'
-											/>
+											<Star className='size-3.5' aria-hidden='true' />
 										</Button>
 										<Button
 											type='button'
@@ -150,10 +147,7 @@ export function LayoutManager({
 											className='h-7 w-7 p-0'
 											title='Duplicate layout'
 										>
-											<Copy
-												className='size-3.5'
-												aria-hidden='true'
-											/>
+											<Copy className='size-3.5' aria-hidden='true' />
 										</Button>
 									</div>
 								</td>

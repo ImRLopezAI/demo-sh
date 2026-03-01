@@ -203,6 +203,7 @@ export const db = defineSchema(
 				name: z.string().meta({ type: 'sentence' }),
 				baseTemplate: z.string().default('A4_SUMMARY'),
 				schemaJson: z.string().default('{}'),
+				datasetDefinition: z.record(z.string(), z.unknown()).optional(),
 				isSystem: z.boolean().default(false),
 				active: z.boolean().default(true),
 				versionNo: z.number().int().min(1).default(1),
@@ -221,13 +222,17 @@ export const db = defineSchema(
 				layoutId: z.string(),
 				versionNo: z.number().int().min(1).default(1),
 				schemaJson: z.string().default('{}'),
+				datasetDefinition: z.record(z.string(), z.unknown()).optional(),
 				changedByUserId: z.string().optional(),
 				changedAt: z.string().optional().meta({ type: 'datetime' }),
 			},
 			seed: false,
 		})
 			.table()
-			.unique('reportLayoutVersions_layout_version_uq', ['layoutId', 'versionNo'])
+			.unique('reportLayoutVersions_layout_version_uq', [
+				'layoutId',
+				'versionNo',
+			])
 			.index('reportLayoutVersions_layout_idx', ['layoutId']),
 
 		reportDefaults: createTable('reportDefaults', {
@@ -250,9 +255,7 @@ export const db = defineSchema(
 				layoutRef: z.string(),
 				requestedByUserId: z.string().optional(),
 				filtersJson: z.string().default('{}'),
-				status: z
-					.enum(['PENDING', 'GENERATED', 'FAILED'])
-					.default('GENERATED'),
+				status: z.enum(['PENDING', 'GENERATED', 'FAILED']).default('GENERATED'),
 				outputFileName: z.string().optional(),
 				generatedAt: z.string().optional().meta({ type: 'datetime' }),
 				errorSummary: z.string().optional(),

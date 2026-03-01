@@ -108,6 +108,7 @@ export class ReactiveTable<T extends object> {
 	private defaultValues: Partial<T> = {}
 	private historyEnabled = false
 
+	readonly fields: Array<Record<keyof T, string>>
 	readonly name: string
 	readonly proxy: ReactiveTableProxy<T>
 
@@ -138,6 +139,21 @@ export class ReactiveTable<T extends object> {
 		}
 
 		this.proxy = this.createProxy()
+
+		this.fields = this.adapter.getAll<T>(this.name).map((doc) => {
+			const fieldRecord: Record<keyof T, string> = {} as Record<keyof T, string>
+			for (const key in doc) {
+				if (
+					key !== '_id' &&
+					key !== '_createdAt' &&
+					key !== '_updatedAt' &&
+					key !== '_version'
+				) {
+					fieldRecord[key as keyof T] = String(doc[key as keyof T])
+				}
+			}
+			return fieldRecord
+		})
 	}
 
 	private createProxy(): ReactiveTableProxy<T> {

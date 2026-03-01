@@ -2,14 +2,20 @@ import {
 	BUILT_IN_LAYOUT_KEYS,
 	type BuiltInLayoutKey,
 	buildGenericDataSet,
+	dataSetDefinitionSchema,
+	executeDataSet,
+	findDataSetForEntity,
 	getBuiltInLayout,
 	listBuiltInLayouts,
+	parseDataSetObject,
 	parseLayoutDraft,
 	REPORT_MODULE_IDS,
+	REPORTING_ALLOWED_TABLES,
 	renderReportFile,
 	reportLayoutSchema,
 	validateLayout,
 } from '@server/reporting'
+import type { DataSetDefinition } from '@server/reporting/contracts'
 import {
 	createRPCRouter,
 	publicProcedure,
@@ -37,6 +43,7 @@ const generateReportInputSchema = z.object({
 
 const previewReportInputSchema = generateReportInputSchema.extend({
 	layoutDraft: z.string().optional(),
+	datasetDraft: dataSetDefinitionSchema.optional(),
 	previewOptions: z
 		.object({
 			rowLimit: z.number().int().min(1).max(500).default(50),
@@ -52,11 +59,13 @@ const createLayoutInputSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	baseTemplate: z.enum(BUILT_IN_LAYOUT_KEYS).default('A4_SUMMARY'),
 	layoutDraft: z.string().optional(),
+	dataSetDraft: dataSetDefinitionSchema.optional(),
 })
 
 const saveLayoutVersionInputSchema = z.object({
 	layoutId: z.string().trim().min(1),
 	layoutDraft: z.string().min(2),
+	dataSetDraft: dataSetDefinitionSchema.optional(),
 	name: z.string().trim().min(1).max(120).optional(),
 	active: z.boolean().optional(),
 })
@@ -95,7 +104,7 @@ const getLayoutInputSchema = z
 
 const listLayoutItemSchema = z.object({
 	id: z.string(),
-	key: z.enum(BUILT_IN_LAYOUT_KEYS).nullable(),
+	key: z.string().nullable(),
 	name: z.string(),
 	pageSize: z.enum(['A4', 'LETTER', 'THERMAL']),
 	orientation: z.enum(['portrait', 'landscape']),
@@ -106,11 +115,12 @@ const listLayoutItemSchema = z.object({
 	active: z.boolean().optional(),
 	versionNo: z.number().int().min(1).optional(),
 	isDefault: z.boolean().optional(),
+	hasDataset: z.boolean().optional(),
 })
 
 const getLayoutResultSchema = z.object({
 	id: z.string(),
-	key: z.enum(BUILT_IN_LAYOUT_KEYS).nullable(),
+	key: z.string().nullable(),
 	name: z.string(),
 	source: z.enum(['SYSTEM', 'CUSTOM']),
 	moduleId: z.string().optional(),
@@ -118,6 +128,7 @@ const getLayoutResultSchema = z.object({
 	active: z.boolean(),
 	versionNo: z.number().int().min(1),
 	layout: reportLayoutSchema,
+	datasetDefinition: dataSetDefinitionSchema.optional(),
 })
 
 const layoutMutationResultSchema = z.object({
@@ -184,20 +195,34 @@ function resolveLayout(params: {
 		if (!parsed) {
 			throw new Error('Layout draft is not valid JSON schema')
 		}
-		return { layout: validateLayout(parsed), layoutRef: 'DRAFT' }
+		return {
+			layout: validateLayout(parsed),
+			layoutRef: 'DRAFT',
+			datasetDefinition: undefined,
+		}
 	}
 
 	if (params.layoutId) {
 		const loaded = loadCustomLayout(params.context, params.layoutId, {
 			requireActive: true,
 		})
-		return { layout: loaded.layout, layoutRef: loaded.row._id }
+		return {
+			layout: loaded.layout,
+			layoutRef: loaded.row._id,
+			datasetDefinition: loaded.row.datasetDefinition as
+				| DataSetDefinition
+				| undefined,
+		}
 	}
 
 	if (params.builtInLayout) {
+		const builtIn = getBuiltInLayout(params.builtInLayout)
+		if (!builtIn)
+			throw new Error(`Unknown built-in layout: ${params.builtInLayout}`)
 		return {
-			layout: getBuiltInLayout(params.builtInLayout),
+			layout: builtIn,
 			layoutRef: params.builtInLayout,
+			datasetDefinition: undefined,
 		}
 	}
 
@@ -216,7 +241,14 @@ function resolveLayout(params: {
 			)
 		) {
 			const builtIn = defaultLayout.defaultLayoutRef as BuiltInLayoutKey
-			return { layout: getBuiltInLayout(builtIn), layoutRef: builtIn }
+			const builtInLayout = getBuiltInLayout(builtIn)
+			if (builtInLayout) {
+				return {
+					layout: builtInLayout,
+					layoutRef: builtIn,
+					datasetDefinition: undefined,
+				}
+			}
 		}
 
 		const loaded = loadCustomLayout(
@@ -226,10 +258,73 @@ function resolveLayout(params: {
 				requireActive: true,
 			},
 		)
-		return { layout: loaded.layout, layoutRef: loaded.row._id }
+		return {
+			layout: loaded.layout,
+			layoutRef: loaded.row._id,
+			datasetDefinition: loaded.row.datasetDefinition as
+				| DataSetDefinition
+				| undefined,
+		}
 	}
 
-	return { layout: getBuiltInLayout('A4_SUMMARY'), layoutRef: 'A4_SUMMARY' }
+	const fallback = getBuiltInLayout('A4_SUMMARY')
+	if (!fallback) throw new Error('Default layout A4_SUMMARY not found')
+	return {
+		layout: fallback,
+		layoutRef: 'A4_SUMMARY',
+		datasetDefinition: undefined,
+	}
+}
+
+function resolveDataSet(params: {
+	context: RpcContextType
+	moduleId: (typeof REPORT_MODULE_IDS)[number]
+	entityId: string
+	layoutId?: string
+	datasetDefinition?: DataSetDefinition
+	filters?: Record<string, string | number | boolean | null>
+	limit: number
+	ids?: string[]
+}) {
+	// Path A: Layout has a stored dataset definition (plain object)
+	if (params.datasetDefinition) {
+		try {
+			const definition = parseDataSetObject(params.datasetDefinition)
+			return executeDataSet(params.context, definition, {
+				moduleId: params.moduleId,
+				entityId: params.entityId,
+				ids: params.ids,
+				filters: params.filters,
+				limit: params.limit,
+			})
+		} catch {
+			// Fall through to generic if dataset validation fails
+		}
+	}
+
+	// Path A2: Check built-in dataset for single-record requests
+	if (params.ids?.length === 1) {
+		const builtIn = findDataSetForEntity(params.moduleId, params.entityId)
+		if (builtIn) {
+			return executeDataSet(params.context, builtIn.definition, {
+				moduleId: params.moduleId,
+				entityId: params.entityId,
+				ids: params.ids,
+				filters: params.filters,
+				limit: params.limit,
+			})
+		}
+	}
+
+	// Path B: Generic fallback (existing behavior)
+	return buildGenericDataSet(params.context, {
+		moduleId: params.moduleId,
+		entityId: params.entityId,
+		layoutId: params.layoutId,
+		filters: params.filters,
+		limit: params.limit,
+		ids: params.ids,
+	})
 }
 
 function safeJson(value: unknown): string {
@@ -340,12 +435,15 @@ export const reportingRouter = createRPCRouter(
 						active: loaded.row.active,
 						versionNo: loaded.row.versionNo,
 						layout: loaded.layout,
+						datasetDefinition: loaded.row.datasetDefinition as
+							| DataSetDefinition
+							| undefined,
 					}
 				}
 
-				const builtInLayout = getBuiltInLayout(
-					input.builtInLayout ?? 'A4_SUMMARY',
-				)
+				const builtInKey = input.builtInLayout ?? 'A4_SUMMARY'
+				const builtInLayout = getBuiltInLayout(builtInKey)
+				if (!builtInLayout) throw new Error(`Unknown layout: ${builtInKey}`)
 				return {
 					id: builtInLayout.key,
 					key: builtInLayout.key,
@@ -384,6 +482,7 @@ export const reportingRouter = createRPCRouter(
 					name: input.name,
 					baseTemplate: input.baseTemplate,
 					schemaJson: safeJson(layout),
+					datasetDefinition: input.dataSetDraft,
 					isSystem: false,
 					active: true,
 					versionNo: 1,
@@ -396,6 +495,7 @@ export const reportingRouter = createRPCRouter(
 					layoutId: created._id,
 					versionNo: 1,
 					schemaJson: safeJson(layout),
+					datasetDefinition: input.dataSetDraft,
 					changedByUserId: context.auth.userId,
 					changedAt: now,
 				})
@@ -424,6 +524,7 @@ export const reportingRouter = createRPCRouter(
 					throw new Error('Layout draft is not valid JSON schema')
 				}
 				const layout = validateLayout(parsed)
+
 				const nextVersion = loaded.row.versionNo + 1
 				const now = new Date().toISOString()
 
@@ -431,6 +532,8 @@ export const reportingRouter = createRPCRouter(
 					loaded.row._id,
 					{
 						schemaJson: safeJson(layout),
+						datasetDefinition:
+							input.dataSetDraft ?? loaded.row.datasetDefinition,
 						versionNo: nextVersion,
 						name: input.name ?? loaded.row.name,
 						active: input.active ?? loaded.row.active,
@@ -446,6 +549,7 @@ export const reportingRouter = createRPCRouter(
 					layoutId: updated._id,
 					versionNo: nextVersion,
 					schemaJson: safeJson(layout),
+					datasetDefinition: input.dataSetDraft ?? loaded.row.datasetDefinition,
 					changedByUserId: context.auth.userId,
 					changedAt: now,
 				})
@@ -526,7 +630,7 @@ export const reportingRouter = createRPCRouter(
 			.handler(async ({ input, context }) => {
 				assertRole(context, 'VIEWER', 'report preview')
 
-				const { layout } = resolveLayout({
+				const { layout, datasetDefinition } = resolveLayout({
 					context,
 					moduleId: input.moduleId,
 					entityId: input.entityId,
@@ -536,11 +640,14 @@ export const reportingRouter = createRPCRouter(
 				})
 
 				const previewLimit = input.previewOptions?.rowLimit ?? 50
-				const dataSet = buildGenericDataSet(context, {
+				const dataSet = resolveDataSet({
+					context,
 					moduleId: input.moduleId,
 					entityId: input.entityId,
 					layoutId: input.layoutId,
-					builtInLayout: input.builtInLayout,
+					datasetDefinition: (input.datasetDraft ?? datasetDefinition) as
+						| DataSetDefinition
+						| undefined,
 					filters: input.filters,
 					limit: Math.min(input.limit, previewLimit),
 					ids: input.ids,
@@ -574,7 +681,7 @@ export const reportingRouter = createRPCRouter(
 			.handler(async ({ input, context }) => {
 				assertRole(context, 'VIEWER', 'report generation')
 
-				const { layout, layoutRef } = resolveLayout({
+				const { layout, layoutRef, datasetDefinition } = resolveLayout({
 					context,
 					moduleId: input.moduleId,
 					entityId: input.entityId,
@@ -582,7 +689,16 @@ export const reportingRouter = createRPCRouter(
 					builtInLayout: input.builtInLayout,
 				})
 
-				const dataSet = buildGenericDataSet(context, input)
+				const dataSet = resolveDataSet({
+					context,
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					layoutId: input.layoutId,
+					datasetDefinition,
+					filters: input.filters,
+					limit: input.limit,
+					ids: input.ids,
+				})
 				const filtersJson = safeJson(input.filters)
 				try {
 					const file = await renderReportFile({
@@ -623,6 +739,42 @@ export const reportingRouter = createRPCRouter(
 					})
 					throw error
 				}
+			}),
+		getAvailableTables: publicProcedure
+			.input(z.void())
+			.output(
+				z.array(
+					z.object({
+						table: z.string(),
+						fields: z.array(z.string()),
+					}),
+				),
+			)
+			.route({
+				method: 'GET',
+				summary: 'List tables available for dataset definitions',
+			})
+			.handler(({ context }) => {
+				assertRole(context, 'MANAGER', 'available tables listing')
+
+				return Array.from(REPORTING_ALLOWED_TABLES).map((tableName) => {
+					const table = context.db.schemas[
+						tableName as keyof typeof context.db.schemas
+					] as unknown as
+						| {
+								findMany: (opts: { limit: number }) => Record<string, unknown>[]
+						  }
+						| undefined
+					if (!table) return { table: tableName, fields: [] }
+
+					// Sample first row to discover field names
+					const sample = table.findMany({ limit: 1 })[0]
+					const fields = sample
+						? Object.keys(sample).filter((k) => !k.startsWith('_'))
+						: []
+
+					return { table: tableName, fields }
+				})
 			}),
 	},
 	{

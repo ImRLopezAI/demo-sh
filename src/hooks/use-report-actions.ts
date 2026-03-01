@@ -1,9 +1,9 @@
 'use client'
 
 import { $rpc, useMutation } from '@lib/rpc'
-import { downloadBinaryPayload } from '@/lib/download-file'
-import { toast } from 'sonner'
 import * as React from 'react'
+import { toast } from 'sonner'
+import { downloadBinaryPayload } from '@/lib/download-file'
 
 export function useReportActions(moduleId: string, entityId: string) {
 	const generateMutation = useMutation(
@@ -17,7 +17,9 @@ export function useReportActions(moduleId: string, entityId: string) {
 		async (ids?: string[]) => {
 			try {
 				const file = await generateMutation.mutateAsync({
-					moduleId: moduleId as Parameters<typeof generateMutation.mutateAsync>[0]['moduleId'],
+					moduleId: moduleId as Parameters<
+						typeof generateMutation.mutateAsync
+					>[0]['moduleId'],
 					entityId,
 					ids: ids?.length ? ids : undefined,
 				})
@@ -26,9 +28,7 @@ export function useReportActions(moduleId: string, entityId: string) {
 			} catch (error) {
 				toast.error('Unable to download report', {
 					description:
-						error instanceof Error
-							? error.message
-							: 'Report generation failed',
+						error instanceof Error ? error.message : 'Report generation failed',
 				})
 			}
 		},
@@ -39,7 +39,9 @@ export function useReportActions(moduleId: string, entityId: string) {
 		async (ids?: string[]) => {
 			try {
 				const file = await previewMutation.mutateAsync({
-					moduleId: moduleId as Parameters<typeof previewMutation.mutateAsync>[0]['moduleId'],
+					moduleId: moduleId as Parameters<
+						typeof previewMutation.mutateAsync
+					>[0]['moduleId'],
 					entityId,
 					ids: ids?.length ? ids : undefined,
 					previewOptions: { rowLimit: 50, sampleMode: 'HEAD' },
@@ -53,9 +55,12 @@ export function useReportActions(moduleId: string, entityId: string) {
 					typeof payload === 'object' &&
 					payload !== null &&
 					'arrayBuffer' in payload &&
-					typeof (payload as { arrayBuffer: () => unknown }).arrayBuffer === 'function'
+					typeof (payload as { arrayBuffer: () => unknown }).arrayBuffer ===
+						'function'
 				) {
-					const ab = await (payload as { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer()
+					const ab = await (
+						payload as { arrayBuffer: () => Promise<ArrayBuffer> }
+					).arrayBuffer()
 					blob = new Blob([ab], { type: 'application/pdf' })
 				} else {
 					throw new Error('Unexpected response format')
@@ -67,9 +72,7 @@ export function useReportActions(moduleId: string, entityId: string) {
 			} catch (error) {
 				toast.error('Unable to preview report', {
 					description:
-						error instanceof Error
-							? error.message
-							: 'Report preview failed',
+						error instanceof Error ? error.message : 'Report preview failed',
 				})
 			}
 		},

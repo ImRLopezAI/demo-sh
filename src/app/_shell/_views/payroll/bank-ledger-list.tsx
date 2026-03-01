@@ -121,8 +121,8 @@ export default function BankLedgerList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="payroll"
-									entityId="bankLedgerEntries"
+									moduleId='payroll'
+									entityId='bankLedgerEntries'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

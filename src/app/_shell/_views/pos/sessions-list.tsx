@@ -3,11 +3,11 @@ import { Lock, Pause } from 'lucide-react'
 import * as React from 'react'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
-import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { SessionCard } from './components/session-card'
@@ -191,8 +191,8 @@ export default function SessionsList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="pos"
-											entityId="sessions"
+											moduleId='pos'
+											entityId='sessions'
 											isBusy={isBusy}
 										/>
 									</>

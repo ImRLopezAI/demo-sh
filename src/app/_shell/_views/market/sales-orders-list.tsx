@@ -6,11 +6,11 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
-import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
@@ -327,8 +327,8 @@ export default function SalesOrdersList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="market"
-											entityId="salesOrders"
+											moduleId='market'
+											entityId='salesOrders'
 											isBusy={isBusy}
 										/>
 									</>

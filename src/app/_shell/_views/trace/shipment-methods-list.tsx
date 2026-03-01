@@ -153,8 +153,8 @@ export default function ShipmentMethodsList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="trace"
-											entityId="shipmentMethods"
+											moduleId='trace'
+											entityId='shipmentMethods'
 											isBusy={isBusy}
 										/>
 									</>

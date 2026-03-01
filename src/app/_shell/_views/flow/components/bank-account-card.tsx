@@ -7,6 +7,7 @@ import {
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { formatCurrency } from '@/lib/utils'
 import { FormSection } from '../../_shared/form-section'
 import {
@@ -15,7 +16,6 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface BankAccountCardProps {
 	selectedId: string | null
@@ -197,7 +197,7 @@ export function BankAccountCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [isNew, currentStatus, reportGroup])
 

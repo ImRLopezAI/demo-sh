@@ -88,8 +88,8 @@ export default function GlEntriesList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="flow"
-									entityId="glEntries"
+									moduleId='flow'
+									entityId='glEntries'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

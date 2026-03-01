@@ -8,6 +8,7 @@ import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import {
 	RecordDialog,
@@ -15,7 +16,6 @@ import {
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface TransferHeader {
 	_id: string
@@ -340,9 +340,15 @@ export function TransferCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, header?.fromLocationCode, header?.toLocationCode, reportGroup])
+	}, [
+		isNew,
+		currentStatus,
+		header?.fromLocationCode,
+		header?.toLocationCode,
+		reportGroup,
+	])
 
 	return (
 		<>

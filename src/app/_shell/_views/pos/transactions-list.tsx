@@ -5,11 +5,11 @@ import { toast } from 'sonner'
 import { downloadBinaryPayload } from '@/lib/download-file'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
-import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransactionCard } from './components/transaction-card'
@@ -249,8 +249,8 @@ export default function TransactionsList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="pos"
-											entityId="transactions"
+											moduleId='pos'
+											entityId='transactions'
 											isBusy={isBusy}
 										/>
 									</>

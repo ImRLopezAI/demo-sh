@@ -4,11 +4,11 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import { ReportActionItems } from '../_shared/report-action-items'
 import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
-import { ReportActionItems } from '../_shared/report-action-items'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { BankAccountCard } from './components/bank-account-card'
@@ -185,8 +185,8 @@ export default function BankAccountsList() {
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
-											moduleId="flow"
-											entityId="bankAccounts"
+											moduleId='flow'
+											entityId='bankAccounts'
 											isBusy={isBusy}
 										/>
 									</>

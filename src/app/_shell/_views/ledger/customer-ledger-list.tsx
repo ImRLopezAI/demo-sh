@@ -115,8 +115,8 @@ export default function CustomerLedgerList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="ledger"
-									entityId="customerLedger"
+									moduleId='ledger'
+									entityId='customerLedger'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

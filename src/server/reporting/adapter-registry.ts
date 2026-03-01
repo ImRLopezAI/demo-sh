@@ -105,10 +105,19 @@ function detectColumns(
 			const lower = k.toLowerCase()
 			if (lower.includes('no') || lower.includes('number') || lower === 'code')
 				return 0
-			if (lower.includes('name') || lower === 'description' || lower === 'title')
+			if (
+				lower.includes('name') ||
+				lower === 'description' ||
+				lower === 'title'
+			)
 				return 1
 			if (lower === 'status') return 2
-			if (lower.includes('amount') || lower.includes('total') || lower.includes('price') || lower.includes('balance'))
+			if (
+				lower.includes('amount') ||
+				lower.includes('total') ||
+				lower.includes('price') ||
+				lower.includes('balance')
+			)
 				return 3
 			if (lower.includes('date') || lower.includes('at')) return 4
 			if (lower.includes('method') || lower.includes('type')) return 5
@@ -116,7 +125,9 @@ function detectColumns(
 		}
 		return score(a) - score(b)
 	})
-	return prioritized.slice(0, maxCols).map((key) => ({ key, label: toLabel(key) }))
+	return prioritized
+		.slice(0, maxCols)
+		.map((key) => ({ key, label: toLabel(key) }))
 }
 
 export function buildGenericDataSet(

@@ -85,8 +85,8 @@ export default function GlEntriesList() {
 								<ReportActionItems
 									table={table}
 									selectionState={state.selectionState}
-									moduleId="payroll"
-									entityId="glEntries"
+									moduleId='payroll'
+									entityId='glEntries'
 								/>
 							)}
 						</DataGrid.ActionBar.Group>

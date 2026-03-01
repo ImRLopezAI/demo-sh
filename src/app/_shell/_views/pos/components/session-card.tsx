@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
+import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 import { useModuleData, useModuleList } from '../../../hooks/use-data'
 import { FormSection } from '../../_shared/form-section'
 import {
@@ -9,7 +10,6 @@ import {
 } from '../../_shared/record-dialog'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
-import { useRecordReportGroup } from '@/hooks/use-record-report-group'
 
 interface PosSessionRecord {
 	_id: string
@@ -155,7 +155,7 @@ export function SessionCard({
 					},
 				],
 			},
-		...(reportGroup ? [reportGroup] : []),
+			...(reportGroup ? [reportGroup] : []),
 		]
 	}, [selectedId, resolvedRecord?.status, reportGroup])
 

@@ -14,7 +14,7 @@ export function HeadingConfig({
 	return (
 		<div className='space-y-3'>
 			<div className='space-y-1.5'>
-				<Label className='text-xs text-muted-foreground'>Heading Text</Label>
+				<Label className='text-muted-foreground text-xs'>Heading Text</Label>
 				<Input
 					value={text}
 					onChange={(e) => onChange({ text: e.target.value })}
@@ -22,7 +22,7 @@ export function HeadingConfig({
 				/>
 			</div>
 			<div className='space-y-1.5'>
-				<Label className='text-xs text-muted-foreground'>Level</Label>
+				<Label className='text-muted-foreground text-xs'>Level</Label>
 				<ToggleGroup
 					value={[String(level)]}
 					onValueChange={(values) => {

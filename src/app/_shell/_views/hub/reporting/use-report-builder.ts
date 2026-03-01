@@ -1,13 +1,18 @@
+import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
 import type {
 	BuiltInLayoutKey,
+	DataSetDefinition,
 	ReportBlock,
 	ReportModuleId,
 } from '@server/reporting/contracts'
-import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
 import * as React from 'react'
 import { toast } from 'sonner'
 import { downloadBinaryPayload } from '@/lib/download-file'
-import { ENTITY_OPTIONS, ENTITY_SUGGESTED_COLUMNS } from './constants'
+import {
+	ENTITY_OPTIONS,
+	TABLE_RELATIONSHIPS,
+	TABLE_TO_MODULE_ENTITY,
+} from './constants'
 import type { BlockWithId, FilterRow } from './types'
 
 let blockIdCounter = 0
@@ -62,6 +67,20 @@ export function useReportBuilder() {
 	>(null)
 	const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
 	const [activeTab, setActiveTab] = React.useState('builder')
+	const [dataSetDefinition, setDataSetDefinition] =
+		React.useState<DataSetDefinition | null>(null)
+
+	const availableTablesQuery = useQuery({
+		...$rpc.hub.reporting.getAvailableTables.queryOptions({
+			input: undefined,
+		}),
+		staleTime: 5 * 60 * 1000,
+	})
+
+	const availableTables = (availableTablesQuery.data ?? []) as Array<{
+		table: string
+		fields: string[]
+	}>
 
 	const layoutsQuery = useQuery({
 		...$rpc.hub.reporting.listLayouts.queryOptions({
@@ -114,6 +133,16 @@ export function useReportBuilder() {
 		[layoutItems, selectedLayoutId],
 	)
 
+	// Infer moduleId/entityId from dataset's primaryTable
+	React.useEffect(() => {
+		if (!dataSetDefinition?.primaryTable) return
+		const mapping = TABLE_TO_MODULE_ENTITY[dataSetDefinition.primaryTable]
+		if (mapping) {
+			setModuleId(mapping.moduleId)
+			setEntityId(mapping.entityId)
+		}
+	}, [dataSetDefinition?.primaryTable])
+
 	React.useEffect(() => {
 		const entities = ENTITY_OPTIONS[moduleId] ?? []
 		if (!entities.includes(entityId)) {
@@ -145,33 +174,119 @@ export function useReportBuilder() {
 
 	const entityKey = `${moduleId}.${entityId}`
 
-	function addBlock(kind: ReportBlock['kind']) {
-		const suggestedColumns = ENTITY_SUGGESTED_COLUMNS[entityKey] ?? [
-			{ key: '_id', label: 'ID' },
-			{ key: 'status', label: 'Status' },
-			{ key: '_updatedAt', label: 'Updated' },
-		]
+	function datasetDirectFields() {
+		return (
+			dataSetDefinition?.fields.filter(
+				(f): f is import('@server/reporting/contracts').DirectField =>
+					!('type' in f),
+			) ?? []
+		)
+	}
 
+	function datasetAllColumns(): Array<{ key: string; label: string }> {
+		if (!dataSetDefinition) return []
+		const cols: Array<{ key: string; label: string }> = []
+		for (const f of dataSetDefinition.fields) {
+			if ('type' in f && f.type === 'related') {
+				for (const sub of f.fields) {
+					if (!('type' in sub)) {
+						cols.push({
+							key: `${f.name}.${sub.name}`,
+							label: `${f.name}.${sub.name}`,
+						})
+					}
+				}
+			} else {
+				cols.push({ key: f.name, label: f.label })
+			}
+		}
+		return cols
+	}
+
+	function datasetHasManyColumns(): Array<{ key: string; label: string }> {
+		if (!dataSetDefinition) return []
+		const hasManyTables = (
+			TABLE_RELATIONSHIPS[dataSetDefinition.primaryTable] ?? []
+		)
+			.filter((r) => r.relationType === 'has-many')
+			.map((r) => r.relatedTable)
+		const cols: Array<{ key: string; label: string }> = []
+		for (const f of dataSetDefinition.fields) {
+			if (
+				'type' in f &&
+				f.type === 'related' &&
+				hasManyTables.includes(f.relatedModel)
+			) {
+				for (const sub of f.fields) {
+					if (!('type' in sub)) {
+						cols.push({
+							key: `${f.name}.${sub.name}`,
+							label: `${f.name}.${sub.name}`,
+						})
+					}
+				}
+			}
+		}
+		return cols
+	}
+
+	function addBlock(kind: ReportBlock['kind']) {
 		let block: ReportBlock
 		switch (kind) {
 			case 'heading':
 				block = { kind: 'heading', text: 'Report Title', level: 1 }
 				break
-			case 'keyValue':
-				block = { kind: 'keyValue', key: 'Module', valuePath: 'moduleId' }
-				break
-			case 'table':
-				block = {
-					kind: 'table',
-					columns: suggestedColumns.slice(0, 4),
-					maxRows: 60,
+			case 'keyValue': {
+				const first = datasetDirectFields()[0]
+				if (first) {
+					block = {
+						kind: 'keyValue',
+						key: first.label,
+						valuePath: `summary.${first.name}`,
+					}
+				} else {
+					block = { kind: 'keyValue', key: '', valuePath: '' }
 				}
 				break
+			}
+			case 'table': {
+				const hasManyDefault =
+					dataSetDefinition?.type === 'single' ? datasetHasManyColumns() : []
+				const cols =
+					hasManyDefault.length > 0 ? hasManyDefault : datasetAllColumns()
+				block = {
+					kind: 'table',
+					columns: cols.length > 0 ? cols.slice(0, 4) : [],
+				}
+				break
+			}
 			case 'spacer':
 				block = { kind: 'spacer', size: 'md' }
 				break
 			case 'paragraph':
 				block = { kind: 'paragraph', text: '' }
+				break
+			case 'row':
+				block = {
+					kind: 'row',
+					columns: [
+						{ width: 50, blocks: [] },
+						{ width: 50, blocks: [] },
+					],
+				}
+				break
+			case 'sectionHeader':
+				block = { kind: 'sectionHeader', text: 'Section', color: '#2c5282' }
+				break
+			case 'keyValueGroup':
+				block = {
+					kind: 'keyValueGroup',
+					pairs: [{ key: '', valuePath: '' }],
+					align: 'left',
+				}
+				break
+			case 'divider':
+				block = { kind: 'divider' }
 				break
 		}
 
@@ -193,9 +308,7 @@ export function useReportBuilder() {
 
 	function updateBlock(id: string, patch: Partial<ReportBlock>) {
 		setBlocks((prev) =>
-			prev.map((b) =>
-				b._id === id ? ({ ...b, ...patch } as BlockWithId) : b,
-			),
+			prev.map((b) => (b._id === id ? ({ ...b, ...patch } as BlockWithId) : b)),
 		)
 	}
 
@@ -204,10 +317,7 @@ export function useReportBuilder() {
 	}
 
 	function addFilter() {
-		setFilters((prev) => [
-			...prev,
-			{ id: nextBlockId(), field: '', value: '' },
-		])
+		setFilters((prev) => [...prev, { id: nextBlockId(), field: '', value: '' }])
 	}
 
 	function removeFilter(id: string) {
@@ -231,6 +341,11 @@ export function useReportBuilder() {
 		setPageSize(layout.pageSize)
 		setOrientation(layout.orientation)
 		setActiveTab('builder')
+	}
+
+	function toDataSetPayload(): DataSetDefinition | undefined {
+		if (!dataSetDefinition || !dataSetDefinition.primaryTable) return undefined
+		return dataSetDefinition
 	}
 
 	function toLayoutPayload(): string {
@@ -271,17 +386,16 @@ export function useReportBuilder() {
 	async function handlePreview() {
 		try {
 			const filterValues = toFilterPayload()
-			const limit = Math.max(1, Math.min(rowLimit || 100, 1000))
 			const layoutDraft = blocks.length > 0 ? toLayoutPayload() : undefined
 			const file = await previewMutation.mutateAsync({
 				moduleId,
 				entityId,
 				...selectedLayoutPayload(),
 				filters: filterValues,
-				limit,
+				limit: rowLimit || undefined,
 				layoutDraft,
+				datasetDraft: toDataSetPayload(),
 				previewOptions: {
-					rowLimit: Math.min(limit, 100),
 					sampleMode: 'HEAD',
 					page: 1,
 				},
@@ -307,13 +421,12 @@ export function useReportBuilder() {
 	async function handleDownload() {
 		try {
 			const filterValues = toFilterPayload()
-			const limit = Math.max(1, Math.min(rowLimit || 100, 2000))
 			const file = await generateMutation.mutateAsync({
 				moduleId,
 				entityId,
 				...selectedLayoutPayload(),
 				filters: filterValues,
-				limit,
+				limit: rowLimit || undefined,
 			})
 			await downloadBinaryPayload(file, `${moduleId}-${entityId}.pdf`)
 			toast.success('Report downloaded')
@@ -344,6 +457,7 @@ export function useReportBuilder() {
 				name,
 				baseTemplate,
 				layoutDraft,
+				dataSetDraft: toDataSetPayload(),
 			})
 			await invalidateReportingQueries()
 			setSelectedLayoutId(created.layoutId)
@@ -373,6 +487,7 @@ export function useReportBuilder() {
 			const saved = await saveLayoutVersionMutation.mutateAsync({
 				layoutId: selectedLayout.id,
 				layoutDraft,
+				dataSetDraft: toDataSetPayload(),
 			})
 			await invalidateReportingQueries()
 			toast.success(`Layout version ${saved.versionNo} saved`)
@@ -421,6 +536,23 @@ export function useReportBuilder() {
 		saveLayoutVersionMutation.isPending ||
 		setDefaultLayoutMutation.isPending
 
+	function clearDataSet() {
+		setDataSetDefinition(null)
+	}
+
+	// When a saved layout is loaded that has a dataset, restore it
+	React.useEffect(() => {
+		const data = selectedLayoutQuery.data as
+			| { datasetDefinition?: DataSetDefinition }
+			| undefined
+		if (!data) return
+		if (data.datasetDefinition) {
+			setDataSetDefinition(data.datasetDefinition)
+		} else {
+			setDataSetDefinition(null)
+		}
+	}, [selectedLayoutQuery.data])
+
 	return {
 		moduleId,
 		setModuleId,
@@ -445,6 +577,10 @@ export function useReportBuilder() {
 		activeTab,
 		setActiveTab,
 		entityKey,
+		dataSetDefinition,
+		setDataSetDefinition,
+		clearDataSet,
+		availableTables,
 
 		layoutsQuery,
 		layoutItems,

@@ -278,6 +278,7 @@ const transactionsRouter = createRPCRouter({
 
 			const dataSet = buildPosReceiptDataSet(context, input.transactionId)
 			const layout = getBuiltInLayout(input.builtInLayout)
+			if (!layout) throw new Error(`Unknown layout: ${input.builtInLayout}`)
 			const file = await renderReportFile({
 				layout,
 				dataSet,

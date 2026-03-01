@@ -1,4 +1,3 @@
-import type { ReportModuleId } from '@server/reporting/contracts'
 import {
 	BANK_ACCOUNT_STATUSES,
 	CART_STATUSES,
@@ -16,6 +15,7 @@ import {
 	TERMINAL_STATUSES,
 	TRANSFER_STATUSES,
 } from '@server/db/constants'
+import type { ReportModuleId } from '@server/reporting/contracts'
 import type { FilterFieldDef } from './types'
 
 export const MODULE_LABELS: Record<ReportModuleId, string> = {
@@ -117,9 +117,7 @@ export const ENTITY_FILTER_FIELDS: Record<string, FilterFieldDef[]> = {
 		{ key: 'code', label: 'Code', type: 'string' },
 		{ key: 'name', label: 'Name', type: 'string' },
 	],
-	'insight.valueEntries': [
-		{ key: 'itemNo', label: 'Item No', type: 'string' },
-	],
+	'insight.valueEntries': [{ key: 'itemNo', label: 'Item No', type: 'string' }],
 	'replenishment.purchaseOrders': [
 		{
 			key: 'status',
@@ -180,9 +178,7 @@ export const ENTITY_FILTER_FIELDS: Record<string, FilterFieldDef[]> = {
 			options: JOURNAL_LINE_STATUSES,
 		},
 	],
-	'flow.glEntries': [
-		{ key: 'accountNo', label: 'Account No', type: 'string' },
-	],
+	'flow.glEntries': [{ key: 'accountNo', label: 'Account No', type: 'string' }],
 	'payroll.payrollRuns': [
 		{
 			key: 'status',
@@ -239,9 +235,7 @@ export const ENTITY_FILTER_FIELDS: Record<string, FilterFieldDef[]> = {
 			options: SHIPMENT_STATUSES,
 		},
 	],
-	'trace.shipmentMethods': [
-		{ key: 'code', label: 'Code', type: 'string' },
-	],
+	'trace.shipmentMethods': [{ key: 'code', label: 'Code', type: 'string' }],
 }
 
 export const ENTITY_SUGGESTED_COLUMNS: Record<
@@ -441,21 +435,462 @@ export const ENTITY_SUGGESTED_COLUMNS: Record<
 	],
 }
 
-export const VALUE_PATH_OPTIONS = [
-	{ value: 'moduleId', label: 'Module ID' },
-	{ value: 'entityId', label: 'Entity ID' },
+/**
+ * Map a dataset primary table name to the module + entity used by the
+ * reporting RPC. Lets us auto-infer module/entity from the dataset so the
+ * user never has to pick them manually.
+ */
+export const TABLE_TO_MODULE_ENTITY: Record<
+	string,
+	{ moduleId: ReportModuleId; entityId: string }
+> = {
+	// market
+	salesHeaders: { moduleId: 'market', entityId: 'salesOrders' },
+	salesLines: { moduleId: 'market', entityId: 'salesOrders' },
+	customers: { moduleId: 'market', entityId: 'customers' },
+	items: { moduleId: 'market', entityId: 'items' },
+	carts: { moduleId: 'market', entityId: 'carts' },
+	// ledger
+	salesInvoiceHeaders: { moduleId: 'ledger', entityId: 'invoices' },
+	salesInvoiceLines: { moduleId: 'ledger', entityId: 'invoices' },
+	custLedgerEntries: { moduleId: 'ledger', entityId: 'customerLedger' },
+	glEntries: { moduleId: 'ledger', entityId: 'glEntries' },
+	// replenishment
+	purchaseHeaders: { moduleId: 'replenishment', entityId: 'purchaseOrders' },
+	purchaseLines: { moduleId: 'replenishment', entityId: 'purchaseOrders' },
+	vendors: { moduleId: 'replenishment', entityId: 'vendors' },
+	transferHeaders: { moduleId: 'replenishment', entityId: 'transfers' },
+	transferLines: { moduleId: 'replenishment', entityId: 'transfers' },
+	// pos
+	posTransactions: { moduleId: 'pos', entityId: 'transactions' },
+	posTransactionLines: { moduleId: 'pos', entityId: 'transactionLines' },
+	posSessions: { moduleId: 'pos', entityId: 'sessions' },
+	terminals: { moduleId: 'pos', entityId: 'terminals' },
+	// payroll
+	employees: { moduleId: 'payroll', entityId: 'employees' },
+	employeeLedgerEntries: { moduleId: 'payroll', entityId: 'employeeLedger' },
+	payrollRuns: { moduleId: 'payroll', entityId: 'payrollRuns' },
+	// flow
+	bankAccounts: { moduleId: 'flow', entityId: 'bankAccounts' },
+	bankAccountLedgerEntries: { moduleId: 'flow', entityId: 'bankLedger' },
+	genJournalLines: { moduleId: 'flow', entityId: 'paymentJournal' },
+	// trace
+	shipments: { moduleId: 'trace', entityId: 'shipments' },
+	shipmentMethods: { moduleId: 'trace', entityId: 'shipmentMethods' },
+	// insight
+	locations: { moduleId: 'insight', entityId: 'locations' },
+	itemLedgerEntries: { moduleId: 'insight', entityId: 'itemLedger' },
+	valueEntries: { moduleId: 'insight', entityId: 'valueEntries' },
+	// hub
+	operationTasks: { moduleId: 'hub', entityId: 'operationTasks' },
+	moduleNotifications: { moduleId: 'hub', entityId: 'notifications' },
+}
+
+// ---------------------------------------------------------------------------
+// Table Relationship Map
+// ---------------------------------------------------------------------------
+
+export interface TableRelation {
+	relatedTable: string
+	relationType: 'lookup' | 'has-many'
+	joinField: string
+	relatedJoinField: string
+	suggestedAlias: string
+	label: string
+}
+
+/**
+ * Encodes FK relationships from `src/server/db/index.ts` so the dataset
+ * builder can filter related-table dropdowns and auto-populate join fields.
+ */
+export const TABLE_RELATIONSHIPS: Record<string, TableRelation[]> = {
+	// Market
+	salesHeaders: [
+		{
+			relatedTable: 'salesLines',
+			relationType: 'has-many',
+			joinField: 'documentNo',
+			relatedJoinField: 'documentNo',
+			suggestedAlias: 'lines',
+			label: 'Sales Lines',
+		},
+		{
+			relatedTable: 'customers',
+			relationType: 'lookup',
+			joinField: 'customerId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'customer',
+			label: 'Customer',
+		},
+	],
+	salesLines: [
+		{
+			relatedTable: 'salesHeaders',
+			relationType: 'lookup',
+			joinField: 'documentNo',
+			relatedJoinField: 'documentNo',
+			suggestedAlias: 'header',
+			label: 'Sales Header',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+	customers: [
+		{
+			relatedTable: 'salesHeaders',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'customerId',
+			suggestedAlias: 'salesOrders',
+			label: 'Sales Orders',
+		},
+		{
+			relatedTable: 'salesInvoiceHeaders',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'customerId',
+			suggestedAlias: 'invoices',
+			label: 'Sales Invoices',
+		},
+		{
+			relatedTable: 'custLedgerEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'customerId',
+			suggestedAlias: 'ledger',
+			label: 'Customer Ledger Entries',
+		},
+	],
+	items: [
+		{
+			relatedTable: 'itemLedgerEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'itemId',
+			suggestedAlias: 'ledger',
+			label: 'Item Ledger Entries',
+		},
+		{
+			relatedTable: 'valueEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'itemId',
+			suggestedAlias: 'values',
+			label: 'Value Entries',
+		},
+		{
+			relatedTable: 'salesLines',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'itemId',
+			suggestedAlias: 'salesLines',
+			label: 'Sales Lines',
+		},
+	],
+
+	// Ledger
+	salesInvoiceHeaders: [
+		{
+			relatedTable: 'salesInvoiceLines',
+			relationType: 'has-many',
+			joinField: 'invoiceNo',
+			relatedJoinField: 'invoiceNo',
+			suggestedAlias: 'lines',
+			label: 'Invoice Lines',
+		},
+		{
+			relatedTable: 'customers',
+			relationType: 'lookup',
+			joinField: 'customerId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'customer',
+			label: 'Customer',
+		},
+	],
+	salesInvoiceLines: [
+		{
+			relatedTable: 'salesInvoiceHeaders',
+			relationType: 'lookup',
+			joinField: 'invoiceNo',
+			relatedJoinField: 'invoiceNo',
+			suggestedAlias: 'header',
+			label: 'Invoice Header',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+	custLedgerEntries: [
+		{
+			relatedTable: 'customers',
+			relationType: 'lookup',
+			joinField: 'customerId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'customer',
+			label: 'Customer',
+		},
+	],
+
+	// Replenishment
+	purchaseHeaders: [
+		{
+			relatedTable: 'purchaseLines',
+			relationType: 'has-many',
+			joinField: 'documentNo',
+			relatedJoinField: 'documentNo',
+			suggestedAlias: 'lines',
+			label: 'Purchase Lines',
+		},
+		{
+			relatedTable: 'vendors',
+			relationType: 'lookup',
+			joinField: 'vendorId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'vendor',
+			label: 'Vendor',
+		},
+	],
+	purchaseLines: [
+		{
+			relatedTable: 'purchaseHeaders',
+			relationType: 'lookup',
+			joinField: 'documentNo',
+			relatedJoinField: 'documentNo',
+			suggestedAlias: 'header',
+			label: 'Purchase Header',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+	vendors: [
+		{
+			relatedTable: 'purchaseHeaders',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'vendorId',
+			suggestedAlias: 'purchaseOrders',
+			label: 'Purchase Orders',
+		},
+		{
+			relatedTable: 'vendorLedgerEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'vendorId',
+			suggestedAlias: 'ledger',
+			label: 'Vendor Ledger Entries',
+		},
+	],
+	transferHeaders: [
+		{
+			relatedTable: 'transferLines',
+			relationType: 'has-many',
+			joinField: 'transferNo',
+			relatedJoinField: 'transferNo',
+			suggestedAlias: 'lines',
+			label: 'Transfer Lines',
+		},
+	],
+	transferLines: [
+		{
+			relatedTable: 'transferHeaders',
+			relationType: 'lookup',
+			joinField: 'transferNo',
+			relatedJoinField: 'transferNo',
+			suggestedAlias: 'header',
+			label: 'Transfer Header',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+
+	// POS
+	posTransactions: [
+		{
+			relatedTable: 'posTransactionLines',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'transactionId',
+			suggestedAlias: 'lines',
+			label: 'Transaction Lines',
+		},
+		{
+			relatedTable: 'posSessions',
+			relationType: 'lookup',
+			joinField: 'posSessionId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'session',
+			label: 'POS Session',
+		},
+	],
+	posTransactionLines: [
+		{
+			relatedTable: 'posTransactions',
+			relationType: 'lookup',
+			joinField: 'transactionId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'transaction',
+			label: 'Transaction',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+	posSessions: [
+		{
+			relatedTable: 'posTransactions',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'posSessionId',
+			suggestedAlias: 'transactions',
+			label: 'POS Transactions',
+		},
+		{
+			relatedTable: 'terminals',
+			relationType: 'lookup',
+			joinField: 'terminalId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'terminal',
+			label: 'Terminal',
+		},
+	],
+
+	// Payroll
+	employees: [
+		{
+			relatedTable: 'employeeLedgerEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'employeeId',
+			suggestedAlias: 'ledger',
+			label: 'Employee Ledger Entries',
+		},
+	],
+	employeeLedgerEntries: [
+		{
+			relatedTable: 'employees',
+			relationType: 'lookup',
+			joinField: 'employeeId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'employee',
+			label: 'Employee',
+		},
+	],
+
+	// Flow
+	bankAccounts: [
+		{
+			relatedTable: 'bankAccountLedgerEntries',
+			relationType: 'has-many',
+			joinField: '_id',
+			relatedJoinField: 'bankAccountId',
+			suggestedAlias: 'ledger',
+			label: 'Bank Account Ledger Entries',
+		},
+	],
+	bankAccountLedgerEntries: [
+		{
+			relatedTable: 'bankAccounts',
+			relationType: 'lookup',
+			joinField: 'bankAccountId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'bankAccount',
+			label: 'Bank Account',
+		},
+	],
+
+	// Insight
+	itemLedgerEntries: [
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+	valueEntries: [
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+		{
+			relatedTable: 'itemLedgerEntries',
+			relationType: 'lookup',
+			joinField: 'itemLedgerEntryId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'itemLedger',
+			label: 'Item Ledger Entry',
+		},
+	],
+
+	// Trace
+	shipments: [
+		{
+			relatedTable: 'shipmentLines',
+			relationType: 'has-many',
+			joinField: 'shipmentNo',
+			relatedJoinField: 'shipmentNo',
+			suggestedAlias: 'lines',
+			label: 'Shipment Lines',
+		},
+	],
+	shipmentLines: [
+		{
+			relatedTable: 'shipments',
+			relationType: 'lookup',
+			joinField: 'shipmentNo',
+			relatedJoinField: 'shipmentNo',
+			suggestedAlias: 'header',
+			label: 'Shipment',
+		},
+		{
+			relatedTable: 'items',
+			relationType: 'lookup',
+			joinField: 'itemId',
+			relatedJoinField: '_id',
+			suggestedAlias: 'item',
+			label: 'Item',
+		},
+	],
+}
+
+/** Report-level metadata paths (report envelope, not dataset fields). */
+export const REPORT_META_VALUE_PATHS = [
+	{ value: 'title', label: 'Report Title' },
 	{ value: 'generatedAt', label: 'Generated At' },
-	{ value: 'title', label: 'Title' },
-	{ value: 'summary.receiptNo', label: 'Receipt No' },
-	{ value: 'summary.sessionNo', label: 'Session No' },
-	{ value: 'summary.paymentMethod', label: 'Payment Method' },
-	{ value: 'summary.subtotal', label: 'Subtotal' },
-	{ value: 'summary.taxAmount', label: 'Tax Amount' },
-	{ value: 'summary.discountAmount', label: 'Discount Amount' },
-	{ value: 'summary.totalAmount', label: 'Total Amount' },
-	{ value: 'summary.customerName', label: 'Customer Name' },
-	{ value: 'summary.vendorName', label: 'Vendor Name' },
-	{ value: 'summary.documentNo', label: 'Document No' },
 	{ value: 'summary.totalRows', label: 'Total Rows' },
 ]
 
@@ -484,5 +919,25 @@ export const BLOCK_TYPE_META = [
 		kind: 'paragraph' as const,
 		label: 'Paragraph',
 		icon: 'AlignLeft' as const,
+	},
+	{
+		kind: 'row' as const,
+		label: 'Row',
+		icon: 'Columns2' as const,
+	},
+	{
+		kind: 'sectionHeader' as const,
+		label: 'Section Header',
+		icon: 'PanelTop' as const,
+	},
+	{
+		kind: 'keyValueGroup' as const,
+		label: 'KV Group',
+		icon: 'List' as const,
+	},
+	{
+		kind: 'divider' as const,
+		label: 'Divider',
+		icon: 'Minus' as const,
 	},
 ] as const
