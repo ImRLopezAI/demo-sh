@@ -51,6 +51,7 @@
 		"embla-carousel-react": "^8.6.0",
 		"hono": "^4.12.3",
 		"input-otp": "^1.4.2",
+		"immer": "^10.2.0",
 		"lucide-react": "^0.575.0",
 		"maplibre-gl": "^5.19.0",
 		"motion": "^12.34.3",
@@ -80,7 +81,9 @@
 		"ui-drawer": "^0.0.3",
 		"vaul": "^1.1.2",
 		"vite-tsconfig-paths": "^6.1.1",
-		"zod": "^4.3.6"
+		"zod": "^4.3.6",
+		"zustand": "^5.0.8",
+		"zundo": "^2.3.0"
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^10.3.0",

@@ -2,20 +2,31 @@ import {
 	BUILT_IN_LAYOUT_KEYS,
 	type BuiltInLayoutKey,
 	buildGenericDataSet,
+	createDefaultReportDefinition,
 	dataSetDefinitionSchema,
 	executeDataSet,
 	findDataSetForEntity,
 	getBuiltInLayout,
+	isReportDefinition,
 	listBuiltInLayouts,
+	listDesignerTemplates,
+	migrateLayoutToReportDefinition,
 	parseDataSetObject,
 	parseLayoutDraft,
+	parseReportDefinitionDraft,
 	REPORT_MODULE_IDS,
 	REPORTING_ALLOWED_TABLES,
 	renderReportFile,
+	reportDefinitionSchema,
 	reportLayoutSchema,
 	validateLayout,
+	validateReportDefinition,
 } from '@server/reporting'
 import type { DataSetDefinition } from '@server/reporting/contracts'
+import type {
+	DatasetSchemaJson,
+	ReportDefinition,
+} from '@server/reporting/designer-contracts'
 import {
 	createRPCRouter,
 	publicProcedure,
@@ -43,6 +54,7 @@ const generateReportInputSchema = z.object({
 
 const previewReportInputSchema = generateReportInputSchema.extend({
 	layoutDraft: z.string().optional(),
+	reportDefinitionDraft: z.string().optional(),
 	datasetDraft: dataSetDefinitionSchema.optional(),
 	previewOptions: z
 		.object({
@@ -140,6 +152,87 @@ const layoutMutationResultSchema = z.object({
 	active: z.boolean(),
 })
 
+const designerSaveInputSchema = z
+	.object({
+		layoutId: z.string().trim().min(1).optional(),
+		moduleId: z.enum(REPORT_MODULE_IDS),
+		entityId: z.string().trim().min(1).max(120),
+		name: z.string().trim().min(1).max(120),
+		reportDefinitionDraft: z.string().optional(),
+		reportDefinition: reportDefinitionSchema.optional(),
+		datasetSchemaJson: z.record(z.string(), z.unknown()).optional(),
+		datasetSchemaVersion: z.string().trim().max(120).optional(),
+		dataSetDraft: dataSetDefinitionSchema.optional(),
+		active: z.boolean().optional(),
+	})
+	.refine(
+		(value) => Boolean(value.reportDefinitionDraft || value.reportDefinition),
+		{
+			message: 'reportDefinitionDraft or reportDefinition is required',
+		},
+	)
+
+const designerLoadInputSchema = z.object({
+	layoutId: z.string().trim().min(1),
+})
+
+const designerLoadResultSchema = z.object({
+	layoutId: z.string(),
+	moduleId: z.string(),
+	entityId: z.string(),
+	name: z.string(),
+	reportDefinition: reportDefinitionSchema,
+	datasetSchemaJson: z.record(z.string(), z.unknown()).optional(),
+	datasetSchemaVersion: z.string().optional(),
+	dataSetDefinition: dataSetDefinitionSchema.optional(),
+	active: z.boolean(),
+	versionNo: z.number().int().min(1),
+})
+
+const datasetSchemaInput = z.object({
+	moduleId: z.enum(REPORT_MODULE_IDS),
+	entityId: z.string().trim().min(1).max(120),
+	layoutId: z.string().trim().optional(),
+})
+
+const datasetSampleInput = datasetSchemaInput.extend({
+	limit: z.number().int().min(1).max(50).default(20),
+	filters: z.record(z.string(), filterValueSchema).optional(),
+})
+
+const designerPreviewInputSchema = z.object({
+	moduleId: z.enum(REPORT_MODULE_IDS),
+	entityId: z.string().trim().min(1).max(120),
+	layoutId: z.string().trim().optional(),
+	reportDefinitionDraft: z.string().optional(),
+	reportDefinition: reportDefinitionSchema.optional(),
+	dataSetDraft: dataSetDefinitionSchema.optional(),
+	limit: z.number().int().min(1).max(5000).default(200),
+	filters: z.record(z.string(), filterValueSchema).optional(),
+	ids: z.array(z.string().trim().min(1)).max(500).optional(),
+})
+
+const datasetSampleResultSchema = z.object({
+	rows: z.array(z.record(z.string(), z.unknown())),
+	summary: z.record(z.string(), z.unknown()),
+	suggestedColumns: z.array(
+		z.object({
+			key: z.string(),
+			label: z.string(),
+		}),
+	),
+})
+
+const designerTemplateSchema = z.object({
+	key: z.string(),
+	name: z.string(),
+	reportDefinition: reportDefinitionSchema,
+})
+
+const convertLayoutInputSchema = z.object({
+	layoutId: z.string().trim().min(1),
+})
+
 function readTenantId(row: unknown): string {
 	return (row as { tenantId?: string }).tenantId ?? 'demo-tenant'
 }
@@ -164,6 +257,131 @@ function parseStoredLayout(layoutJson: string) {
 	}
 }
 
+function parseStoredReportDefinition(params: {
+	reportDefinitionJson?: string | null
+	layoutJson?: string | null
+	name?: string | null
+}): ReportDefinition {
+	if (params.reportDefinitionJson) {
+		try {
+			const parsed = JSON.parse(params.reportDefinitionJson) as unknown
+			return validateReportDefinition(parsed)
+		} catch {
+			// fall through to migration fallback
+		}
+	}
+	if (params.layoutJson) {
+		try {
+			const legacy = parseStoredLayout(params.layoutJson)
+			return migrateLayoutToReportDefinition(legacy)
+		} catch {
+			// fall through to default fallback
+		}
+	}
+	return createDefaultReportDefinition(params.name ?? 'Untitled report')
+}
+
+function valueType(value: unknown): string {
+	if (value === null || value === undefined) return 'string'
+	if (typeof value === 'string') return 'string'
+	if (typeof value === 'number') return 'number'
+	if (typeof value === 'boolean') return 'boolean'
+	if (Array.isArray(value)) return 'array'
+	if (typeof value === 'object') return 'object'
+	return 'string'
+}
+
+function objectShape(
+	input: Record<string, unknown>,
+): Record<string, Record<string, unknown>> {
+	const properties: Record<string, Record<string, unknown>> = {}
+	for (const [key, value] of Object.entries(input)) {
+		if (key.startsWith('_')) continue
+		properties[key] = {
+			type: valueType(value),
+			title: key,
+		}
+	}
+	return properties
+}
+
+function dataSetDefinitionToJsonSchema(
+	definition: DataSetDefinition | undefined,
+): DatasetSchemaJson {
+	if (!definition) {
+		return {
+			type: 'object',
+			properties: {
+				Fields: { type: 'object', properties: {} },
+				Summary: { type: 'object', properties: {} },
+			},
+		}
+	}
+	const fields: Record<string, unknown> = {}
+	for (const field of definition.fields) {
+		if ('type' in field && field.type === 'related') {
+			const nestedProps: Record<string, unknown> = {}
+			for (const nested of field.fields) {
+				if ('type' in nested && nested.type === 'related') {
+					nestedProps[nested.name] = {
+						type: 'object',
+						properties: Object.fromEntries(
+							nested.fields.map((leaf) => [
+								leaf.name,
+								{ type: 'string', title: leaf.label },
+							]),
+						),
+					}
+					continue
+				}
+				nestedProps[nested.name] = { type: 'string', title: nested.label }
+			}
+			fields[field.name] = {
+				type: 'object',
+				title: field.label,
+				properties: nestedProps,
+			}
+			continue
+		}
+		fields[field.name] = { type: 'string', title: field.label }
+	}
+	return {
+		$schema: 'https://json-schema.org/draft/2020-12/schema',
+		type: 'object',
+		properties: {
+			Fields: {
+				type: 'object',
+				properties: fields,
+			},
+			Summary: {
+				type: 'object',
+				properties: fields,
+			},
+		},
+	}
+}
+
+function inferDatasetSchemaFromData(
+	rows: Array<Record<string, unknown>>,
+	summary: Record<string, unknown> | undefined,
+): DatasetSchemaJson {
+	const firstRow = rows[0] ?? {}
+	return {
+		$schema: 'https://json-schema.org/draft/2020-12/schema',
+		type: 'object',
+		properties: {
+			Fields: {
+				type: 'object',
+				properties: objectShape(firstRow),
+			},
+			Summary: {
+				type: 'object',
+				properties: objectShape(summary ?? {}),
+			},
+		},
+	}
+}
+
 function loadCustomLayout(
 	context: RpcContextType,
 	layoutId: string,
@@ -179,6 +397,14 @@ function loadCustomLayout(
 	return {
 		row,
 		layout: parseStoredLayout(row.schemaJson),
+		reportDefinition:
+			row.definitionVersion === 2
+				? parseStoredReportDefinition({
+						reportDefinitionJson: row.reportDefinitionJson,
+						layoutJson: row.schemaJson,
+						name: row.name,
+					})
+				: undefined,
 	}
 }
 
@@ -189,7 +415,20 @@ function resolveLayout(params: {
 	layoutId?: string
 	builtInLayout?: BuiltInLayoutKey
 	layoutDraft?: string
+	reportDefinitionDraft?: string
 }) {
+	if (params.reportDefinitionDraft) {
+		const parsed = parseReportDefinitionDraft(params.reportDefinitionDraft)
+		if (!parsed) {
+			throw new Error('Report definition draft is not valid')
+		}
+		return {
+			layout: validateReportDefinition(parsed),
+			layoutRef: 'DRAFT_DESIGNER',
+			datasetDefinition: undefined,
+		}
+	}
+
 	if (params.layoutDraft) {
 		const parsed = parseLayoutDraft(params.layoutDraft)
 		if (!parsed) {
@@ -207,7 +446,10 @@ function resolveLayout(params: {
 			requireActive: true,
 		})
 		return {
-			layout: loaded.layout,
+			layout:
+				loaded.row.definitionVersion === 2
+					? (loaded.reportDefinition ?? loaded.layout)
+					: loaded.layout,
 			layoutRef: loaded.row._id,
 			datasetDefinition: loaded.row.datasetDefinition as
 				| DataSetDefinition
@@ -259,7 +501,10 @@ function resolveLayout(params: {
 			},
 		)
 		return {
-			layout: loaded.layout,
+			layout:
+				loaded.row.definitionVersion === 2
+					? (loaded.reportDefinition ?? loaded.layout)
+					: loaded.layout,
 			layoutRef: loaded.row._id,
 			datasetDefinition: loaded.row.datasetDefinition as
 				| DataSetDefinition
@@ -335,6 +580,22 @@ function safeJson(value: unknown): string {
 	}
 }
 
+function resolveDesignerDefinitionInput(input: {
+	reportDefinitionDraft?: string
+	reportDefinition?: ReportDefinition
+	name?: string
+}): ReportDefinition {
+	if (input.reportDefinitionDraft) {
+		const parsed = parseReportDefinitionDraft(input.reportDefinitionDraft)
+		if (!parsed) throw new Error('Report definition draft is not valid')
+		return validateReportDefinition(parsed)
+	}
+	if (input.reportDefinition) {
+		return validateReportDefinition(input.reportDefinition)
+	}
+	return createDefaultReportDefinition(input.name ?? 'Untitled report')
+}
+
 export const reportingRouter = createRPCRouter(
 	{
 		listLayouts: publicProcedure
@@ -389,15 +650,41 @@ export const reportingRouter = createRPCRouter(
 
 				const customLayouts = customRows.flatMap((row) => {
 					try {
-						const layout = parseStoredLayout(row.schemaJson)
+						if (row.definitionVersion === 2) {
+							const definition = parseStoredReportDefinition({
+								reportDefinitionJson: row.reportDefinitionJson,
+								layoutJson: row.schemaJson,
+								name: row.name,
+							})
+							return [
+								{
+									id: row._id,
+									key: null,
+									name: row.name,
+									pageSize:
+										typeof definition.page.size === 'string'
+											? definition.page.size
+											: 'A4',
+									orientation: definition.page.orientation,
+									blockCount: definition.bands.length,
+									source: 'CUSTOM' as const,
+									moduleId: row.moduleId,
+									entityId: row.entityId,
+									active: row.active,
+									versionNo: row.versionNo,
+									isDefault: defaultLayoutRef === row._id,
+								},
+							]
+						}
+						const legacyLayout = parseStoredLayout(row.schemaJson)
 						return [
 							{
 								id: row._id,
 								key: null,
 								name: row.name,
-								pageSize: layout.pageSize,
-								orientation: layout.orientation,
-								blockCount: layout.blocks.length,
+								pageSize: legacyLayout.pageSize,
+								orientation: legacyLayout.orientation,
+								blockCount: legacyLayout.blocks.length,
 								source: 'CUSTOM' as const,
 								moduleId: row.moduleId,
 								entityId: row.entityId,
@@ -483,6 +770,7 @@ export const reportingRouter = createRPCRouter(
 					baseTemplate: input.baseTemplate,
 					schemaJson: safeJson(layout),
 					datasetDefinition: input.dataSetDraft,
+					definitionVersion: 1,
 					isSystem: false,
 					active: true,
 					versionNo: 1,
@@ -496,6 +784,7 @@ export const reportingRouter = createRPCRouter(
 					versionNo: 1,
 					schemaJson: safeJson(layout),
 					datasetDefinition: input.dataSetDraft,
+					definitionVersion: 1,
 					changedByUserId: context.auth.userId,
 					changedAt: now,
 				})
@@ -550,6 +839,7 @@ export const reportingRouter = createRPCRouter(
 					versionNo: nextVersion,
 					schemaJson: safeJson(layout),
 					datasetDefinition: input.dataSetDraft ?? loaded.row.datasetDefinition,
+					definitionVersion: loaded.row.definitionVersion ?? 1,
 					changedByUserId: context.auth.userId,
 					changedAt: now,
 				})
@@ -637,6 +927,7 @@ export const reportingRouter = createRPCRouter(
 					layoutId: input.layoutId,
 					builtInLayout: input.builtInLayout,
 					layoutDraft: input.layoutDraft,
+					reportDefinitionDraft: input.reportDefinitionDraft,
 				})
 
 				const previewLimit = input.previewOptions?.rowLimit ?? 50
@@ -740,6 +1031,379 @@ export const reportingRouter = createRPCRouter(
 					throw error
 				}
 			}),
+		saveReport: publicProcedure
+			.input(designerSaveInputSchema)
+			.output(layoutMutationResultSchema)
+			.route({
+				method: 'POST',
+				summary: 'Create or update a visual report designer definition',
+			})
+			.handler(({ input, context }) => {
+				assertRole(context, 'MANAGER', 'visual report save')
+				const reportDefinition = resolveDesignerDefinitionInput({
+					reportDefinitionDraft: input.reportDefinitionDraft,
+					reportDefinition: input.reportDefinition,
+					name: input.name,
+				})
+				const now = new Date().toISOString()
+				const fallbackLayout = getBuiltInLayout('A4_SUMMARY')
+				if (!fallbackLayout) {
+					throw new Error('Built-in A4_SUMMARY layout not found')
+				}
+
+				if (input.layoutId) {
+					const loaded = loadCustomLayout(context, input.layoutId)
+					const nextVersion = loaded.row.versionNo + 1
+					const updated = context.db.schemas.reportLayouts.update(
+						loaded.row._id,
+						{
+							moduleId: input.moduleId,
+							entityId: input.entityId,
+							name: input.name,
+							reportDefinitionJson: safeJson(reportDefinition),
+							definitionVersion: 2,
+							datasetSchemaJson: input.datasetSchemaJson,
+							datasetSchemaVersion: input.datasetSchemaVersion,
+							datasetDefinition:
+								input.dataSetDraft ??
+								(loaded.row.datasetDefinition as DataSetDefinition | undefined),
+							schemaJson: loaded.row.schemaJson || safeJson(fallbackLayout),
+							versionNo: nextVersion,
+							active: input.active ?? loaded.row.active,
+							updatedByUserId: context.auth.userId,
+							updatedAt: now,
+						},
+					)
+					if (!updated) throw new Error('Unable to update visual report')
+
+					context.db.schemas.reportLayoutVersions.insert({
+						layoutId: updated._id,
+						versionNo: nextVersion,
+						schemaJson: updated.schemaJson,
+						reportDefinitionJson: safeJson(reportDefinition),
+						definitionVersion: 2,
+						datasetSchemaJson: input.datasetSchemaJson,
+						datasetSchemaVersion: input.datasetSchemaVersion,
+						datasetDefinition:
+							input.dataSetDraft ??
+							(loaded.row.datasetDefinition as DataSetDefinition | undefined),
+						changedByUserId: context.auth.userId,
+						changedAt: now,
+					})
+
+					return {
+						layoutId: updated._id,
+						moduleId: updated.moduleId,
+						entityId: updated.entityId,
+						name: updated.name,
+						versionNo: updated.versionNo,
+						active: updated.active,
+					}
+				}
+
+				const created = context.db.schemas.reportLayouts.insert({
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					name: input.name,
+					baseTemplate: 'A4_SUMMARY',
+					schemaJson: safeJson(fallbackLayout),
+					reportDefinitionJson: safeJson(reportDefinition),
+					definitionVersion: 2,
+					datasetSchemaJson: input.datasetSchemaJson,
+					datasetSchemaVersion: input.datasetSchemaVersion,
+					datasetDefinition: input.dataSetDraft,
+					isSystem: false,
+					active: input.active ?? true,
+					versionNo: 1,
+					createdByUserId: context.auth.userId,
+					updatedByUserId: context.auth.userId,
+					updatedAt: now,
+				})
+
+				context.db.schemas.reportLayoutVersions.insert({
+					layoutId: created._id,
+					versionNo: 1,
+					schemaJson: created.schemaJson,
+					reportDefinitionJson: safeJson(reportDefinition),
+					definitionVersion: 2,
+					datasetSchemaJson: input.datasetSchemaJson,
+					datasetSchemaVersion: input.datasetSchemaVersion,
+					datasetDefinition: input.dataSetDraft,
+					changedByUserId: context.auth.userId,
+					changedAt: now,
+				})
+
+				return {
+					layoutId: created._id,
+					moduleId: created.moduleId,
+					entityId: created.entityId,
+					name: created.name,
+					versionNo: created.versionNo,
+					active: created.active,
+				}
+			}),
+		loadReport: publicProcedure
+			.input(designerLoadInputSchema)
+			.output(designerLoadResultSchema)
+			.route({
+				method: 'GET',
+				summary: 'Load visual report designer definition by layout id',
+			})
+			.handler(({ input, context }) => {
+				assertRole(context, 'VIEWER', 'visual report read')
+				const loaded = loadCustomLayout(context, input.layoutId)
+				const reportDefinition =
+					loaded.reportDefinition ??
+					parseStoredReportDefinition({
+						reportDefinitionJson: loaded.row.reportDefinitionJson,
+						layoutJson: loaded.row.schemaJson,
+						name: loaded.row.name,
+					})
+
+				const datasetSchemaJson = (loaded.row.datasetSchemaJson ??
+					dataSetDefinitionToJsonSchema(
+						loaded.row.datasetDefinition as DataSetDefinition | undefined,
+					)) as Record<string, unknown>
+
+				return {
+					layoutId: loaded.row._id,
+					moduleId: loaded.row.moduleId,
+					entityId: loaded.row.entityId,
+					name: loaded.row.name,
+					reportDefinition,
+					datasetSchemaJson,
+					datasetSchemaVersion: loaded.row.datasetSchemaVersion,
+					dataSetDefinition: loaded.row.datasetDefinition as
+						| DataSetDefinition
+						| undefined,
+					active: loaded.row.active,
+					versionNo: loaded.row.versionNo,
+				}
+			}),
+		getDatasetSchema: publicProcedure
+			.input(datasetSchemaInput)
+			.output(z.record(z.string(), z.unknown()))
+			.route({
+				method: 'GET',
+				summary: 'Get dataset JSON schema for visual designer field picker',
+			})
+			.handler(({ input, context }) => {
+				assertRole(context, 'VIEWER', 'dataset schema read')
+
+				if (input.layoutId) {
+					const loaded = loadCustomLayout(context, input.layoutId)
+					if (loaded.row.datasetSchemaJson) {
+						return loaded.row.datasetSchemaJson as Record<string, unknown>
+					}
+					return dataSetDefinitionToJsonSchema(
+						loaded.row.datasetDefinition as DataSetDefinition | undefined,
+					) as Record<string, unknown>
+				}
+
+				const builtInDataSet = findDataSetForEntity(
+					input.moduleId,
+					input.entityId,
+				)
+				if (builtInDataSet) {
+					return dataSetDefinitionToJsonSchema(
+						builtInDataSet.definition,
+					) as Record<string, unknown>
+				}
+
+				const fallback = buildGenericDataSet(context, {
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					limit: 1,
+				})
+				return inferDatasetSchemaFromData(
+					fallback.rows,
+					fallback.summary,
+				) as Record<string, unknown>
+			}),
+		getDatasetSample: publicProcedure
+			.input(datasetSampleInput)
+			.output(datasetSampleResultSchema)
+			.route({
+				method: 'GET',
+				summary: 'Get capped dataset rows for designer preview',
+			})
+			.handler(({ input, context }) => {
+				assertRole(context, 'VIEWER', 'dataset sample read')
+				const fromLayout = input.layoutId
+					? loadCustomLayout(context, input.layoutId)
+					: null
+				const builtIn = findDataSetForEntity(input.moduleId, input.entityId)
+				const datasetDefinition = (fromLayout?.row.datasetDefinition ??
+					builtIn?.definition) as DataSetDefinition | undefined
+				const dataSet = resolveDataSet({
+					context,
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					layoutId: input.layoutId,
+					datasetDefinition,
+					filters: input.filters,
+					limit: input.limit,
+				})
+				return {
+					rows: dataSet.rows.slice(0, input.limit),
+					summary: (dataSet.summary ?? {}) as Record<string, unknown>,
+					suggestedColumns: dataSet.suggestedColumns ?? [],
+				}
+			}),
+		previewDesignerReport: publicProcedure
+			.input(designerPreviewInputSchema)
+			.route({
+				method: 'POST',
+				summary: 'Render visual report designer preview PDF',
+			})
+			.handler(async ({ input, context }) => {
+				assertRole(context, 'VIEWER', 'visual report preview')
+				const loaded = input.layoutId
+					? loadCustomLayout(context, input.layoutId, { requireActive: true })
+					: null
+				const reportDefinition = resolveDesignerDefinitionInput({
+					reportDefinitionDraft: input.reportDefinitionDraft,
+					reportDefinition: input.reportDefinition,
+					name: loaded?.row.name,
+				})
+				const dataSet = resolveDataSet({
+					context,
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					layoutId: input.layoutId,
+					datasetDefinition: (input.dataSetDraft ??
+						(loaded?.row.datasetDefinition as DataSetDefinition | undefined)) as
+						| DataSetDefinition
+						| undefined,
+					filters: input.filters,
+					limit: input.limit,
+					ids: input.ids,
+				})
+				const file = await renderReportFile({
+					layout: reportDefinition,
+					dataSet,
+					filenameSuffix: 'designer-preview',
+				})
+				context.resHeaders?.set('Content-Type', 'application/pdf')
+				context.resHeaders?.set(
+					'Content-Disposition',
+					`inline; filename="${file.name}"`,
+				)
+				context.resHeaders?.set('Cache-Control', 'no-store')
+				return file
+			}),
+		exportReport: publicProcedure
+			.input(designerPreviewInputSchema)
+			.route({
+				method: 'POST',
+				summary: 'Generate final PDF from visual report designer layout',
+			})
+			.handler(async ({ input, context }) => {
+				assertRole(context, 'VIEWER', 'visual report export')
+				const loaded = input.layoutId
+					? loadCustomLayout(context, input.layoutId, { requireActive: true })
+					: null
+				const reportDefinition = resolveDesignerDefinitionInput({
+					reportDefinitionDraft: input.reportDefinitionDraft,
+					reportDefinition: input.reportDefinition,
+					name: loaded?.row.name,
+				})
+				const dataSet = resolveDataSet({
+					context,
+					moduleId: input.moduleId,
+					entityId: input.entityId,
+					layoutId: input.layoutId,
+					datasetDefinition: (input.dataSetDraft ??
+						(loaded?.row.datasetDefinition as DataSetDefinition | undefined)) as
+						| DataSetDefinition
+						| undefined,
+					filters: input.filters,
+					limit: input.limit,
+					ids: input.ids,
+				})
+				const file = await renderReportFile({
+					layout: reportDefinition,
+					dataSet,
+				})
+				context.resHeaders?.set('Content-Type', 'application/pdf')
+				context.resHeaders?.set(
+					'Content-Disposition',
+					`attachment; filename="${file.name}"`,
+				)
+				return file
+			}),
+		convertLegacyLayout: publicProcedure
+			.input(convertLayoutInputSchema)
+			.output(designerLoadResultSchema)
+			.route({
+				method: 'POST',
+				summary: 'Convert legacy block layout to visual report definition',
+			})
+			.handler(({ input, context }) => {
+				assertRole(context, 'MANAGER', 'convert legacy layout')
+				const loaded = loadCustomLayout(context, input.layoutId)
+				const reportDefinition = isReportDefinition(loaded.reportDefinition)
+					? loaded.reportDefinition
+					: migrateLayoutToReportDefinition(loaded.layout)
+				const now = new Date().toISOString()
+				const nextVersion =
+					loaded.row.definitionVersion === 2
+						? loaded.row.versionNo
+						: loaded.row.versionNo + 1
+				const updated = context.db.schemas.reportLayouts.update(
+					loaded.row._id,
+					{
+						reportDefinitionJson: safeJson(reportDefinition),
+						definitionVersion: 2,
+						versionNo: nextVersion,
+						updatedByUserId: context.auth.userId,
+						updatedAt: now,
+					},
+				)
+				if (!updated) throw new Error('Unable to convert layout')
+				context.db.schemas.reportLayoutVersions.insert({
+					layoutId: updated._id,
+					versionNo: nextVersion,
+					schemaJson: updated.schemaJson,
+					reportDefinitionJson: safeJson(reportDefinition),
+					definitionVersion: 2,
+					datasetDefinition: updated.datasetDefinition,
+					datasetSchemaJson: updated.datasetSchemaJson,
+					datasetSchemaVersion: updated.datasetSchemaVersion,
+					changedByUserId: context.auth.userId,
+					changedAt: now,
+				})
+				return {
+					layoutId: updated._id,
+					moduleId: updated.moduleId,
+					entityId: updated.entityId,
+					name: updated.name,
+					reportDefinition,
+					datasetSchemaJson: (updated.datasetSchemaJson ??
+						dataSetDefinitionToJsonSchema(
+							updated.datasetDefinition as DataSetDefinition | undefined,
+						)) as Record<string, unknown>,
+					datasetSchemaVersion: updated.datasetSchemaVersion,
+					dataSetDefinition: updated.datasetDefinition as
+						| DataSetDefinition
+						| undefined,
+					active: updated.active,
+					versionNo: updated.versionNo,
+				}
+			}),
+		listDesignerTemplates: publicProcedure
+			.output(z.array(designerTemplateSchema))
+			.route({
+				method: 'GET',
+				summary: 'List built-in templates for visual report designer',
+			})
+			.handler(() =>
+				listDesignerTemplates().map((item) => ({
+					key: item.key,
+					name: item.definition.name,
+					reportDefinition: item.definition,
+				})),
+			),
 		getAvailableTables: publicProcedure
 			.output(
 				z.array(

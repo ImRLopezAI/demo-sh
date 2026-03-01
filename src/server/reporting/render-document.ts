@@ -1,9 +1,13 @@
 import PDFDocument from 'pdfkit'
+import { renderBandReportDocument } from './band-renderer'
 import type { ReportBlock, ReportDataSet, ReportLayout } from './contracts'
+import { isReportDefinition, type ReportDefinition } from './designer-contracts'
 
 const DEFAULT_GENERIC_KEYS = new Set(['_id', 'status', '_updatedAt'])
 
-function resolvePageSize(layout: ReportLayout): PDFKit.PDFDocumentOptions {
+function resolveLegacyPageSize(
+	layout: ReportLayout,
+): PDFKit.PDFDocumentOptions {
 	if (layout.pageSize === 'THERMAL') {
 		return { size: [226.77, 1200], layout: 'portrait' }
 	}
@@ -62,11 +66,16 @@ interface BlockRenderContext {
 }
 
 export function renderDocumentStream(
-	layout: ReportLayout,
+	layout: ReportLayout | ReportDefinition,
 	dataSet: ReportDataSet,
 ): PDFKit.PDFDocument {
-	const pageOpts = resolvePageSize(layout)
-	const margin = layout.pageSize === 'THERMAL' ? 12 : 24
+	if (isReportDefinition(layout)) {
+		return renderBandReportDocument(layout, dataSet)
+	}
+
+	const legacyLayout = layout
+	const pageOpts = resolveLegacyPageSize(legacyLayout)
+	const margin = legacyLayout.pageSize === 'THERMAL' ? 12 : 24
 	const doc = new PDFDocument({
 		...pageOpts,
 		margin,
@@ -86,7 +95,7 @@ export function renderDocumentStream(
 	}
 
 	const pageWidth = (doc.page?.width ?? 595.28) - margin * 2
-	const isThermal = layout.pageSize === 'THERMAL'
+	const isThermal = legacyLayout.pageSize === 'THERMAL'
 
 	// Font sizes adapt to page format
 	const baseFontSize = isThermal ? 7 : 10
@@ -111,7 +120,7 @@ export function renderDocumentStream(
 		depth: 0,
 	}
 
-	for (const block of layout.blocks) {
+	for (const block of legacyLayout.blocks) {
 		renderBlock(doc, block, ctx)
 	}
 

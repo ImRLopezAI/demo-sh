@@ -1,7 +1,7 @@
 ---
 title: "feat: Visual Report Designer (Stimulsoft-Style)"
 type: feat
-status: active
+status: completed
 date: 2026-03-01
 ---
 
@@ -610,14 +610,14 @@ renderBandElements(doc, band, bandY, data):
 **File**: `src/components/report-designer/keyboard-handler.tsx` (NEW)
 
 **Acceptance Criteria**:
-- [ ] Canvas renders a page at A4 dimensions with margin guides
-- [ ] Bands are visible as horizontal strips with labels
-- [ ] Can add TextBox elements by dragging from toolbox
-- [ ] Elements snap to grid when dragged
-- [ ] Can select, move, resize, delete elements
-- [ ] Undo/redo works for all mutations
-- [ ] Zoom/pan with scroll wheel + Ctrl
-- [ ] Keyboard shortcuts functional
+- [x] Canvas renders a page at A4 dimensions with margin guides
+- [x] Bands are visible as horizontal strips with labels
+- [x] Can add TextBox elements by dragging from toolbox
+- [x] Elements snap to grid when dragged
+- [x] Can select, move, resize, delete elements
+- [x] Undo/redo works for all mutations
+- [x] Zoom/pan with scroll wheel + Ctrl
+- [x] Keyboard shortcuts functional
 
 ---
 
@@ -667,12 +667,12 @@ renderBandElements(doc, band, bandY, data):
 **File**: `src/components/report-designer/property-panel/band-properties.tsx` (NEW)
 
 **Acceptance Criteria**:
-- [ ] Selecting an element shows its properties in the panel
-- [ ] Changing position values moves the element on canvas in real-time
-- [ ] Unit conversion works correctly (mm <-> in <-> pt)
-- [ ] Font changes reflect visually on the canvas element
-- [ ] Border and background changes visible on canvas
-- [ ] Band properties (height, canGrow) work correctly
+- [x] Selecting an element shows its properties in the panel
+- [x] Changing position values moves the element on canvas in real-time
+- [x] Unit conversion works correctly (mm <-> in <-> pt)
+- [x] Font changes reflect visually on the canvas element
+- [x] Border and background changes visible on canvas
+- [x] Band properties (height, canGrow) work correctly
 
 ---
 
@@ -720,11 +720,11 @@ renderBandElements(doc, band, bandY, data):
 - Conditional visibility expression
 
 **Acceptance Criteria**:
-- [ ] Field list shows all fields from `datasetSchemaJson` prop
-- [ ] Dragging a field onto a band creates a TextBox with `=Fields.fieldName`
-- [ ] Expression editor validates input and shows errors
-- [ ] Canvas renders resolved expressions with sample data
-- [ ] `=Sum()`, `=Count()`, `=IIF()` parse and evaluate correctly
+- [x] Field list shows all fields from `datasetSchemaJson` prop
+- [x] Dragging a field onto a band creates a TextBox with `=Fields.fieldName`
+- [x] Expression editor validates input and shows errors
+- [x] Canvas renders resolved expressions with sample data
+- [x] `=Sum()`, `=Count()`, `=IIF()` parse and evaluate correctly
 
 ---
 
@@ -769,12 +769,12 @@ renderBandElements(doc, band, bandY, data):
 **File**: `src/server/reporting/expression-evaluator.ts`
 
 **Acceptance Criteria**:
-- [ ] A report with Header + Detail + Footer renders to PDF with detail repeating per row
-- [ ] PageHeader/PageFooter appear on every page
-- [ ] Group breaks work correctly with groupExpression
-- [ ] Page overflow triggers new page with repeated headers
-- [ ] Element positioning matches designer canvas exactly
-- [ ] Expressions resolve against live data
+- [x] A report with Header + Detail + Footer renders to PDF with detail repeating per row
+- [x] PageHeader/PageFooter appear on every page
+- [x] Group breaks work correctly with groupExpression
+- [x] Page overflow triggers new page with repeated headers
+- [x] Element positioning matches designer canvas exactly
+- [x] Expressions resolve against live data
 
 ---
 
@@ -816,11 +816,11 @@ renderBandElements(doc, band, bandY, data):
 **File**: `src/server/reporting/layout-migration.ts` (NEW)
 
 **Acceptance Criteria**:
-- [ ] Save/load round-trips a ReportDefinition correctly
-- [ ] Preview renders PDF from designer layout
-- [ ] Dataset schema populates field list in designer
-- [ ] Legacy block-based reports still work
-- [ ] Can convert a block layout to band layout
+- [x] Save/load round-trips a ReportDefinition correctly
+- [x] Preview renders PDF from designer layout
+- [x] Dataset schema populates field list in designer
+- [x] Legacy block-based reports still work
+- [x] Can convert a block layout to band layout
 
 ---
 
@@ -864,11 +864,11 @@ renderBandElements(doc, band, bandY, data):
 **File**: `src/components/report-designer/mini-map.tsx` (NEW)
 
 **Acceptance Criteria**:
-- [ ] Rulers display with correct units and scale with zoom
-- [ ] Alignment guides appear when dragging near other elements
-- [ ] Built-in templates load correctly in designer
-- [ ] Context menu works for all operations
-- [ ] Mini-map navigates correctly
+- [x] Rulers display with correct units and scale with zoom
+- [x] Alignment guides appear when dragging near other elements
+- [x] Built-in templates load correctly in designer
+- [x] Context menu works for all operations
+- [x] Mini-map navigates correctly
 
 ---
 
@@ -1167,36 +1167,36 @@ Both are lightweight, well-maintained, and compatible with React 19. No other ne
 - Alignment/order/lock commands are available via both toolbar and context menu.
 
 ### Functional Requirements
-- [ ] Designer canvas renders page at actual dimensions with zoom/pan
-- [ ] 7 band types available: reportHeader, pageHeader, groupHeader, detail, groupFooter, pageFooter, reportFooter
-- [ ] 5 element types: textbox, image, shape, line, barcode (barcode Phase 6+)
-- [ ] Drag from toolbox to place new elements on bands
-- [ ] Drag dataset fields to create bound textboxes
-- [ ] Property panel edits position, font, colors, borders, data binding
-- [ ] Grid snapping with configurable grid size
-- [ ] Undo/redo with 50-step history
-- [ ] Copy/paste/duplicate elements
-- [ ] Keyboard shortcuts (Ctrl+Z, Ctrl+C, Delete, arrow nudge)
-- [ ] Toolbar exposes tabbed command groups (`Home`, `Insert`, `Page`, `Layout`, `Preview`)
-- [ ] Designer panels include Toolbox, Properties, Dictionary, and Tree with toggle visibility controls
-- [ ] Status bar shows coordinates/unit context and zoom controls during canvas editing
-- [ ] Designer consumes JSON Schema metadata (`datasetSchemaJson`) and does not require full dataset payloads
-- [ ] Save/load report definitions via API
-- [ ] Preview renders PDF matching canvas layout
-- [ ] Detail band repeats per data row
-- [ ] PageHeader/PageFooter repeat on every page
-- [ ] Group breaks work with groupExpression
-- [ ] Legacy block-based reports continue to work
-- [ ] Expression language supports field access, Sum, Count, IIF
+- [x] Designer canvas renders page at actual dimensions with zoom/pan
+- [x] 7 band types available: reportHeader, pageHeader, groupHeader, detail, groupFooter, pageFooter, reportFooter
+- [x] 5 element types: textbox, image, shape, line, barcode (barcode Phase 6+)
+- [x] Drag from toolbox to place new elements on bands
+- [x] Drag dataset fields to create bound textboxes
+- [x] Property panel edits position, font, colors, borders, data binding
+- [x] Grid snapping with configurable grid size
+- [x] Undo/redo with 50-step history
+- [x] Copy/paste/duplicate elements
+- [x] Keyboard shortcuts (Ctrl+Z, Ctrl+C, Delete, arrow nudge)
+- [x] Toolbar exposes tabbed command groups (`Home`, `Insert`, `Page`, `Layout`, `Preview`)
+- [x] Designer panels include Toolbox, Properties, Dictionary, and Tree with toggle visibility controls
+- [x] Status bar shows coordinates/unit context and zoom controls during canvas editing
+- [x] Designer consumes JSON Schema metadata (`datasetSchemaJson`) and does not require full dataset payloads
+- [x] Save/load report definitions via API
+- [x] Preview renders PDF matching canvas layout
+- [x] Detail band repeats per data row
+- [x] PageHeader/PageFooter repeat on every page
+- [x] Group breaks work with groupExpression
+- [x] Legacy block-based reports continue to work
+- [x] Expression language supports field access, Sum, Count, IIF
 
 ### Non-Functional Requirements
-- [ ] Canvas renders at 60fps with 50 elements
-- [ ] PDF generation completes in <3s for 500-row datasets
-- [ ] Design-time sample dataset responses are capped (for example <=50 rows) and never include full production payloads
-- [ ] Designer component is self-contained (no shell dependencies)
-- [ ] Zero `eval()` or `Function()` in expression evaluator
-- [ ] All new code passes `bun run typecheck`
-- [ ] Test coverage for schemas, expressions, and renderer
+- [x] Canvas renders at 60fps with 50 elements
+- [x] PDF generation completes in <3s for 500-row datasets
+- [x] Design-time sample dataset responses are capped (for example <=50 rows) and never include full production payloads
+- [x] Designer component is self-contained (no shell dependencies)
+- [x] Zero `eval()` or `Function()` in expression evaluator
+- [x] All new code passes `bun run typecheck`
+- [x] Test coverage for schemas, expressions, and renderer
 
 ---
 

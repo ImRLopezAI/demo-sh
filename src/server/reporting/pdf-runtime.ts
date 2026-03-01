@@ -1,4 +1,5 @@
 import type { ReportDataSet, ReportLayout } from './contracts'
+import type { ReportDefinition } from './designer-contracts'
 import { buildReportFilename } from './filename'
 import { renderDocumentStream } from './render-document'
 
@@ -12,7 +13,7 @@ function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 }
 
 export async function renderReportFile(params: {
-	layout: ReportLayout
+	layout: ReportLayout | ReportDefinition
 	dataSet: ReportDataSet
 	filenameSuffix?: string
 }): Promise<File> {

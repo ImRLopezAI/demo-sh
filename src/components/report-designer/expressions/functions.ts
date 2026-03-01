@@ -1,0 +1,15 @@
+export const DESIGNER_FUNCTIONS = [
+	'Sum',
+	'Count',
+	'Avg',
+	'Min',
+	'Max',
+	'IIF',
+	'Format',
+	'Upper',
+	'Lower',
+	'Trim',
+	'Left',
+	'Right',
+	'DateFormat',
+] as const
