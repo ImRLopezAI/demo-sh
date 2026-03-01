@@ -3,6 +3,12 @@
 import { AlertTriangle } from 'lucide-react'
 import * as React from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from '@/components/ui/resizable'
 import { cn } from '@/lib/utils'
 import { DesignerCanvas } from './canvas/designer-canvas'
 import { DEFAULT_THEME_VARS, DESIGNER_FONT_STACK } from './constants'
@@ -189,35 +195,56 @@ const ReportDesignerImpl = React.forwardRef<
 				onZoomReset={handleZoomReset}
 				onZoomFit={handleZoomFit}
 			/>
-			<div className='flex items-center gap-2 border-border border-b bg-amber-50/80 px-3 py-1 text-[11px] text-amber-950'>
-				<AlertTriangle className='size-3.5 text-amber-700' />
-				<span className='truncate'>
-					Designer mode uses sample data and local draft state until you save.
-				</span>
+			<div className='px-2 py-1'>
+				<Alert className='rounded-sm border-border bg-card/70 px-2 py-1'>
+					<AlertTriangle className='size-3.5 text-muted-foreground' />
+					<AlertDescription className='truncate text-[11px]'>
+						Designer mode uses sample data and local draft state until you save.
+					</AlertDescription>
+				</Alert>
 			</div>
-			<div className='grid min-h-0 flex-1 grid-cols-[300px_1fr_320px] gap-2 p-2'>
-				<DesignerSidebar fields={fields} />
-				<DesignerContextMenu>
-					<div className='relative h-full min-h-0'>
-						{activeTab === 'Preview' && previewUrl ? (
-							<iframe
-								title='Report preview'
-								src={previewUrl}
-								className='h-full w-full rounded-sm border border-border bg-background'
-							/>
-						) : (
-							<DesignerCanvas />
-						)}
-						{previewError ? (
-							<p className='absolute right-3 bottom-3 rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] text-destructive'>
-								{previewError}
-							</p>
-						) : null}
-					</div>
-				</DesignerContextMenu>
-				<PropertyPanel fields={fields} />
+			<div className='min-h-0 flex-1 px-2 pb-2'>
+				<ResizablePanelGroup
+					orientation='horizontal'
+					className='h-full rounded-sm border border-border bg-muted/10'
+				>
+					<ResizablePanel defaultSize={23} minSize={18}>
+						<div className='h-full p-1.5'>
+							<DesignerSidebar fields={fields} />
+						</div>
+					</ResizablePanel>
+					<ResizableHandle withHandle />
+					<ResizablePanel defaultSize={52} minSize={35}>
+						<div className='h-full p-1.5'>
+							<DesignerContextMenu>
+								<div className='relative h-full min-h-0'>
+									{activeTab === 'Preview' && previewUrl ? (
+										<iframe
+											title='Report preview'
+											src={previewUrl}
+											className='h-full w-full rounded-sm border border-border bg-background'
+										/>
+									) : (
+										<DesignerCanvas />
+									)}
+									{previewError ? (
+										<p className='absolute right-3 bottom-3 rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] text-destructive'>
+											{previewError}
+										</p>
+									) : null}
+								</div>
+							</DesignerContextMenu>
+						</div>
+					</ResizablePanel>
+					<ResizableHandle withHandle />
+					<ResizablePanel defaultSize={25} minSize={18}>
+						<div className='h-full p-1.5'>
+							<PropertyPanel fields={fields} />
+						</div>
+					</ResizablePanel>
+				</ResizablePanelGroup>
 			</div>
-			<div className='flex items-center justify-between border-black/30 border-t bg-[var(--designer-status)] px-2 py-1 text-[10px] text-slate-100'>
+			<div className='flex items-center justify-between border-border border-t bg-primary/95 px-2 py-1 text-[10px] text-primary-foreground'>
 				<div className='flex items-center gap-3'>
 					<span>
 						Coords: {Math.round(lastPointer.x)}, {Math.round(lastPointer.y)}

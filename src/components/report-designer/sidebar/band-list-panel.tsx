@@ -46,11 +46,13 @@ export function BandListPanel() {
 			</div>
 			<div className='space-y-1'>
 				{report.bands.map((band) => (
-					<button
+					<Button
 						key={band.id}
 						type='button'
+						variant='ghost'
+						size='sm'
 						onClick={() => selectBand(band.id)}
-						className={`flex w-full items-center justify-between rounded-sm border px-2 py-1 text-left text-[11px] transition-colors ${
+						className={`h-auto w-full justify-between rounded-sm border px-2 py-1 text-left text-[11px] transition-colors ${
 							selectedBandId === band.id
 								? 'border-primary/45 bg-primary/10 text-foreground'
 								: 'border-border bg-background text-foreground hover:border-primary/35 hover:bg-muted/45'
@@ -60,7 +62,7 @@ export function BandListPanel() {
 						<span className='font-mono text-[10px] text-muted-foreground'>
 							{band.elements.length}
 						</span>
-					</button>
+					</Button>
 				))}
 			</div>
 			<div className='grid grid-cols-2 gap-1'>

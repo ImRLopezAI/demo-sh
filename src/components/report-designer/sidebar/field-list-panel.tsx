@@ -1,6 +1,7 @@
 'use client'
 
 import { Database, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { DesignerFieldItem } from '../types'
 
@@ -13,21 +14,23 @@ function FieldNode({
 }) {
 	return (
 		<div className='space-y-1'>
-			<button
+			<Button
 				type='button'
+				variant='ghost'
+				size='sm'
 				draggable
 				onDragStart={(event) => {
 					event.dataTransfer.effectAllowed = 'copy'
 					event.dataTransfer.setData('designer-field-path', field.path)
 				}}
-				className='flex w-full items-center justify-between rounded-sm border border-border bg-background px-2 py-1 text-left text-[11px] text-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30'
+				className='h-auto w-full justify-between rounded-sm border border-border bg-background px-2 py-1 text-left text-[11px] text-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30'
 				style={{ marginLeft: depth * 10 }}
 			>
 				<span>{field.label}</span>
 				<span className='font-mono text-[10px] text-muted-foreground'>
 					{field.type}
 				</span>
-			</button>
+			</Button>
 			{field.children?.map((child) => (
 				<FieldNode key={child.path} field={child} depth={depth + 1} />
 			))}

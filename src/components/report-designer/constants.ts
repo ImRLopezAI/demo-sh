@@ -49,7 +49,6 @@ export const DEFAULT_THEME_VARS: Record<string, string> = {
 	'--designer-accent': 'hsl(var(--primary))',
 	'--designer-grid': 'hsl(var(--border) / 0.7)',
 	'--designer-ribbon': 'hsl(var(--background))',
-	'--designer-status': 'hsl(220 25% 20%)',
 }
 
 export const DESIGNER_KEYBOARD_STEP = 4
