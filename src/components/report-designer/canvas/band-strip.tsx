@@ -65,8 +65,8 @@ export function BandStrip({
 				bandId={band.id}
 				onDrop={onDrop}
 				className={cn(
-					'relative rounded-r-md border border-slate-300/70 bg-white/85',
-					selected ? 'ring-2 ring-amber-300/50' : undefined,
+					'relative border border-border bg-background',
+					selected ? 'ring-1 ring-primary/65' : undefined,
 				)}
 			>
 				<section

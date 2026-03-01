@@ -1,8 +1,9 @@
 'use client'
 
-import { ListTree } from 'lucide-react'
+import { ListTree, Search } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { BAND_LABELS } from '../constants'
 import { useReportDesignerStore } from '../store'
 
@@ -29,11 +30,19 @@ export function BandListPanel() {
 
 	return (
 		<div className='space-y-2'>
-			<div className='flex items-center justify-between'>
-				<h3 className='font-semibold text-[11px] text-slate-600 uppercase tracking-[0.16em]'>
+			<div className='flex items-center justify-between border-border border-b pb-1'>
+				<h3 className='font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]'>
 					Report tree
 				</h3>
-				<ListTree className='size-3 text-slate-500' />
+				<ListTree className='size-3 text-muted-foreground' />
+			</div>
+			<div className='relative'>
+				<Search className='pointer-events-none absolute top-1/2 left-2 size-3 -translate-y-1/2 text-muted-foreground' />
+				<Input
+					aria-label='Search bands'
+					placeholder='Search bands…'
+					className='h-7 pl-6 text-[11px]'
+				/>
 			</div>
 			<div className='space-y-1'>
 				{report.bands.map((band) => (
@@ -41,14 +50,14 @@ export function BandListPanel() {
 						key={band.id}
 						type='button'
 						onClick={() => selectBand(band.id)}
-						className={`flex w-full items-center justify-between rounded border px-2 py-1 text-left text-[11px] ${
+						className={`flex w-full items-center justify-between rounded-sm border px-2 py-1 text-left text-[11px] transition-colors ${
 							selectedBandId === band.id
-								? 'border-amber-400 bg-amber-50 text-amber-900'
-								: 'border-slate-300/70 bg-white/80 text-slate-700 hover:border-slate-400'
+								? 'border-primary/45 bg-primary/10 text-foreground'
+								: 'border-border bg-background text-foreground hover:border-primary/35 hover:bg-muted/45'
 						}`}
 					>
 						<span>{BAND_LABELS[band.type]}</span>
-						<span className='font-mono text-[10px]'>
+						<span className='font-mono text-[10px] text-muted-foreground'>
 							{band.elements.length}
 						</span>
 					</button>

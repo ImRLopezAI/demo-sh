@@ -24,7 +24,7 @@ export function SelectionOverlay({
 
 	return (
 		<div
-			className='pointer-events-none absolute border border-amber-500'
+			className='pointer-events-none absolute border border-primary'
 			style={{
 				left: element.x,
 				top: element.y,
@@ -38,7 +38,7 @@ export function SelectionOverlay({
 					type='button'
 					onPointerDown={(event) => onResizeStart(handle.id, event)}
 					aria-label={`Resize element from ${handle.id} corner`}
-					className='pointer-events-auto absolute size-2 rounded-full border border-amber-500 bg-white'
+					className='pointer-events-auto absolute size-2 border border-primary bg-background'
 					style={{ ...handle.style, cursor: handle.cursor }}
 				/>
 			))}

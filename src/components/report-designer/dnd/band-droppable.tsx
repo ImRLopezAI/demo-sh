@@ -47,7 +47,7 @@ export function BandDroppable({
 				})
 			}}
 			className={cn(
-				over ? 'outline-dashed outline-2 outline-amber-400/70' : undefined,
+				over ? 'outline-dashed outline-2 outline-primary/70' : undefined,
 				className,
 			)}
 		>

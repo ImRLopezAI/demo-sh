@@ -34,21 +34,22 @@ export const ELEMENT_DEFAULT_SIZE: Record<
 }
 
 export const DESIGNER_FONT_STACK = {
-	display: '"Outfit Variable", "DM Sans Variable", ui-sans-serif, sans-serif',
-	body: '"DM Sans Variable", "Inter Variable", ui-sans-serif, sans-serif',
+	display: 'var(--font-heading), var(--font-sans), "Segoe UI", sans-serif',
+	body: 'var(--font-sans), "Segoe UI", sans-serif',
 	mono: 'ui-monospace, SFMono-Regular, Menlo, monospace',
 }
 
 export const DEFAULT_GRID_SIZE = 8
 
 export const DEFAULT_THEME_VARS: Record<string, string> = {
-	'--designer-bg':
-		'linear-gradient(135deg, #f5f7fa 0%, #eef2ff 45%, #ecfeff 100%)',
-	'--designer-panel': 'rgba(255,255,255,0.84)',
-	'--designer-ink': '#0f172a',
-	'--designer-muted': '#64748b',
-	'--designer-accent': '#f59e0b',
-	'--designer-grid': 'rgba(15, 23, 42, 0.08)',
+	'--designer-bg': 'hsl(var(--muted) / 0.26)',
+	'--designer-panel': 'hsl(var(--background))',
+	'--designer-ink': 'hsl(var(--foreground))',
+	'--designer-muted': 'hsl(var(--muted-foreground))',
+	'--designer-accent': 'hsl(var(--primary))',
+	'--designer-grid': 'hsl(var(--border) / 0.7)',
+	'--designer-ribbon': 'hsl(var(--background))',
+	'--designer-status': 'hsl(220 25% 20%)',
 }
 
 export const DESIGNER_KEYBOARD_STEP = 4

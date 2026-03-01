@@ -32,10 +32,10 @@ export function CanvasElementRenderer({
 			aria-label={`Select ${element.kind} element`}
 			data-designer-element='true'
 			className={cn(
-				'group absolute cursor-move rounded border bg-white/80 px-1 py-0.5 shadow-sm outline-none transition',
+				'group absolute cursor-move rounded-sm border bg-background/95 px-1 py-0.5 shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40',
 				selected
-					? 'border-amber-500 ring-2 ring-amber-300/60'
-					: 'border-slate-300/70 hover:border-amber-300',
+					? 'border-primary ring-2 ring-primary/20'
+					: 'border-border hover:border-primary/45',
 			)}
 			style={{
 				left: element.x,

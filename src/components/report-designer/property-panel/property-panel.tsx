@@ -5,6 +5,7 @@ import type {
 	ReportElement,
 } from '@server/reporting/designer-contracts'
 import { useShallow } from 'zustand/react/shallow'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useReportDesignerStore } from '../store'
 import type { DesignerFieldItem } from '../types'
@@ -55,58 +56,75 @@ export function PropertyPanel({ fields }: { fields: DesignerFieldItem[] }) {
 	)
 
 	return (
-		<div className='h-full rounded-md border border-slate-300/70 bg-white/65 shadow-sm backdrop-blur'>
-			<Tabs defaultValue='position' className='h-full'>
+		<div className='h-full overflow-hidden border border-border bg-card'>
+			<Tabs defaultValue='position' className='h-full gap-0'>
 				<TabsList
 					variant='line'
-					className='w-full justify-start border-slate-200 border-b p-2'
+					className='w-full justify-start rounded-none border-border border-b bg-muted/25 p-1'
 				>
-					<TabsTrigger value='position'>Position</TabsTrigger>
-					<TabsTrigger value='style'>Style</TabsTrigger>
-					<TabsTrigger value='data'>Data</TabsTrigger>
-					<TabsTrigger value='rules'>Rules</TabsTrigger>
+					<TabsTrigger value='position' className='px-2'>
+						Position
+					</TabsTrigger>
+					<TabsTrigger value='style' className='px-2'>
+						Style
+					</TabsTrigger>
+					<TabsTrigger value='data' className='px-2'>
+						Data
+					</TabsTrigger>
+					<TabsTrigger value='rules' className='px-2'>
+						Rules
+					</TabsTrigger>
 				</TabsList>
-				<div className='space-y-3 p-3 text-[11px]'>
-					{element ? (
-						<>
-							<TabsContent value='position'>
-								<PositionTab
-									element={element}
-									unit={rulers.unit}
-									onUpdate={(patch) => updateElement(element.id, patch)}
-								/>
-							</TabsContent>
-							<TabsContent value='style'>
-								<StyleTab
-									element={element}
-									onUpdate={(patch) => updateElement(element.id, patch)}
-								/>
-							</TabsContent>
-							<TabsContent value='data'>
-								<DataTab
-									element={element}
-									fields={fields}
-									onUpdate={(patch) => updateElement(element.id, patch)}
-								/>
-							</TabsContent>
-							<TabsContent value='rules'>
-								<RulesTab
-									element={element}
-									onUpdate={(patch) => updateElement(element.id, patch)}
-								/>
-							</TabsContent>
-						</>
-					) : band ? (
-						<BandProperties
-							band={band}
-							onUpdate={(patch) => updateBand(band.id, patch)}
-						/>
-					) : (
-						<p className='rounded border border-slate-300 border-dashed px-2 py-3 text-slate-500'>
-							Select a band or element to edit properties.
-						</p>
-					)}
-				</div>
+				<ScrollArea className='h-[calc(100%-36px)] bg-background/80'>
+					<div className='space-y-3 p-2.5 text-[11px]'>
+						<div className='rounded-sm border border-border bg-muted/25 px-2 py-1 text-[10px] text-muted-foreground'>
+							{element
+								? `Editing ${element.kind}`
+								: band
+									? `Editing ${band.type}`
+									: 'No selection'}
+						</div>
+						{element ? (
+							<>
+								<TabsContent value='position'>
+									<PositionTab
+										element={element}
+										unit={rulers.unit}
+										onUpdate={(patch) => updateElement(element.id, patch)}
+									/>
+								</TabsContent>
+								<TabsContent value='style'>
+									<StyleTab
+										element={element}
+										onUpdate={(patch) => updateElement(element.id, patch)}
+									/>
+								</TabsContent>
+								<TabsContent value='data'>
+									<DataTab
+										element={element}
+										fields={fields}
+										onUpdate={(patch) => updateElement(element.id, patch)}
+									/>
+								</TabsContent>
+								<TabsContent value='rules'>
+									<RulesTab
+										element={element}
+										onUpdate={(patch) => updateElement(element.id, patch)}
+									/>
+								</TabsContent>
+							</>
+						) : band ? (
+							<BandProperties
+								band={band}
+								onUpdate={(patch) => updateBand(band.id, patch)}
+							/>
+						) : (
+							<p className='rounded-sm border border-border border-dashed bg-background px-2 py-3 text-muted-foreground'>
+								Select a band or element to edit properties.
+							</p>
+						)}
+					</div>
+				</ScrollArea>
 			</Tabs>
 		</div>
 	)

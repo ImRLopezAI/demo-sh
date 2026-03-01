@@ -5,7 +5,9 @@ import type {
 	ReportDefinition,
 	ReportElement,
 } from '@server/reporting/designer-contracts'
+import { Plus } from 'lucide-react'
 import type * as React from 'react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { pageDimensions } from '../utils'
 import { AlignmentGuides } from './alignment-guides'
@@ -62,11 +64,30 @@ export function PageSurface({
 
 	return (
 		<div className='relative'>
+			<div className='mb-1 flex items-center gap-1'>
+				<Button
+					type='button'
+					variant='ghost'
+					size='sm'
+					className='inline-flex h-7 items-center gap-1 rounded-t-sm border border-border border-b-background bg-background px-3 text-[11px] text-foreground'
+				>
+					<span className='font-medium'>Page1</span>
+				</Button>
+				<Button
+					type='button'
+					variant='ghost'
+					size='icon-xs'
+					aria-label='Add page'
+					className='mt-0.5 text-muted-foreground'
+				>
+					<Plus className='size-3' />
+				</Button>
+			</div>
 			{rulers.show ? (
-				<div className='pointer-events-none absolute top-0 left-0 h-6 w-6 rounded-tl border border-slate-300/70 bg-slate-100/90' />
+				<div className='pointer-events-none absolute top-7 left-0 h-6 w-6 border border-border bg-muted/70' />
 			) : null}
 			{rulers.show ? (
-				<div className='absolute top-0 left-6'>
+				<div className='absolute top-7 left-6 overflow-hidden border border-border border-l-0 bg-muted/70'>
 					<Ruler
 						length={page.width}
 						orientation='horizontal'
@@ -76,7 +97,7 @@ export function PageSurface({
 				</div>
 			) : null}
 			{rulers.show ? (
-				<div className='absolute top-6 left-0'>
+				<div className='absolute top-[52px] left-0 overflow-hidden border border-border border-t-0 bg-muted/70'>
 					<Ruler
 						length={page.height}
 						orientation='vertical'
@@ -87,15 +108,15 @@ export function PageSurface({
 			) : null}
 			<div
 				className={cn(
-					'relative overflow-hidden rounded-md border border-slate-300/80 bg-[var(--designer-panel)] shadow-[0_20px_80px_rgba(15,23,42,0.14)]',
-					rulers.show ? 'mt-6 ml-6' : undefined,
+					'relative overflow-hidden border border-border bg-[var(--designer-panel)] shadow-sm',
+					rulers.show ? 'mt-[52px] ml-6' : 'mt-1',
 				)}
 				style={{
 					width: page.width,
 					minHeight: page.height,
 				}}
 			>
-				<div className='space-y-2 p-3'>
+				<div className='space-y-1.5 p-2'>
 					{report.bands.map((band) => (
 						<BandStrip
 							key={band.id}

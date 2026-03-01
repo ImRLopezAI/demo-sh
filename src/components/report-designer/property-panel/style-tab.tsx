@@ -3,6 +3,13 @@
 import type { ReportElement } from '@server/reporting/designer-contracts'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
 import { BorderEditor } from './border-editor'
 import { ColorPicker } from './color-picker'
 import { FontPicker } from './font-picker'
@@ -39,9 +46,12 @@ export function StyleTab({
 			/>
 			<div className='grid grid-cols-2 gap-2'>
 				<div className='space-y-1'>
-					<Label className='text-[11px] text-slate-600'>Size</Label>
+					<Label className='text-[11px] text-muted-foreground'>Size</Label>
 					<Input
 						type='number'
+						name='font-size'
+						autoComplete='off'
+						aria-label='Font size'
 						value={font.size}
 						onChange={(event) =>
 							onUpdate({
@@ -55,23 +65,27 @@ export function StyleTab({
 					/>
 				</div>
 				<div className='space-y-1'>
-					<Label className='text-[11px] text-slate-600'>Align</Label>
-					<select
+					<Label className='text-[11px] text-muted-foreground'>Align</Label>
+					<Select
 						value={font.align}
-						onChange={(event) =>
+						onValueChange={(value) =>
 							onUpdate({
 								font: {
 									...font,
-									align: event.target.value as 'left' | 'center' | 'right',
+									align: value as 'left' | 'center' | 'right',
 								},
 							})
 						}
-						className='h-7 w-full rounded border border-slate-300 bg-white px-2 text-[11px]'
 					>
-						<option value='left'>Left</option>
-						<option value='center'>Center</option>
-						<option value='right'>Right</option>
-					</select>
+						<SelectTrigger className='h-7 text-[11px]'>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='left'>Left</SelectItem>
+							<SelectItem value='center'>Center</SelectItem>
+							<SelectItem value='right'>Right</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
 			</div>
 			<ColorPicker

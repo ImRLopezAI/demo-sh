@@ -16,12 +16,14 @@ export function DataTab({
 	return (
 		<div className='space-y-2'>
 			<ExpressionEditor
+				label='Value expression'
 				value={element.expression ?? ''}
 				onChange={(expression) => onUpdate({ expression })}
 				fields={fields}
 				placeholder='=Fields.documentNo'
 			/>
 			<ExpressionEditor
+				label='Visibility expression'
 				value={element.visibility ?? ''}
 				onChange={(visibility) => onUpdate({ visibility })}
 				fields={fields}

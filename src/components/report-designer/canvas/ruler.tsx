@@ -20,13 +20,18 @@ export function Ruler({
 	zoom: number
 }) {
 	const ticks = React.useMemo(() => {
-		const every = unit === 'in' ? 36 : unit === 'mm' ? 20 : 36
-		const total = Math.ceil(length / every)
+		const majorEvery = unit === 'in' ? 36 : unit === 'mm' ? 20 : 36
+		const minorEvery = majorEvery / 4
+		const total = Math.ceil(length / minorEvery)
 		return Array.from({ length: total + 1 }, (_, index) => {
-			const position = index * every
+			const position = index * minorEvery
+			const isMajor =
+				Math.abs((position / majorEvery) % 1) < 0.0001 ||
+				Math.abs(((position / majorEvery) % 1) - 1) < 0.0001
 			return {
 				position,
-				label: formatTick(fromPoints(position, unit)),
+				isMajor,
+				label: isMajor ? formatTick(fromPoints(position, unit)) : '',
 			}
 		})
 	}, [length, unit])
@@ -34,7 +39,7 @@ export function Ruler({
 	return (
 		<div
 			aria-hidden='true'
-			className='pointer-events-none select-none text-[9px] text-slate-500'
+			className='pointer-events-none relative select-none text-[9px] text-muted-foreground'
 			style={{
 				width: orientation === 'horizontal' ? length * zoom : 24,
 				height: orientation === 'horizontal' ? 24 : length * zoom,
@@ -43,38 +48,40 @@ export function Ruler({
 			{ticks.map((tick) => (
 				<div
 					key={`${orientation}-${tick.position}`}
-					className='absolute border-slate-300/60'
+					className='absolute border-border'
 					style={
 						orientation === 'horizontal'
 							? {
 									left: tick.position * zoom,
-									top: 0,
-									height: 24,
+									top: tick.isMajor ? 0 : 10,
+									height: tick.isMajor ? 24 : 14,
 									borderLeftWidth: 1,
 								}
 							: {
-									left: 0,
+									left: tick.isMajor ? 0 : 10,
 									top: tick.position * zoom,
-									width: 24,
+									width: tick.isMajor ? 24 : 14,
 									borderTopWidth: 1,
 								}
 					}
 				>
-					<span
-						className='absolute'
-						style={
-							orientation === 'horizontal'
-								? { left: 2, top: 2 }
-								: {
-										left: 2,
-										top: 2,
-										transform: 'rotate(-90deg)',
-										transformOrigin: '0 0',
-									}
-						}
-					>
-						{tick.label}
-					</span>
+					{tick.isMajor ? (
+						<span
+							className='absolute'
+							style={
+								orientation === 'horizontal'
+									? { left: 2, top: 2 }
+									: {
+											left: 2,
+											top: 2,
+											transform: 'rotate(-90deg)',
+											transformOrigin: '0 0',
+										}
+							}
+						>
+							{tick.label}
+						</span>
+					) : null}
 				</div>
 			))}
 		</div>

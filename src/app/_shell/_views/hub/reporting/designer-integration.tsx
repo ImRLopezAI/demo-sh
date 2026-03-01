@@ -129,12 +129,15 @@ export function DesignerIntegration({
 
 	return (
 		<div className='flex h-full min-h-0 flex-col gap-2 p-2'>
-			<div className='grid grid-cols-[1fr_auto_auto] items-end gap-2 rounded-md border border-slate-300/70 bg-white/70 p-2'>
+			<div className='grid grid-cols-[1fr_auto_auto] items-end gap-2 rounded-md border border-border bg-card/90 p-2'>
 				<div className='space-y-1'>
-					<Label className='text-[11px] text-slate-600'>
+					<Label className='text-[11px] text-muted-foreground'>
 						Designer Layout Name
 					</Label>
 					<Input
+						name='designer-layout-name'
+						autoComplete='off'
+						aria-label='Designer layout name'
 						value={workingName}
 						onChange={(event) => {
 							setWorkingName(event.target.value)
@@ -249,8 +252,8 @@ export function DesignerIntegration({
 					}}
 				/>
 			) : (
-				<div className='flex h-full items-center justify-center rounded-md border border-slate-300 border-dashed bg-white/80'>
-					<p className='text-slate-500 text-sm'>
+				<div className='flex h-full items-center justify-center rounded-md border border-border border-dashed bg-background/80'>
+					<p className='text-muted-foreground text-sm'>
 						No designer template available.
 					</p>
 				</div>

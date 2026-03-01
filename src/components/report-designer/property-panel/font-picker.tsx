@@ -24,7 +24,7 @@ export function FontPicker({
 }) {
 	return (
 		<div className='space-y-1'>
-			<Label className='text-[11px] text-slate-600'>Font</Label>
+			<Label className='text-[11px] text-muted-foreground'>Font</Label>
 			<Select
 				value={value}
 				onValueChange={(next) =>

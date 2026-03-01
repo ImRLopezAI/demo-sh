@@ -1,5 +1,6 @@
 'use client'
 
+import { AlertTriangle } from 'lucide-react'
 import * as React from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/lib/utils'
@@ -27,20 +28,22 @@ function clampZoom(value: number): number {
 function ReportDesignerRoot({
 	children,
 	className,
+	theme,
 }: {
 	children: React.ReactNode
 	className?: string
+	theme: 'light' | 'dark'
 }) {
 	return (
 		<div
+			data-theme={theme}
 			className={cn(
-				'flex h-full min-h-[720px] flex-col gap-2 rounded-lg border border-slate-300/70 p-3 text-[var(--designer-ink)] shadow-[0_28px_80px_rgba(15,23,42,0.2)] backdrop-blur',
+				'flex h-full min-h-[720px] flex-col overflow-hidden rounded-md border border-border bg-[var(--designer-bg)] text-[var(--designer-ink)] shadow-sm',
 				className,
 			)}
 			style={{
 				...(DEFAULT_THEME_VARS as React.CSSProperties),
 				fontFamily: DESIGNER_FONT_STACK.body,
-				background: 'var(--designer-bg)',
 			}}
 		>
 			{children}
@@ -58,6 +61,7 @@ const ReportDesignerImpl = React.forwardRef<
 		onSave,
 		onPreview,
 		onDirtyChange,
+		theme = 'light',
 		className,
 	} = props
 	const {
@@ -99,6 +103,16 @@ const ReportDesignerImpl = React.forwardRef<
 	React.useEffect(() => {
 		onDirtyChange?.(isDirty)
 	}, [isDirty, onDirtyChange])
+
+	React.useEffect(() => {
+		if (!isDirty || typeof window === 'undefined') return
+		function onBeforeUnload(event: BeforeUnloadEvent) {
+			event.preventDefault()
+			event.returnValue = ''
+		}
+		window.addEventListener('beforeunload', onBeforeUnload)
+		return () => window.removeEventListener('beforeunload', onBeforeUnload)
+	}, [isDirty])
 
 	React.useImperativeHandle(
 		ref,
@@ -144,7 +158,7 @@ const ReportDesignerImpl = React.forwardRef<
 	}, [report, setCamera])
 
 	return (
-		<ReportDesignerRoot className={className}>
+		<ReportDesignerRoot className={className} theme={theme}>
 			<KeyboardHandler />
 			<DesignerToolbar
 				onSave={() => {
@@ -175,7 +189,13 @@ const ReportDesignerImpl = React.forwardRef<
 				onZoomReset={handleZoomReset}
 				onZoomFit={handleZoomFit}
 			/>
-			<div className='grid min-h-0 flex-1 grid-cols-[260px_1fr_320px] gap-2'>
+			<div className='flex items-center gap-2 border-border border-b bg-amber-50/80 px-3 py-1 text-[11px] text-amber-950'>
+				<AlertTriangle className='size-3.5 text-amber-700' />
+				<span className='truncate'>
+					Designer mode uses sample data and local draft state until you save.
+				</span>
+			</div>
+			<div className='grid min-h-0 flex-1 grid-cols-[300px_1fr_320px] gap-2 p-2'>
 				<DesignerSidebar fields={fields} />
 				<DesignerContextMenu>
 					<div className='relative h-full min-h-0'>
@@ -183,13 +203,13 @@ const ReportDesignerImpl = React.forwardRef<
 							<iframe
 								title='Report preview'
 								src={previewUrl}
-								className='h-full w-full rounded-md border border-slate-300/70 bg-white'
+								className='h-full w-full rounded-sm border border-border bg-background'
 							/>
 						) : (
 							<DesignerCanvas />
 						)}
 						{previewError ? (
-							<p className='absolute right-3 bottom-3 rounded border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] text-rose-700'>
+							<p className='absolute right-3 bottom-3 rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] text-destructive'>
 								{previewError}
 							</p>
 						) : null}
@@ -197,7 +217,7 @@ const ReportDesignerImpl = React.forwardRef<
 				</DesignerContextMenu>
 				<PropertyPanel fields={fields} />
 			</div>
-			<div className='flex items-center justify-between rounded-md border border-slate-300/70 bg-white/70 px-2 py-1 text-[10px] text-slate-600'>
+			<div className='flex items-center justify-between border-black/30 border-t bg-[var(--designer-status)] px-2 py-1 text-[10px] text-slate-100'>
 				<div className='flex items-center gap-3'>
 					<span>
 						Coords: {Math.round(lastPointer.x)}, {Math.round(lastPointer.y)}

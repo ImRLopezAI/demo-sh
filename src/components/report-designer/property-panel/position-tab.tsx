@@ -16,9 +16,12 @@ function NumberField({
 }) {
 	return (
 		<div className='space-y-1'>
-			<Label className='text-[11px] text-slate-600'>{label}</Label>
+			<Label className='text-[11px] text-muted-foreground'>{label}</Label>
 			<Input
 				type='number'
+				name={label}
+				aria-label={label}
+				autoComplete='off'
 				value={Number.isFinite(value) ? value : 0}
 				onChange={(event) => onChange(Number(event.target.value || 0))}
 				className='h-7 text-[11px]'

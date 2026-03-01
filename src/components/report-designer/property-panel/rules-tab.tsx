@@ -14,17 +14,20 @@ export function RulesTab({
 	return (
 		<div className='space-y-2'>
 			<div className='space-y-1'>
-				<Label className='text-[11px] text-slate-600'>
+				<Label className='text-[11px] text-muted-foreground'>
 					Conditional visibility
 				</Label>
 				<Input
+					name='conditional-visibility'
+					autoComplete='off'
+					aria-label='Conditional visibility'
 					value={element.visibility ?? ''}
 					onChange={(event) => onUpdate({ visibility: event.target.value })}
 					placeholder='=Fields.status == "Draft"'
 					className='h-8 font-mono text-[11px]'
 				/>
 			</div>
-			<div className='text-[10px] text-slate-500'>
+			<div className='text-[10px] text-muted-foreground'>
 				Use the expression language to toggle visibility or create rule-based
 				labels.
 			</div>

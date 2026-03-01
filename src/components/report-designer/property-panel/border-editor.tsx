@@ -17,10 +17,13 @@ export function BorderEditor({
 
 	return (
 		<div className='space-y-2'>
-			<Label className='text-[11px] text-slate-600'>Border</Label>
+			<Label className='text-[11px] text-muted-foreground'>Border</Label>
 			<div className='grid grid-cols-2 gap-2'>
 				<Input
 					type='number'
+					name='border-width'
+					autoComplete='off'
+					aria-label='Border width'
 					value={width}
 					onChange={(event) => {
 						const next = Number(event.target.value || 0)
@@ -37,6 +40,7 @@ export function BorderEditor({
 				/>
 				<input
 					type='color'
+					aria-label='Border color'
 					value={color}
 					onChange={(event) => {
 						onChange({
@@ -48,7 +52,7 @@ export function BorderEditor({
 							},
 						})
 					}}
-					className='h-7 w-full rounded border border-slate-300/80 bg-transparent'
+					className='h-7 w-full rounded-sm border border-border bg-transparent'
 				/>
 			</div>
 		</div>

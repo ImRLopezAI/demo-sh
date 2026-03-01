@@ -332,7 +332,7 @@ export function DesignerCanvas() {
 		<div
 			ref={canvasRef}
 			className={cn(
-				'relative h-full overflow-auto rounded-md border border-slate-300/70 bg-slate-100/70 p-4',
+				'relative h-full overflow-auto rounded-sm border border-border bg-muted/35 p-3',
 				isPanning ? 'cursor-grabbing select-none' : undefined,
 				isSpacePanning ? 'cursor-grab' : undefined,
 			)}
@@ -410,7 +410,7 @@ export function DesignerCanvas() {
 				}}
 			/>
 			{selectedBand ? (
-				<div className='absolute bottom-4 left-4 rounded border border-slate-300/70 bg-white/85 px-2 py-1 text-[10px] text-slate-600'>
+				<div className='absolute bottom-3 left-3 rounded-sm border border-border bg-background/95 px-2 py-1 text-[10px] text-muted-foreground shadow-xs'>
 					Selected band: <strong>{selectedBand.type}</strong> ·{' '}
 					{selectedElementIds.length} selected
 				</div>

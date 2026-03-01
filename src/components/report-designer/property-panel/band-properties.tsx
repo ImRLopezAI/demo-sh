@@ -15,9 +15,12 @@ export function BandProperties({
 	return (
 		<div className='space-y-2'>
 			<div className='space-y-1'>
-				<Label className='text-[11px] text-slate-600'>Band height</Label>
+				<Label className='text-[11px] text-muted-foreground'>Band height</Label>
 				<Input
 					type='number'
+					name='band-height'
+					autoComplete='off'
+					aria-label='Band height'
 					value={band.height}
 					onChange={(event) =>
 						onUpdate({ height: Number(event.target.value || 0) })
@@ -25,14 +28,14 @@ export function BandProperties({
 					className='h-7 text-[11px]'
 				/>
 			</div>
-			<div className='flex items-center justify-between text-[11px] text-slate-600'>
+			<div className='flex items-center justify-between text-[11px] text-muted-foreground'>
 				<span>Can grow</span>
 				<Switch
 					checked={band.canGrow}
 					onCheckedChange={(next) => onUpdate({ canGrow: next })}
 				/>
 			</div>
-			<div className='flex items-center justify-between text-[11px] text-slate-600'>
+			<div className='flex items-center justify-between text-[11px] text-muted-foreground'>
 				<span>Keep together</span>
 				<Switch
 					checked={Boolean(band.keepTogether)}
@@ -40,8 +43,13 @@ export function BandProperties({
 				/>
 			</div>
 			<div className='space-y-1'>
-				<Label className='text-[11px] text-slate-600'>Group expression</Label>
+				<Label className='text-[11px] text-muted-foreground'>
+					Group expression
+				</Label>
 				<Input
+					name='group-expression'
+					autoComplete='off'
+					aria-label='Group expression'
 					value={band.groupExpression ?? ''}
 					onChange={(event) =>
 						onUpdate({ groupExpression: event.target.value })
