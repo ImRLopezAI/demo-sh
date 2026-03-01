@@ -51,6 +51,8 @@ export function DesignerCanvas() {
 		camera,
 		grid,
 		rulers,
+		showBandHeaders,
+		showElementOrder,
 		selectedBandId,
 		selectedElementIds,
 		setPointer,
@@ -67,6 +69,8 @@ export function DesignerCanvas() {
 			camera: state.camera,
 			grid: state.grid,
 			rulers: state.rulers,
+			showBandHeaders: state.showBandHeaders,
+			showElementOrder: state.showElementOrder,
 			selectedBandId: state.selectedBandId,
 			selectedElementIds: state.selectedElementIds,
 			setPointer: state.setPointer,
@@ -390,6 +394,8 @@ export function DesignerCanvas() {
 					zoom={camera.z}
 					rulers={rulers}
 					grid={{ show: grid.show, size: grid.size }}
+					showBandHeaders={showBandHeaders}
+					showElementOrder={showElementOrder}
 					selectedBandId={selectedBandId}
 					selectedElementIds={selectedElementIds}
 					selectedElement={selectedElement}

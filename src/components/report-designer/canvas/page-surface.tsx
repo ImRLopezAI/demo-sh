@@ -19,6 +19,8 @@ export function PageSurface({
 	zoom,
 	rulers,
 	grid,
+	showBandHeaders,
+	showElementOrder,
 	selectedBandId,
 	selectedElementIds,
 	selectedElement,
@@ -34,6 +36,8 @@ export function PageSurface({
 	zoom: number
 	rulers: { show: boolean; unit: 'pt' | 'mm' | 'in' }
 	grid: { show: boolean; size: number }
+	showBandHeaders: boolean
+	showElementOrder: boolean
 	selectedBandId: string | null
 	selectedElementIds: string[]
 	selectedElement: ReportElement | null
@@ -61,6 +65,10 @@ export function PageSurface({
 	) => void
 }) {
 	const page = pageDimensions(report)
+	const contentWidth = Math.max(
+		100,
+		page.width - report.page.margins.left - report.page.margins.right,
+	)
 
 	return (
 		<div className='relative'>
@@ -113,20 +121,40 @@ export function PageSurface({
 				)}
 				style={{
 					width: page.width,
-					minHeight: page.height,
+					height: page.height,
 				}}
 			>
-				<div className='space-y-1.5 p-2'>
+				<div className='pointer-events-none absolute inset-0'>
+					<div
+						className='absolute inset-y-0 border-border border-r'
+						style={{ left: report.page.margins.left }}
+					/>
+					<div
+						className='absolute inset-y-0 border-border border-r'
+						style={{ right: report.page.margins.right }}
+					/>
+					<div
+						className='absolute inset-x-0 border-border border-b'
+						style={{ top: report.page.margins.top }}
+					/>
+					<div
+						className='absolute inset-x-0 border-border border-t'
+						style={{ bottom: report.page.margins.bottom }}
+					/>
+				</div>
+				<div
+					className='absolute overflow-hidden border border-border bg-background'
+					style={{
+						left: report.page.margins.left,
+						top: report.page.margins.top,
+						width: contentWidth,
+					}}
+				>
 					{report.bands.map((band) => (
 						<BandStrip
 							key={band.id}
 							band={band}
-							width={Math.max(
-								100,
-								page.width -
-									report.page.margins.left -
-									report.page.margins.right,
-							)}
+							width={contentWidth}
 							selected={selectedBandId === band.id}
 							selectedElement={
 								selectedBandId === band.id ? selectedElement : null
@@ -134,6 +162,8 @@ export function PageSurface({
 							selectedElementIds={selectedElementIds}
 							gridVisible={grid.show}
 							gridSize={grid.size}
+							showHeader={showBandHeaders}
+							showElementOrder={showElementOrder}
 							onDrop={onDrop}
 							onSelectBand={() => onSelectBand(band.id)}
 							onSelectElement={onSelectElement}

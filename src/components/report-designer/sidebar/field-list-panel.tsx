@@ -40,7 +40,7 @@ function FieldNode({
 
 export function FieldListPanel({ fields }: { fields: DesignerFieldItem[] }) {
 	return (
-		<div className='space-y-2'>
+		<div className='grid h-full grid-rows-[auto_auto_auto_1fr] gap-2'>
 			<h3 className='border-border border-b pb-1 font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]'>
 				Dictionary
 			</h3>
@@ -77,7 +77,7 @@ export function FieldListPanel({ fields }: { fields: DesignerFieldItem[] }) {
 					className='h-7 pl-6 text-[11px]'
 				/>
 			</div>
-			<div className='max-h-72 space-y-1 overflow-auto pr-1'>
+			<div className='min-h-0 space-y-1 overflow-auto pr-1'>
 				<div className='mb-1 inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground'>
 					<Database className='size-3' />
 					Data Sources

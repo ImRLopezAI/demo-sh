@@ -3,6 +3,7 @@
 import {
 	AlignHorizontalDistributeCenter,
 	Barcode,
+	ChevronDown,
 	ClipboardPaste,
 	Columns3,
 	Copy,
@@ -43,6 +44,15 @@ import {
 import * as React from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -54,11 +64,18 @@ import {
 	useReportDesignerStore,
 } from './store'
 
+type RibbonMenuItem = {
+	label: string
+	onClick?: () => void
+	children?: RibbonMenuItem[]
+}
+
 type RibbonActionDef = {
 	label: string
 	icon: React.ComponentType<{ className?: string }>
 	onClick?: () => void
 	disabled?: boolean
+	menuItems?: RibbonMenuItem[]
 }
 
 type RibbonGroupDef = {
@@ -66,13 +83,34 @@ type RibbonGroupDef = {
 	actions: RibbonActionDef[]
 }
 
+function renderRibbonMenuItems(items: RibbonMenuItem[]): React.ReactNode {
+	return items.map((item) => {
+		if (item.children?.length) {
+			return (
+				<DropdownMenuSub key={item.label}>
+					<DropdownMenuSubTrigger>{item.label}</DropdownMenuSubTrigger>
+					<DropdownMenuSubContent>
+						{renderRibbonMenuItems(item.children)}
+					</DropdownMenuSubContent>
+				</DropdownMenuSub>
+			)
+		}
+		return (
+			<DropdownMenuItem key={item.label} onClick={item.onClick}>
+				{item.label}
+			</DropdownMenuItem>
+		)
+	})
+}
+
 function RibbonActionButton({
 	label,
 	icon: Icon,
 	onClick,
 	disabled,
+	menuItems,
 }: RibbonActionDef) {
-	return (
+	const button = (
 		<Button
 			type='button'
 			variant='ghost'
@@ -83,7 +121,21 @@ function RibbonActionButton({
 		>
 			<Icon className='size-3.5' />
 			<span className='leading-none'>{label}</span>
+			{menuItems?.length ? (
+				<ChevronDown className='size-2.5 opacity-70' />
+			) : null}
 		</Button>
+	)
+
+	if (!menuItems?.length) return button
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger render={button} />
+			<DropdownMenuContent align='start'>
+				{renderRibbonMenuItems(menuItems)}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	)
 }
 
@@ -131,12 +183,23 @@ export function DesignerToolbar({
 		camera,
 		grid,
 		rulers,
+		showBandHeaders,
+		showElementOrder,
 		toggleGrid,
+		toggleGridSnap,
 		toggleRulers,
+		toggleBandHeaders,
+		toggleElementOrder,
 		copy,
 		cut,
 		paste,
+		bringSelectedToFront,
+		sendSelectedToBack,
+		moveSelectedForward,
+		moveSelectedBackward,
 		selectedBandId,
+		selectedElementIds,
+		addBand,
 		addElementByKind,
 	} = useReportDesignerStore(
 		useShallow((state) => ({
@@ -145,17 +208,29 @@ export function DesignerToolbar({
 			camera: state.camera,
 			grid: state.grid,
 			rulers: state.rulers,
+			showBandHeaders: state.showBandHeaders,
+			showElementOrder: state.showElementOrder,
 			toggleGrid: state.toggleGrid,
+			toggleGridSnap: state.toggleGridSnap,
 			toggleRulers: state.toggleRulers,
+			toggleBandHeaders: state.toggleBandHeaders,
+			toggleElementOrder: state.toggleElementOrder,
 			copy: state.copy,
 			cut: state.cut,
 			paste: state.paste,
+			bringSelectedToFront: state.bringSelectedToFront,
+			sendSelectedToBack: state.sendSelectedToBack,
+			moveSelectedForward: state.moveSelectedForward,
+			moveSelectedBackward: state.moveSelectedBackward,
 			selectedBandId: state.selectedBandId,
+			selectedElementIds: state.selectedElementIds,
+			addBand: state.addBand,
 			addElementByKind: state.addElementByKind,
 		})),
 	)
 
 	const history = historyAvailability()
+	const hasElementSelection = selectedElementIds.length > 0
 
 	const canInsert = Boolean(selectedBandId)
 	const noop = React.useCallback(() => {}, [])
@@ -168,6 +243,80 @@ export function DesignerToolbar({
 	}
 
 	const groups = React.useMemo(() => {
+		const bandMenuItems: RibbonMenuItem[] = [
+			{ label: 'Report Header', onClick: () => addBand('reportHeader') },
+			{ label: 'Page Header', onClick: () => addBand('pageHeader') },
+			{ label: 'Group Header', onClick: () => addBand('groupHeader') },
+			{ label: 'Detail', onClick: () => addBand('detail') },
+			{ label: 'Group Footer', onClick: () => addBand('groupFooter') },
+			{ label: 'Page Footer', onClick: () => addBand('pageFooter') },
+			{ label: 'Report Footer', onClick: () => addBand('reportFooter') },
+		]
+
+		const shapeMenuItems: RibbonMenuItem[] = [
+			{
+				label: 'Basic Shapes',
+				children: [
+					{ label: 'Rectangle', onClick: () => quickInsert('shape') },
+					{ label: 'Rounded Rectangle', onClick: () => quickInsert('shape') },
+					{ label: 'Ellipse', onClick: () => quickInsert('shape') },
+				],
+			},
+			{
+				label: 'Lines',
+				children: [
+					{ label: 'Horizontal', onClick: () => quickInsert('line') },
+					{ label: 'Vertical', onClick: () => quickInsert('line') },
+				],
+			},
+		]
+
+		const barcodeMenuItems: RibbonMenuItem[] = [
+			{
+				label: 'Two-Dimensional',
+				children: [
+					{ label: 'QR Code', onClick: () => quickInsert('barcode') },
+					{ label: 'DataMatrix', onClick: () => quickInsert('barcode') },
+					{ label: 'Pdf417', onClick: () => quickInsert('barcode') },
+					{ label: 'Aztec', onClick: () => quickInsert('barcode') },
+				],
+			},
+			{
+				label: 'EANUPC',
+				children: [
+					{ label: 'EAN-13', onClick: () => quickInsert('barcode') },
+					{ label: 'UPC-A', onClick: () => quickInsert('barcode') },
+				],
+			},
+			{
+				label: 'GS1',
+				children: [{ label: 'GS1-128', onClick: () => quickInsert('barcode') }],
+			},
+		]
+
+		const chartMenuItems: RibbonMenuItem[] = [
+			{
+				label: 'Clustered Column',
+				children: [
+					{ label: 'Column', onClick: () => quickInsert('textbox') },
+					{ label: 'Stacked Column', onClick: () => quickInsert('textbox') },
+				],
+			},
+			{
+				label: 'Line',
+				children: [
+					{ label: 'Simple Line', onClick: () => quickInsert('textbox') },
+					{ label: 'Spline', onClick: () => quickInsert('textbox') },
+				],
+			},
+			{
+				label: 'Pie',
+				children: [
+					{ label: 'Pie Chart', onClick: () => quickInsert('textbox') },
+				],
+			},
+		]
+
 		const home: RibbonGroupDef[] = [
 			{
 				title: 'Main',
@@ -229,12 +378,14 @@ export function DesignerToolbar({
 						icon: Barcode,
 						disabled: !canInsert,
 						onClick: () => quickInsert('barcode'),
+						menuItems: barcodeMenuItems,
 					},
 					{
 						label: 'Shape',
 						icon: AlignHorizontalDistributeCenter,
 						disabled: !canInsert,
 						onClick: () => quickInsert('shape'),
+						menuItems: shapeMenuItems,
 					},
 				],
 			},
@@ -244,8 +395,16 @@ export function DesignerToolbar({
 					{ label: 'Select', icon: MousePointer2, onClick: noop },
 					{ label: 'Grid', icon: Grid2X2, onClick: toggleGrid },
 					{ label: 'Rulers', icon: Ruler, onClick: toggleRulers },
-					{ label: 'Page', icon: LayoutPanelTop, onClick: noop },
-					{ label: 'Bands', icon: Rows3, onClick: noop },
+					{
+						label: showBandHeaders ? 'Headers On' : 'Headers Off',
+						icon: Rows3,
+						onClick: toggleBandHeaders,
+					},
+					{
+						label: showElementOrder ? 'Order On' : 'Order Off',
+						icon: LayoutPanelTop,
+						onClick: toggleElementOrder,
+					},
 					{ label: 'Style', icon: Paintbrush2, onClick: noop },
 					{ label: 'Guide', icon: PencilRuler, onClick: noop },
 				],
@@ -258,7 +417,11 @@ export function DesignerToolbar({
 				actions: [
 					{ label: 'Page', icon: LayoutPanelTop, onClick: noop },
 					{ label: 'Dashboard', icon: LayoutGrid, onClick: noop },
-					{ label: 'Bands', icon: Rows3, onClick: noop },
+					{
+						label: 'Bands',
+						icon: Rows3,
+						menuItems: bandMenuItems,
+					},
 					{ label: 'Cross', icon: TableProperties, onClick: noop },
 				],
 			},
@@ -269,9 +432,13 @@ export function DesignerToolbar({
 					{
 						label: 'Shape',
 						icon: AlignHorizontalDistributeCenter,
-						onClick: noop,
+						menuItems: shapeMenuItems,
 					},
-					{ label: 'Chart', icon: Columns3, onClick: noop },
+					{
+						label: 'Chart',
+						icon: Columns3,
+						menuItems: chartMenuItems,
+					},
 					{ label: 'Gauge', icon: Gauge, onClick: noop },
 					{ label: 'Map', icon: Globe, onClick: noop },
 				],
@@ -321,13 +488,26 @@ export function DesignerToolbar({
 						icon: Grid2X2,
 						onClick: toggleGrid,
 					},
-					{ label: 'Align Grid', icon: MoveHorizontal, onClick: noop },
+					{
+						label: grid.snap ? 'Align Grid On' : 'Align Grid Off',
+						icon: MoveHorizontal,
+						onClick: toggleGridSnap,
+					},
 					{
 						label: rulers.show ? 'Rulers On' : 'Rulers Off',
 						icon: Ruler,
 						onClick: toggleRulers,
 					},
-					{ label: 'Order', icon: Rows3, onClick: noop },
+					{
+						label: showBandHeaders ? 'Headers On' : 'Headers Off',
+						icon: Rows3,
+						onClick: toggleBandHeaders,
+					},
+					{
+						label: showElementOrder ? 'Order On' : 'Order Off',
+						icon: LayoutPanelTop,
+						onClick: toggleElementOrder,
+					},
 				],
 			},
 		]
@@ -336,11 +516,35 @@ export function DesignerToolbar({
 			{
 				title: 'Arrange',
 				actions: [
-					{ label: 'Align Grid', icon: Grid2X2, onClick: noop },
-					{ label: 'Bring Front', icon: SquareStack, onClick: noop },
-					{ label: 'Send Back', icon: LayoutGrid, onClick: noop },
-					{ label: 'Move Fwd', icon: MoveHorizontal, onClick: noop },
-					{ label: 'Move Back', icon: MoveHorizontal, onClick: noop },
+					{
+						label: grid.snap ? 'Align Grid On' : 'Align Grid Off',
+						icon: Grid2X2,
+						onClick: toggleGridSnap,
+					},
+					{
+						label: 'Bring Front',
+						icon: SquareStack,
+						onClick: bringSelectedToFront,
+						disabled: !hasElementSelection,
+					},
+					{
+						label: 'Send Back',
+						icon: LayoutGrid,
+						onClick: sendSelectedToBack,
+						disabled: !hasElementSelection,
+					},
+					{
+						label: 'Move Fwd',
+						icon: MoveHorizontal,
+						onClick: moveSelectedForward,
+						disabled: !hasElementSelection,
+					},
+					{
+						label: 'Move Back',
+						icon: MoveHorizontal,
+						onClick: moveSelectedBackward,
+						disabled: !hasElementSelection,
+					},
 				],
 			},
 			{
@@ -372,20 +576,33 @@ export function DesignerToolbar({
 		if (activeTab === 'Preview') return preview
 		return home
 	}, [
+		addBand,
 		activeTab,
+		bringSelectedToFront,
 		canInsert,
 		copy,
 		cut,
+		grid.snap,
 		grid.show,
+		hasElementSelection,
 		history.canRedo,
 		history.canUndo,
+		moveSelectedBackward,
+		moveSelectedForward,
 		noop,
 		onPreview,
 		onSave,
 		paste,
 		quickInsert,
 		rulers.show,
+		selectedElementIds.length,
 		selectedBandId,
+		sendSelectedToBack,
+		showBandHeaders,
+		showElementOrder,
+		toggleBandHeaders,
+		toggleElementOrder,
+		toggleGridSnap,
 		toggleGrid,
 		toggleRulers,
 	])
@@ -452,13 +669,29 @@ export function DesignerToolbar({
 						<span className='text-right text-foreground'>
 							{grid.show ? 'On' : 'Off'}
 						</span>
+						<span>Snap</span>
+						<span className='text-right text-foreground'>
+							{grid.snap ? 'On' : 'Off'}
+						</span>
 						<span>Rulers</span>
 						<span className='text-right text-foreground'>
 							{rulers.show ? 'On' : 'Off'}
 						</span>
+						<span>Headers</span>
+						<span className='text-right text-foreground'>
+							{showBandHeaders ? 'On' : 'Off'}
+						</span>
+						<span>Order</span>
+						<span className='text-right text-foreground'>
+							{showElementOrder ? 'On' : 'Off'}
+						</span>
 						<span>Selection</span>
 						<span className='text-right text-foreground'>
-							{selectedBandId ? 'Band' : 'None'}
+							{selectedElementIds.length > 0
+								? `${selectedElementIds.length} el`
+								: selectedBandId
+									? 'Band'
+									: 'None'}
 						</span>
 					</div>
 				</div>

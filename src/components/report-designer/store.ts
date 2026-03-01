@@ -29,6 +29,8 @@ export interface DesignerStoreState {
 	camera: { x: number; y: number; z: number }
 	grid: { size: number; show: boolean; snap: boolean }
 	rulers: { show: boolean; unit: 'pt' | 'mm' | 'in' }
+	showBandHeaders: boolean
+	showElementOrder: boolean
 	clipboard: ReportElement[] | null
 	panelVisibility: {
 		toolbox: boolean
@@ -46,7 +48,10 @@ export interface DesignerStoreState {
 	setCamera: (camera: Partial<{ x: number; y: number; z: number }>) => void
 	zoomToFit: () => void
 	toggleGrid: () => void
+	toggleGridSnap: () => void
 	toggleRulers: () => void
+	toggleBandHeaders: () => void
+	toggleElementOrder: () => void
 	setGridSize: (size: number) => void
 	togglePanel: (panel: keyof DesignerStoreState['panelVisibility']) => void
 	setUnit: (unit: 'pt' | 'mm' | 'in') => void
@@ -76,6 +81,10 @@ export interface DesignerStoreState {
 		x: number,
 		y: number,
 	) => void
+	bringSelectedToFront: () => void
+	sendSelectedToBack: () => void
+	moveSelectedForward: () => void
+	moveSelectedBackward: () => void
 	nudgeSelected: (dx: number, dy: number) => void
 	duplicateElements: (elementIds: string[]) => void
 	selectBand: (bandId: string | null) => void
@@ -109,6 +118,60 @@ function withDirty(state: DesignerStoreState): void {
 	state.isDirty = true
 }
 
+function moveSelectedElementsInBand(
+	band: ReportBand,
+	selectedIds: Set<string>,
+	direction: 'front' | 'back' | 'forward' | 'backward',
+): boolean {
+	if (selectedIds.size === 0) return false
+	const hasSelected = band.elements.some((element) =>
+		selectedIds.has(element.id),
+	)
+	if (!hasSelected) return false
+
+	if (direction === 'front') {
+		const kept = band.elements.filter((element) => !selectedIds.has(element.id))
+		const selected = band.elements.filter((element) =>
+			selectedIds.has(element.id),
+		)
+		band.elements = [...kept, ...selected]
+		return true
+	}
+
+	if (direction === 'back') {
+		const selected = band.elements.filter((element) =>
+			selectedIds.has(element.id),
+		)
+		const kept = band.elements.filter((element) => !selectedIds.has(element.id))
+		band.elements = [...selected, ...kept]
+		return true
+	}
+
+	if (direction === 'forward') {
+		for (let index = band.elements.length - 2; index >= 0; index -= 1) {
+			const current = band.elements[index]
+			const next = band.elements[index + 1]
+			if (!current || !next) continue
+			if (selectedIds.has(current.id) && !selectedIds.has(next.id)) {
+				band.elements[index] = next
+				band.elements[index + 1] = current
+			}
+		}
+		return true
+	}
+
+	for (let index = 1; index < band.elements.length; index += 1) {
+		const current = band.elements[index]
+		const previous = band.elements[index - 1]
+		if (!current || !previous) continue
+		if (selectedIds.has(current.id) && !selectedIds.has(previous.id)) {
+			band.elements[index] = previous
+			band.elements[index - 1] = current
+		}
+	}
+	return true
+}
+
 const storeCreator = temporal(
 	subscribeWithSelector(
 		immer<DesignerStoreState>((set, get) => ({
@@ -120,6 +183,8 @@ const storeCreator = temporal(
 			camera: { x: 0, y: 0, z: 1 },
 			grid: { size: DEFAULT_GRID_SIZE, show: true, snap: true },
 			rulers: { show: true, unit: 'pt' },
+			showBandHeaders: true,
+			showElementOrder: false,
 			clipboard: null,
 			panelVisibility: {
 				toolbox: true,
@@ -168,9 +233,21 @@ const storeCreator = temporal(
 				set((state) => {
 					state.grid.show = !state.grid.show
 				}),
+			toggleGridSnap: () =>
+				set((state) => {
+					state.grid.snap = !state.grid.snap
+				}),
 			toggleRulers: () =>
 				set((state) => {
 					state.rulers.show = !state.rulers.show
+				}),
+			toggleBandHeaders: () =>
+				set((state) => {
+					state.showBandHeaders = !state.showBandHeaders
+				}),
+			toggleElementOrder: () =>
+				set((state) => {
+					state.showElementOrder = !state.showElementOrder
 				}),
 			setGridSize: (size) =>
 				set((state) => {
@@ -302,6 +379,52 @@ const storeCreator = temporal(
 					state.selectedElementIds = [element.id]
 					state.selectedBandId = targetBandId
 					withDirty(state)
+				}),
+			bringSelectedToFront: () =>
+				set((state) => {
+					if (state.selectedElementIds.length === 0) return
+					const selectedIds = new Set(state.selectedElementIds)
+					let changed = false
+					for (const band of state.report.bands) {
+						changed =
+							moveSelectedElementsInBand(band, selectedIds, 'front') || changed
+					}
+					if (changed) withDirty(state)
+				}),
+			sendSelectedToBack: () =>
+				set((state) => {
+					if (state.selectedElementIds.length === 0) return
+					const selectedIds = new Set(state.selectedElementIds)
+					let changed = false
+					for (const band of state.report.bands) {
+						changed =
+							moveSelectedElementsInBand(band, selectedIds, 'back') || changed
+					}
+					if (changed) withDirty(state)
+				}),
+			moveSelectedForward: () =>
+				set((state) => {
+					if (state.selectedElementIds.length === 0) return
+					const selectedIds = new Set(state.selectedElementIds)
+					let changed = false
+					for (const band of state.report.bands) {
+						changed =
+							moveSelectedElementsInBand(band, selectedIds, 'forward') ||
+							changed
+					}
+					if (changed) withDirty(state)
+				}),
+			moveSelectedBackward: () =>
+				set((state) => {
+					if (state.selectedElementIds.length === 0) return
+					const selectedIds = new Set(state.selectedElementIds)
+					let changed = false
+					for (const band of state.report.bands) {
+						changed =
+							moveSelectedElementsInBand(band, selectedIds, 'backward') ||
+							changed
+					}
+					if (changed) withDirty(state)
 				}),
 			nudgeSelected: (dx, dy) =>
 				set((state) => {

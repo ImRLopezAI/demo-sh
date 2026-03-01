@@ -10,7 +10,11 @@ import {
 } from '@/components/ui/resizable'
 import { cn } from '@/lib/utils'
 import { DesignerCanvas } from './canvas/designer-canvas'
-import { DEFAULT_THEME_VARS, DESIGNER_FONT_STACK } from './constants'
+import {
+	DARK_THEME_VARS,
+	DEFAULT_THEME_VARS,
+	DESIGNER_FONT_STACK,
+} from './constants'
 import { DesignerContextMenu } from './context-menu'
 import { DesignerToolbar } from './designer-toolbar'
 import { KeyboardHandler } from './keyboard-handler'
@@ -47,7 +51,9 @@ function ReportDesignerRoot({
 				className,
 			)}
 			style={{
-				...(DEFAULT_THEME_VARS as React.CSSProperties),
+				...((theme === 'dark'
+					? DARK_THEME_VARS
+					: DEFAULT_THEME_VARS) as React.CSSProperties),
 				fontFamily: DESIGNER_FONT_STACK.body,
 			}}
 		>

@@ -29,7 +29,7 @@ export function BandListPanel() {
 		)
 
 	return (
-		<div className='space-y-2'>
+		<div className='grid h-full grid-rows-[auto_auto_1fr_auto] gap-2'>
 			<div className='flex items-center justify-between border-border border-b pb-1'>
 				<h3 className='font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]'>
 					Report tree
@@ -44,7 +44,7 @@ export function BandListPanel() {
 					className='h-7 pl-6 text-[11px]'
 				/>
 			</div>
-			<div className='space-y-1'>
+			<div className='min-h-0 space-y-1 overflow-auto pr-1'>
 				{report.bands.map((band) => (
 					<Button
 						key={band.id}
