@@ -3,7 +3,6 @@
 import { AlertTriangle } from 'lucide-react'
 import * as React from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -195,26 +194,18 @@ const ReportDesignerImpl = React.forwardRef<
 				onZoomReset={handleZoomReset}
 				onZoomFit={handleZoomFit}
 			/>
-			<div className='px-2 py-1'>
-				<Alert className='rounded-sm border-border bg-card/70 px-2 py-1'>
-					<AlertTriangle className='size-3.5 text-muted-foreground' />
-					<AlertDescription className='truncate text-[11px]'>
-						Designer mode uses sample data and local draft state until you save.
-					</AlertDescription>
-				</Alert>
-			</div>
-			<div className='min-h-0 flex-1 px-2 pb-2'>
+			<div className='min-h-0 flex-1 px-2 py-2'>
 				<ResizablePanelGroup
 					orientation='horizontal'
-					className='h-full rounded-sm border border-border bg-muted/10'
+					className='h-full rounded-sm border border-border bg-muted/20'
 				>
-					<ResizablePanel defaultSize={23} minSize={18}>
+					<ResizablePanel defaultSize={28} minSize={20}>
 						<div className='h-full p-1.5'>
 							<DesignerSidebar fields={fields} />
 						</div>
 					</ResizablePanel>
 					<ResizableHandle withHandle />
-					<ResizablePanel defaultSize={52} minSize={35}>
+					<ResizablePanel defaultSize={72} minSize={50}>
 						<div className='h-full p-1.5'>
 							<DesignerContextMenu>
 								<div className='relative h-full min-h-0'>
@@ -236,16 +227,14 @@ const ReportDesignerImpl = React.forwardRef<
 							</DesignerContextMenu>
 						</div>
 					</ResizablePanel>
-					<ResizableHandle withHandle />
-					<ResizablePanel defaultSize={25} minSize={18}>
-						<div className='h-full p-1.5'>
-							<PropertyPanel fields={fields} />
-						</div>
-					</ResizablePanel>
 				</ResizablePanelGroup>
 			</div>
 			<div className='flex items-center justify-between border-border border-t bg-primary/95 px-2 py-1 text-[10px] text-primary-foreground'>
 				<div className='flex items-center gap-3'>
+					<span className='inline-flex items-center gap-1'>
+						<AlertTriangle className='size-3' />
+						Auto-save off
+					</span>
 					<span>
 						Coords: {Math.round(lastPointer.x)}, {Math.round(lastPointer.y)}
 					</span>

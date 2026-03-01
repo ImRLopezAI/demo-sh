@@ -4,10 +4,12 @@ import type {
 	ReportBand,
 	ReportElement,
 } from '@server/reporting/designer-contracts'
+import { GripVertical } from 'lucide-react'
 import type * as React from 'react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { BAND_LABELS } from '../constants'
 import { BandDroppable } from '../dnd/band-droppable'
-import { BandHandle } from './band-handle'
 import { CanvasElementRenderer } from './element-renderer'
 import { GridBackground } from './grid-background'
 import { SelectionOverlay } from './selection-overlay'
@@ -54,19 +56,32 @@ export function BandStrip({
 	}) => void
 }) {
 	return (
-		<div className='flex w-full'>
-			<BandHandle
-				type={band.type}
-				height={band.height}
-				onSelect={onSelectBand}
-				onResizeStart={onResizeBandStart}
-			/>
+		<div className='w-full border border-border bg-background'>
+			<div
+				className={cn(
+					'flex h-6 items-center gap-2 border-border border-b px-2',
+					selected ? 'bg-primary/10' : 'bg-muted/40',
+				)}
+			>
+				<Button
+					type='button'
+					variant='ghost'
+					size='sm'
+					onClick={onSelectBand}
+					className='h-5 px-1.5 text-[10px] uppercase tracking-[0.12em]'
+				>
+					{BAND_LABELS[band.type]}
+				</Button>
+				<span className='ml-auto text-[10px] text-muted-foreground'>
+					{Math.round(band.height)} pt
+				</span>
+			</div>
 			<BandDroppable
 				bandId={band.id}
 				onDrop={onDrop}
 				className={cn(
-					'relative border border-border bg-background',
-					selected ? 'ring-1 ring-primary/65' : undefined,
+					'relative border-border border-t bg-background',
+					selected ? 'ring-1 ring-primary/70 ring-inset' : undefined,
 				)}
 			>
 				<section
@@ -96,6 +111,16 @@ export function BandStrip({
 						element={selectedElement}
 						onResizeStart={onResizeElementStart}
 					/>
+					<Button
+						type='button'
+						variant='ghost'
+						size='xs'
+						onPointerDown={onResizeBandStart}
+						aria-label='Resize band height'
+						className='absolute bottom-0 left-1/2 h-4 -translate-x-1/2 rounded-none border border-border border-b-0 bg-background/90 px-1 text-muted-foreground hover:text-foreground'
+					>
+						<GripVertical className='size-3' />
+					</Button>
 				</section>
 			</BandDroppable>
 		</div>

@@ -49,7 +49,13 @@ export interface CanvasPointerPosition {
 	y: number
 }
 
-export type DesignerTab = 'Home' | 'Insert' | 'Page' | 'Layout' | 'Preview'
+export type DesignerTab =
+	| 'Home'
+	| 'Insert'
+	| 'Report'
+	| 'Page'
+	| 'Layout'
+	| 'Preview'
 
 export interface PropertyEditorTarget {
 	type: 'element' | 'band' | 'none'

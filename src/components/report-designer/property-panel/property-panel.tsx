@@ -30,7 +30,13 @@ function getSelection(
 	return { band, element: null }
 }
 
-export function PropertyPanel({ fields }: { fields: DesignerFieldItem[] }) {
+export function PropertyPanel({
+	fields,
+	embedded = false,
+}: {
+	fields: DesignerFieldItem[]
+	embedded?: boolean
+}) {
 	const {
 		report,
 		rulers,
@@ -56,7 +62,13 @@ export function PropertyPanel({ fields }: { fields: DesignerFieldItem[] }) {
 	)
 
 	return (
-		<div className='h-full overflow-hidden border border-border bg-card'>
+		<div
+			className={
+				embedded
+					? 'h-full overflow-hidden bg-transparent'
+					: 'h-full overflow-hidden border border-border bg-card'
+			}
+		>
 			<Tabs defaultValue='position' className='h-full gap-0'>
 				<TabsList
 					variant='line'
@@ -75,7 +87,13 @@ export function PropertyPanel({ fields }: { fields: DesignerFieldItem[] }) {
 						Rules
 					</TabsTrigger>
 				</TabsList>
-				<ScrollArea className='h-[calc(100%-36px)] bg-background/80'>
+				<ScrollArea
+					className={
+						embedded
+							? 'h-[calc(100%-36px)] bg-background/60'
+							: 'h-[calc(100%-36px)] bg-background/80'
+					}
+				>
 					<div className='space-y-3 p-2.5 text-[11px]'>
 						<div className='rounded-sm border border-border bg-muted/25 px-2 py-1 text-[10px] text-muted-foreground'>
 							{element

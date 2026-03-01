@@ -1,5 +1,4 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PageHeader } from '../_shared/page-header'
 import { DesignerIntegration } from './reporting/designer-integration'
 import { LayoutManager } from './reporting/layout-manager'
 import { TemplateGallery } from './reporting/template-gallery'
@@ -9,18 +8,16 @@ export default function ReportingCenter() {
 	const builder = useReportBuilder()
 
 	return (
-		<div className='flex h-full flex-col gap-4 pb-4'>
-			<PageHeader
-				title='Report Designer'
-				description='Design, preview, and manage visual PDF report layouts.'
-			/>
-
+		<div className='flex h-full flex-col gap-2 pb-2'>
 			<Tabs
 				value={builder.activeTab}
 				onValueChange={builder.setActiveTab}
 				className='flex flex-1 flex-col overflow-hidden'
 			>
-				<TabsList variant='line' className='shrink-0'>
+				<TabsList
+					variant='line'
+					className='shrink-0 border-border border-b bg-background px-1'
+				>
 					<TabsTrigger value='templates'>Templates</TabsTrigger>
 					<TabsTrigger value='builder'>Designer</TabsTrigger>
 					<TabsTrigger value='saved'>Saved Layouts</TabsTrigger>

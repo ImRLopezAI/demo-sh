@@ -10,9 +10,9 @@ import {
 	PencilRuler,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PropertyPanel } from '../property-panel/property-panel'
 import type { DesignerFieldItem } from '../types'
 import { BandListPanel } from './band-list-panel'
 import { FieldListPanel } from './field-list-panel'
@@ -46,13 +46,29 @@ export function DesignerSidebar({ fields }: { fields: DesignerFieldItem[] }) {
 				))}
 				<Separator className='my-1' />
 			</div>
-			<Tabs defaultValue='toolbox' className='h-full gap-0'>
+			<Tabs defaultValue='properties' className='h-full gap-0'>
+				<div className='min-h-0 flex-1 bg-background/80 p-2'>
+					<TabsContent value='properties' className='h-full'>
+						<div className='grid h-full grid-rows-[auto_1fr] gap-2'>
+							<ToolboxPanel />
+							<div className='min-h-0 overflow-hidden border border-border bg-background'>
+								<PropertyPanel fields={fields} embedded />
+							</div>
+						</div>
+					</TabsContent>
+					<TabsContent value='fields'>
+						<FieldListPanel fields={fields} />
+					</TabsContent>
+					<TabsContent value='tree'>
+						<BandListPanel />
+					</TabsContent>
+				</div>
 				<TabsList
 					variant='line'
-					className='w-full justify-start rounded-none border-border border-b bg-muted/25 p-1'
+					className='h-10 w-full justify-start rounded-none border-border border-t bg-muted/25 p-1'
 				>
-					<TabsTrigger value='toolbox' className='px-2'>
-						Toolbox
+					<TabsTrigger value='properties' className='px-2'>
+						Properties
 					</TabsTrigger>
 					<TabsTrigger value='fields' className='px-2'>
 						Dictionary
@@ -61,19 +77,6 @@ export function DesignerSidebar({ fields }: { fields: DesignerFieldItem[] }) {
 						Tree
 					</TabsTrigger>
 				</TabsList>
-				<ScrollArea className='h-[calc(100%-36px)] bg-background/80'>
-					<div className='p-2'>
-						<TabsContent value='toolbox'>
-							<ToolboxPanel />
-						</TabsContent>
-						<TabsContent value='fields'>
-							<FieldListPanel fields={fields} />
-						</TabsContent>
-						<TabsContent value='tree'>
-							<BandListPanel />
-						</TabsContent>
-					</div>
-				</ScrollArea>
 			</Tabs>
 		</div>
 	)

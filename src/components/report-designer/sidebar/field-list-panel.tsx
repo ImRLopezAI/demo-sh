@@ -1,6 +1,6 @@
 'use client'
 
-import { Database, Search } from 'lucide-react'
+import { Database, Search, Settings2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { DesignerFieldItem } from '../types'
@@ -44,6 +44,31 @@ export function FieldListPanel({ fields }: { fields: DesignerFieldItem[] }) {
 			<h3 className='border-border border-b pb-1 font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]'>
 				Dictionary
 			</h3>
+			<div className='flex items-center gap-1'>
+				<Button type='button' variant='outline' size='sm'>
+					New
+				</Button>
+				<Button type='button' variant='outline' size='sm'>
+					Actions
+				</Button>
+				<Button
+					type='button'
+					variant='ghost'
+					size='icon-xs'
+					aria-label='Remove dictionary item'
+					className='ml-auto'
+				>
+					<X className='size-3' />
+				</Button>
+				<Button
+					type='button'
+					variant='ghost'
+					size='icon-xs'
+					aria-label='Dictionary settings'
+				>
+					<Settings2 className='size-3' />
+				</Button>
+			</div>
 			<div className='relative'>
 				<Search className='pointer-events-none absolute top-1/2 left-2 size-3 -translate-y-1/2 text-muted-foreground' />
 				<Input

@@ -125,8 +125,7 @@ export function PageSurface({
 								100,
 								page.width -
 									report.page.margins.left -
-									report.page.margins.right -
-									112,
+									report.page.margins.right,
 							)}
 							selected={selectedBandId === band.id}
 							selectedElement={

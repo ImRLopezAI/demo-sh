@@ -7,6 +7,7 @@ import type { DesignerTab } from './types'
 export const DESIGNER_TABS: DesignerTab[] = [
 	'Home',
 	'Insert',
+	'Report',
 	'Page',
 	'Layout',
 	'Preview',

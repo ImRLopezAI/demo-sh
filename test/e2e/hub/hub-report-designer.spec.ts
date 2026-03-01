@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test'
 test.describe('hub report designer @functional', () => {
 	async function openDesigner(page: import('@playwright/test').Page) {
 		await page.goto('/hub/reporting', { waitUntil: 'networkidle' })
-		await expect(
-			page.getByRole('heading', { name: /report designer/i }),
-		).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByRole('tab', { name: /designer/i })).toBeVisible({
+			timeout: 10_000,
+		})
 		await page.getByRole('tab', { name: /designer/i }).click()
 		await expect(page.getByText('Page navigator')).toBeVisible({
 			timeout: 10_000,

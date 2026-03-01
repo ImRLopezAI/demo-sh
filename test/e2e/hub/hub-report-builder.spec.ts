@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test'
 test.describe('hub report designer compatibility @functional', () => {
 	async function waitForHydration(page: import('@playwright/test').Page) {
 		await page.goto('/hub/reporting', { waitUntil: 'networkidle' })
-		await expect(
-			page.getByRole('heading', { name: /report designer/i }),
-		).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByRole('tab', { name: /designer/i })).toBeVisible({
+			timeout: 10_000,
+		})
 	}
 
 	test('reporting page loads with template/designer/saved tabs', async ({
