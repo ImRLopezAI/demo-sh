@@ -551,7 +551,7 @@ function Footer() {
 		<footer className='bg-black px-6 pt-20 pb-10 md:px-16 lg:px-30'>
 			<div className='flex flex-col justify-between gap-16 lg:flex-row'>
 				<div className='flex flex-col gap-4'>
-						<div className='flex items-center gap-3'>
+					<div className='flex items-center gap-3'>
 						<div className='flex size-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-white to-zinc-400'>
 							<div className='flex size-6 items-center justify-center rounded-md bg-black'>
 								<ArrowUpRight className='size-4 text-white' />
