@@ -8,6 +8,7 @@ export function BandDroppable({
 	onDrop,
 	children,
 	className,
+	style,
 }: {
 	bandId: string
 	onDrop: (params: {
@@ -19,6 +20,7 @@ export function BandDroppable({
 	}) => void
 	children: React.ReactNode
 	className?: string
+	style?: React.CSSProperties
 }) {
 	const [over, setOver] = React.useState(false)
 
@@ -47,9 +49,12 @@ export function BandDroppable({
 				})
 			}}
 			className={cn(
-				over ? 'outline-dashed outline-2 outline-primary/70' : undefined,
+				over
+					? 'outline-dashed outline-2 [outline-color:rgba(47,103,178,0.7)]'
+					: undefined,
 				className,
 			)}
+			style={style}
 		>
 			{children}
 		</section>

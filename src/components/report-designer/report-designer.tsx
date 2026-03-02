@@ -1,6 +1,5 @@
 'use client'
 
-import { AlertTriangle } from 'lucide-react'
 import * as React from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import {
@@ -47,16 +46,38 @@ function ReportDesignerRoot({
 		<div
 			data-theme={theme}
 			className={cn(
-				'flex h-full min-h-[720px] flex-col overflow-hidden rounded-md border border-border bg-[var(--designer-bg)] text-[var(--designer-ink)] shadow-sm',
+				'flex h-full min-h-[740px] flex-col overflow-hidden border bg-[var(--designer-bg)] text-[var(--designer-ink)] shadow-none',
 				className,
 			)}
-			style={{
-				...((theme === 'dark'
-					? DARK_THEME_VARS
-					: DEFAULT_THEME_VARS) as React.CSSProperties),
+				style={{
+					...((theme === 'dark'
+						? DARK_THEME_VARS
+						: DEFAULT_THEME_VARS) as React.CSSProperties),
 				fontFamily: DESIGNER_FONT_STACK.body,
-			}}
-		>
+				borderColor: 'var(--designer-panel-border)',
+				colorScheme: 'light',
+				'--background': '#f6f6f8',
+				'--foreground': '#2f343b',
+				'--card': '#ffffff',
+				'--card-foreground': '#2f343b',
+				'--popover': '#ffffff',
+				'--popover-foreground': '#2f343b',
+				'--primary': '#3564a4',
+				'--primary-foreground': '#ffffff',
+				'--secondary': '#eceef2',
+				'--secondary-foreground': '#2f343b',
+				'--muted': '#eceef2',
+				'--muted-foreground': '#68707d',
+				'--accent': '#e9eef6',
+				'--accent-foreground': '#2f343b',
+				'--destructive': '#b34040',
+				'--destructive-foreground': '#ffffff',
+				'--border': '#cfd3db',
+					'--input': '#cfd3db',
+					'--ring': '#3564a4',
+					'--radius': '4px',
+				} as React.CSSProperties}
+			>
 			{children}
 		</div>
 	)
@@ -203,15 +224,18 @@ const ReportDesignerImpl = React.forwardRef<
 			<div className='min-h-0 flex-1 px-2 py-2'>
 				<ResizablePanelGroup
 					orientation='horizontal'
-					className='h-full rounded-sm border border-border bg-muted/20'
+					className='h-full border'
+					style={{
+						borderColor: 'var(--designer-panel-border)',
+					}}
 				>
-					<ResizablePanel defaultSize={28} minSize={20}>
+					<ResizablePanel defaultSize={24} minSize={18}>
 						<div className='h-full p-1.5'>
 							<DesignerSidebar fields={fields} />
 						</div>
 					</ResizablePanel>
 					<ResizableHandle withHandle />
-					<ResizablePanel defaultSize={72} minSize={50}>
+					<ResizablePanel defaultSize={76} minSize={52}>
 						<div className='h-full p-1.5'>
 							<DesignerContextMenu>
 								<div className='relative h-full min-h-0'>
@@ -235,22 +259,29 @@ const ReportDesignerImpl = React.forwardRef<
 					</ResizablePanel>
 				</ResizablePanelGroup>
 			</div>
-			<div className='flex items-center justify-between border-border border-t bg-primary/95 px-2 py-1 text-[10px] text-primary-foreground'>
+			<div
+				className='flex items-center justify-between border-t px-2 py-1 text-[11px]'
+				style={{
+					borderColor: 'var(--designer-ribbon-border)',
+					background: 'var(--designer-status-bg)',
+					color: 'var(--designer-status-ink)',
+				}}
+			>
 				<div className='flex items-center gap-3'>
-					<span className='inline-flex items-center gap-1'>
-						<AlertTriangle className='size-3' />
-						Auto-save off
-					</span>
+					<span>Hundredths of Inch</span>
+					<span>Check for Issues</span>
+					<span>Page1</span>
 					<span>
-						Coords: {Math.round(lastPointer.x)}, {Math.round(lastPointer.y)}
+						X:{Math.round(lastPointer.x).toString().padStart(2, '0')} Y:
+						{Math.round(lastPointer.y).toString().padStart(2, '0')}
 					</span>
-					<span>Unit: {rulers.unit}</span>
-					<span>Zoom: {Math.round(camera.z * 100)}%</span>
+					<span>{rulers.unit}</span>
 				</div>
 				<div className='flex items-center gap-2'>
-					<span>Undo: {history.canUndo ? 'yes' : 'no'}</span>
-					<span>Redo: {history.canRedo ? 'yes' : 'no'}</span>
-					<span>{isDirty ? 'Unsaved changes' : 'Saved'}</span>
+					<span>{history.canUndo ? 'Undo' : 'Undo -'}</span>
+					<span>{history.canRedo ? 'Redo' : 'Redo -'}</span>
+					<span>{isDirty ? 'Unsaved' : 'Saved'}</span>
+					<span>{Math.round(camera.z * 100)}%</span>
 				</div>
 			</div>
 		</ReportDesignerRoot>

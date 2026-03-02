@@ -98,7 +98,7 @@ export function DesignerIntegration({
 			DOC_SALES_ORDER: 'PURCHASE_ORDER',
 			THERMAL_RECEIPT: 'POS_RECEIPT_THERMAL',
 			DOC_POS_RECEIPT: 'POS_RECEIPT_THERMAL',
-			A4_SUMMARY: 'SALES_SUMMARY',
+			A4_SUMMARY: 'INVOICE',
 		}
 		const mappedKey =
 			templateAliasByLegacyLayout[builder.selectedLayout?.key ?? '']
@@ -110,9 +110,10 @@ export function DesignerIntegration({
 				return mapped.reportDefinition as ReportDefinition
 			}
 		}
-		return templatesQuery.data?.[0]?.reportDefinition as
-			| ReportDefinition
-			| undefined
+		const fallback =
+			templatesQuery.data?.find((template) => template.key === 'INVOICE') ??
+			templatesQuery.data?.[0]
+		return fallback?.reportDefinition as ReportDefinition | undefined
 	}, [
 		builder.selectedLayout?.key,
 		loadReportQuery.data?.reportDefinition,
@@ -128,10 +129,10 @@ export function DesignerIntegration({
 	}) as Record<string, unknown>
 
 	return (
-		<div className='flex h-full min-h-0 flex-col gap-2 p-2'>
-			<div className='grid grid-cols-[1fr_auto_auto] items-end gap-2 rounded-md border border-border bg-card/90 p-2'>
+		<div className='flex h-full min-h-0 flex-col gap-1 p-1'>
+			<div className='grid grid-cols-[1fr_auto_auto] items-end gap-2 border border-[#cfd3db] bg-[#f1f2f4] p-2'>
 				<div className='space-y-1'>
-					<Label className='text-[11px] text-muted-foreground'>
+					<Label className='text-[#58606d] text-[12px]'>
 						Designer Layout Name
 					</Label>
 					<Input
@@ -144,12 +145,13 @@ export function DesignerIntegration({
 							builder.setLayoutName(event.target.value)
 						}}
 						placeholder='Visual report layout name'
-						className='h-8 text-[12px]'
+						className='h-9 border-[#cfd3db] bg-white text-[13px]'
 					/>
 				</div>
 				<Button
 					type='button'
 					variant='outline'
+					className='h-9 border-[#cfd3db] bg-white text-[13px]'
 					onClick={() => {
 						if (!activeTemplate) return
 						void saveMutation
@@ -183,6 +185,7 @@ export function DesignerIntegration({
 				<Button
 					type='button'
 					variant='outline'
+					className='h-9 border-[#cfd3db] bg-white text-[13px]'
 					onClick={() => {
 						if (!selection.layoutId) return
 						void exportMutation
@@ -212,6 +215,7 @@ export function DesignerIntegration({
 			</div>
 			{activeTemplate ? (
 				<ReportDesigner
+					theme='light'
 					datasetSchemaJson={datasetSchemaJson}
 					datasetSchemaVersion={builder.entityKey}
 					sampleData={datasetSampleQuery.data?.rows ?? []}

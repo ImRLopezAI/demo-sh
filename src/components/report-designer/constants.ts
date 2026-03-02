@@ -43,23 +43,25 @@ export const DESIGNER_FONT_STACK = {
 export const DEFAULT_GRID_SIZE = 8
 
 export const DEFAULT_THEME_VARS: Record<string, string> = {
-	'--designer-bg': 'hsl(210 20% 95%)',
-	'--designer-panel': 'hsl(var(--background))',
-	'--designer-ink': 'hsl(var(--foreground))',
-	'--designer-muted': 'hsl(var(--muted-foreground))',
-	'--designer-accent': 'hsl(var(--primary))',
-	'--designer-grid': 'hsl(216 15% 80% / 0.85)',
-	'--designer-ribbon': 'hsl(210 20% 97%)',
+	'--designer-bg': '#e9e9ea',
+	'--designer-panel': '#ffffff',
+	'--designer-ink': '#2f2f2f',
+	'--designer-muted': '#767676',
+	'--designer-accent': '#1f4f91',
+	'--designer-grid': 'rgba(182, 188, 199, 0.7)',
+	'--designer-ribbon': '#f6f6f7',
+	'--designer-ribbon-border': '#d4d6da',
+	'--designer-panel-border': '#cfd2d9',
+	'--designer-warning-bg': '#f1ebd7',
+	'--designer-status-bg': '#1f4f91',
+	'--designer-status-ink': '#ffffff',
+	'--designer-file-tab': '#3564a4',
+	'--designer-file-tab-ink': '#ffffff',
+	'--designer-selection': '#2f67b2',
 }
 
 export const DARK_THEME_VARS: Record<string, string> = {
-	'--designer-bg': 'hsl(222 10% 14%)',
-	'--designer-panel': 'hsl(220 8% 18%)',
-	'--designer-ink': 'hsl(210 20% 94%)',
-	'--designer-muted': 'hsl(215 12% 72%)',
-	'--designer-accent': 'hsl(var(--primary))',
-	'--designer-grid': 'hsl(214 12% 30% / 0.8)',
-	'--designer-ribbon': 'hsl(220 8% 16%)',
+	...DEFAULT_THEME_VARS,
 }
 
 export const DESIGNER_KEYBOARD_STEP = 4

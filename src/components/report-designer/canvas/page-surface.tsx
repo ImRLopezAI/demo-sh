@@ -77,7 +77,7 @@ export function PageSurface({
 					type='button'
 					variant='ghost'
 					size='sm'
-					className='inline-flex h-7 items-center gap-1 rounded-t-sm border border-border border-b-background bg-background px-3 text-[11px] text-foreground'
+					className='inline-flex h-8 items-center gap-1 rounded-[3px] rounded-b-none border border-[#cfd3db] border-b-[#f4f5f8] bg-[#eef1f6] px-3 text-[#2f333b] text-[14px]'
 				>
 					<span className='font-medium'>Page1</span>
 				</Button>
@@ -86,16 +86,22 @@ export function PageSurface({
 					variant='ghost'
 					size='icon-xs'
 					aria-label='Add page'
-					className='mt-0.5 text-muted-foreground'
+					className='mt-0.5 text-[#6a727e]'
 				>
 					<Plus className='size-3' />
 				</Button>
 			</div>
 			{rulers.show ? (
-				<div className='pointer-events-none absolute top-7 left-0 h-6 w-6 border border-border bg-muted/70' />
+				<div
+					className='pointer-events-none absolute top-7 left-0 h-6 w-6 border bg-[#eceff4]'
+					style={{ borderColor: '#cfd3db' }}
+				/>
 			) : null}
 			{rulers.show ? (
-				<div className='absolute top-7 left-6 overflow-hidden border border-border border-l-0 bg-muted/70'>
+				<div
+					className='absolute top-7 left-6 overflow-hidden border border-l-0 bg-[#eceff4]'
+					style={{ borderColor: '#cfd3db' }}
+				>
 					<Ruler
 						length={page.width}
 						orientation='horizontal'
@@ -105,7 +111,10 @@ export function PageSurface({
 				</div>
 			) : null}
 			{rulers.show ? (
-				<div className='absolute top-[52px] left-0 overflow-hidden border border-border border-t-0 bg-muted/70'>
+				<div
+					className='absolute top-[52px] left-0 overflow-hidden border border-t-0 bg-[#eceff4]'
+					style={{ borderColor: '#cfd3db' }}
+				>
 					<Ruler
 						length={page.height}
 						orientation='vertical'
@@ -116,38 +125,40 @@ export function PageSurface({
 			) : null}
 			<div
 				className={cn(
-					'relative overflow-hidden border border-border bg-[var(--designer-panel)] shadow-sm',
+					'relative overflow-hidden border bg-[var(--designer-panel)] shadow-sm',
 					rulers.show ? 'mt-[52px] ml-6' : 'mt-1',
 				)}
 				style={{
 					width: page.width,
 					height: page.height,
+					borderColor: '#cfd3db',
 				}}
 			>
 				<div className='pointer-events-none absolute inset-0'>
 					<div
-						className='absolute inset-y-0 border-border border-r'
+						className='absolute inset-y-0 border-r'
 						style={{ left: report.page.margins.left }}
 					/>
 					<div
-						className='absolute inset-y-0 border-border border-r'
+						className='absolute inset-y-0 border-r'
 						style={{ right: report.page.margins.right }}
 					/>
 					<div
-						className='absolute inset-x-0 border-border border-b'
+						className='absolute inset-x-0 border-b'
 						style={{ top: report.page.margins.top }}
 					/>
 					<div
-						className='absolute inset-x-0 border-border border-t'
+						className='absolute inset-x-0 border-t'
 						style={{ bottom: report.page.margins.bottom }}
 					/>
 				</div>
 				<div
-					className='absolute overflow-hidden border border-border bg-background'
+					className='absolute overflow-hidden border bg-background'
 					style={{
 						left: report.page.margins.left,
 						top: report.page.margins.top,
 						width: contentWidth,
+						borderColor: '#ced2d9',
 					}}
 				>
 					{report.bands.map((band) => (

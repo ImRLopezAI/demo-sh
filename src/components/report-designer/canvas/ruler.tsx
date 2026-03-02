@@ -39,7 +39,7 @@ export function Ruler({
 	return (
 		<div
 			aria-hidden='true'
-			className='pointer-events-none relative select-none text-[9px] text-muted-foreground'
+			className='pointer-events-none relative select-none text-[#6d7480] text-[9px]'
 			style={{
 				width: orientation === 'horizontal' ? length * zoom : 24,
 				height: orientation === 'horizontal' ? 24 : length * zoom,
@@ -48,7 +48,7 @@ export function Ruler({
 			{ticks.map((tick) => (
 				<div
 					key={`${orientation}-${tick.position}`}
-					className='absolute border-border'
+					className='absolute border-[#c2c8d2]'
 					style={
 						orientation === 'horizontal'
 							? {

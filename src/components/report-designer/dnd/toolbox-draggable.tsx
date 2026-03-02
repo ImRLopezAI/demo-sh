@@ -21,14 +21,12 @@ export function ToolboxDraggable({
 				event.dataTransfer.setData('designer-element-kind', kind)
 			}}
 			className={cn(
-				'flex w-full items-center justify-between rounded-sm border border-border bg-background px-2 py-1.5 font-medium text-[11px] text-foreground shadow-xs transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30',
+				'flex h-8 w-full items-center justify-between rounded-[3px] border border-[#d0d4dc] bg-white px-2 py-1.5 font-medium text-[#2f343c] text-[12px] shadow-xs transition-colors hover:border-[#8aabd7] hover:bg-[#f2f6fc] focus-visible:border-[#5c87c2] focus-visible:ring-2 focus-visible:ring-[#5c87c240]',
 				className,
 			)}
 		>
 			<span>{label}</span>
-			<span className='font-mono text-[10px] text-muted-foreground'>
-				{kind}
-			</span>
+			<span className='font-mono text-[#707886] text-[11px]'>{kind}</span>
 		</button>
 	)
 }

@@ -23,11 +23,11 @@ function FieldNode({
 					event.dataTransfer.effectAllowed = 'copy'
 					event.dataTransfer.setData('designer-field-path', field.path)
 				}}
-				className='h-auto w-full justify-between rounded-sm border border-border bg-background px-2 py-1 text-left text-[11px] text-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30'
+				className='h-auto w-full justify-between rounded-[3px] border border-[#d0d4dc] bg-white px-2 py-1 text-left text-[#2f343c] text-[12px] transition-colors hover:border-[#8aabd7] hover:bg-[#f2f6fc] focus-visible:border-[#5c87c2] focus-visible:ring-2 focus-visible:ring-[#5c87c240]'
 				style={{ marginLeft: depth * 10 }}
 			>
 				<span>{field.label}</span>
-				<span className='font-mono text-[10px] text-muted-foreground'>
+				<span className='font-mono text-[#707886] text-[11px]'>
 					{field.type}
 				</span>
 			</Button>
@@ -41,7 +41,7 @@ function FieldNode({
 export function FieldListPanel({ fields }: { fields: DesignerFieldItem[] }) {
 	return (
 		<div className='grid h-full grid-rows-[auto_auto_auto_1fr] gap-2'>
-			<h3 className='border-border border-b pb-1 font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]'>
+			<h3 className='border-[#d2d6de] border-b pb-1 font-semibold text-[#5f6672] text-[12px] uppercase tracking-[0.16em]'>
 				Dictionary
 			</h3>
 			<div className='flex items-center gap-1'>
@@ -74,7 +74,7 @@ export function FieldListPanel({ fields }: { fields: DesignerFieldItem[] }) {
 				<Input
 					aria-label='Search dictionary fields'
 					placeholder='Search fields…'
-					className='h-7 pl-6 text-[11px]'
+					className='h-8 border-[#cfd4dc] bg-white pl-6 text-[12px]'
 				/>
 			</div>
 			<div className='min-h-0 space-y-1 overflow-auto pr-1'>

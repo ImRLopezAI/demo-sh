@@ -63,21 +63,23 @@ export function BandStrip({
 		<BandDroppable
 			bandId={band.id}
 			onDrop={onDrop}
-			className={cn(
-				'relative border-border border-r border-b border-l bg-background',
-				selected ? 'ring-1 ring-primary/70 ring-inset' : undefined,
-			)}
+			className={cn('relative border-r border-b border-l bg-background')}
+			style={{
+				borderColor: '#cfd3db',
+				...(selected ? { boxShadow: 'inset 0 0 0 1px #2f67b2' } : undefined),
+			}}
 		>
 			<section
 				className={cn(
 					'relative overflow-hidden',
-					selected
-						? 'outline outline-1 outline-primary/25 -outline-offset-1'
-						: '',
+					selected ? 'outline outline-1 -outline-offset-1' : '',
 				)}
 				style={{
 					width,
 					height: band.height,
+					...(selected
+						? { outlineColor: 'rgba(47, 103, 178, 0.45)' }
+						: undefined),
 				}}
 			>
 				<button
@@ -90,9 +92,12 @@ export function BandStrip({
 				{showHeader ? (
 					<div
 						className={cn(
-							'pointer-events-none absolute inset-x-0 top-0 flex h-5 items-center border-border border-b px-1.5',
-							selected ? 'bg-primary/15' : 'bg-sky-100/80 dark:bg-sky-900/25',
+							'pointer-events-none absolute inset-x-0 top-0 flex h-5 items-center border-b px-1.5',
 						)}
+						style={{
+							borderColor: '#cfdae8',
+							background: selected ? '#dbe8fa' : '#d9e6f5',
+						}}
 					>
 						<span className='font-medium text-[10px] text-foreground/90'>
 							{BAND_LABELS[band.type]}

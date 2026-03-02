@@ -8,7 +8,7 @@ export default function ReportingCenter() {
 	const builder = useReportBuilder()
 
 	return (
-		<div className='flex h-full flex-col gap-2 pb-2'>
+		<div className='flex h-full flex-col gap-0'>
 			<Tabs
 				value={builder.activeTab}
 				onValueChange={builder.setActiveTab}

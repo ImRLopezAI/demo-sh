@@ -336,10 +336,11 @@ export function DesignerCanvas() {
 		<div
 			ref={canvasRef}
 			className={cn(
-				'relative h-full overflow-auto rounded-sm border border-border bg-muted/35 p-3',
+				'relative h-full overflow-auto rounded-none border bg-[#dcdde1] p-3',
 				isPanning ? 'cursor-grabbing select-none' : undefined,
 				isSpacePanning ? 'cursor-grab' : undefined,
 			)}
+			style={{ borderColor: '#cfd3db' }}
 			onPointerDownCapture={(event) => {
 				const shouldStartPan =
 					event.button === 1 || (isSpacePanning && event.button === 0)
@@ -416,7 +417,7 @@ export function DesignerCanvas() {
 				}}
 			/>
 			{selectedBand ? (
-				<div className='absolute bottom-3 left-3 rounded-sm border border-border bg-background/95 px-2 py-1 text-[10px] text-muted-foreground shadow-xs'>
+				<div className='absolute bottom-3 left-3 rounded-[2px] border border-[#cfd3db] bg-[#ffffffec] px-2 py-1 text-[#646d79] text-[10px] shadow-xs'>
 					Selected band: <strong>{selectedBand.type}</strong> ·{' '}
 					{selectedElementIds.length} selected
 				</div>

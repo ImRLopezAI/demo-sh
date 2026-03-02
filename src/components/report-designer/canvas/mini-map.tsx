@@ -36,8 +36,8 @@ export function MiniMap({
 	}
 
 	return (
-		<div className='absolute right-3 bottom-3 w-[170px] rounded-sm border border-border bg-background/95 p-2 shadow-sm'>
-			<p className='mb-2 font-medium text-[10px] text-muted-foreground uppercase tracking-[0.18em]'>
+		<div className='absolute right-3 bottom-3 w-[170px] rounded-[4px] border border-[#cfd3db] bg-[#f6f7f9] p-2 shadow-sm'>
+			<p className='mb-2 font-medium text-[#7a808b] text-[10px] uppercase tracking-[0.18em]'>
 				Page navigator
 			</p>
 			<button
@@ -55,11 +55,11 @@ export function MiniMap({
 				onPointerUp={() => {
 					setDragging(false)
 				}}
-				className='relative block overflow-hidden rounded-sm border border-border bg-muted/40'
+				className='relative block overflow-hidden rounded-[3px] border border-[#d0d4db] bg-[#e5e7ec]'
 				style={{ width, height }}
 			>
 				<div
-					className='absolute border border-primary bg-primary/15'
+					className='absolute border border-[#2f67b2] bg-[#2f67b236]'
 					style={{
 						left: viewport.x,
 						top: viewport.y,

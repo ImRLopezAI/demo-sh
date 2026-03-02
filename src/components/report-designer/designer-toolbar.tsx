@@ -117,12 +117,12 @@ function RibbonActionButton({
 			size='sm'
 			disabled={disabled}
 			onClick={onClick}
-			className='h-12 min-w-[58px] flex-col gap-0.5 rounded-sm px-1 text-[10px]'
+			className='h-[88px] min-w-[70px] flex-col justify-start gap-1 rounded-none px-1.5 pt-2 text-[#30343a] text-[12px] hover:bg-[#f0f2f6]'
 		>
-			<Icon className='size-3.5' />
+			<Icon className='size-[22px]' />
 			<span className='leading-none'>{label}</span>
 			{menuItems?.length ? (
-				<ChevronDown className='size-2.5 opacity-70' />
+				<ChevronDown className='size-3.5 opacity-70' />
 			) : null}
 		</Button>
 	)
@@ -141,8 +141,8 @@ function RibbonActionButton({
 
 function RibbonGroup({ group }: { group: RibbonGroupDef }) {
 	return (
-		<div className='flex min-h-[72px] flex-col justify-between gap-1'>
-			<div className='flex items-start gap-1'>
+		<div className='flex min-h-[104px] flex-col justify-between'>
+			<div className='flex items-start gap-0.5'>
 				{group.actions.map((action) => (
 					<RibbonActionButton
 						key={`${group.title}-${action.label}`}
@@ -150,10 +150,11 @@ function RibbonGroup({ group }: { group: RibbonGroupDef }) {
 						icon={action.icon}
 						onClick={action.onClick}
 						disabled={action.disabled}
+						menuItems={action.menuItems}
 					/>
 				))}
 			</div>
-			<span className='px-1 text-[10px] text-muted-foreground'>
+			<span className='px-2 pb-0.5 text-[#6d747e] text-[10px]'>
 				{group.title}
 			</span>
 		</div>
@@ -608,13 +609,26 @@ export function DesignerToolbar({
 	])
 
 	return (
-		<div className='overflow-hidden border border-border bg-[var(--designer-ribbon)]'>
-			<div className='flex items-center gap-1 border-border border-b bg-background px-1 py-1'>
+		<div
+			className='overflow-hidden border'
+			style={{
+				borderColor: 'var(--designer-ribbon-border)',
+				background: 'var(--designer-ribbon)',
+			}}
+		>
+			<div
+				className='flex items-center gap-1 border-b bg-[#f7f7f8] px-1 py-1'
+				style={{ borderColor: 'var(--designer-ribbon-border)' }}
+			>
 				<Button
 					type='button'
 					variant='default'
 					size='sm'
-					className='h-7 rounded-sm rounded-b-none bg-primary px-3 text-primary-foreground'
+					className='h-[44px] rounded-none rounded-b-none px-7 font-medium text-[15px]'
+					style={{
+						background: '#355f98',
+						color: 'var(--designer-file-tab-ink)',
+					}}
 				>
 					File
 				</Button>
@@ -628,65 +642,101 @@ export function DesignerToolbar({
 				>
 					<TabsList
 						variant='line'
-						className='h-auto border-0 bg-transparent p-0 text-muted-foreground'
+						className='h-auto border-0 bg-transparent p-0 text-[#555a64]'
 					>
 						{DESIGNER_TABS.map((tab) => (
 							<TabsTrigger
 								key={tab}
 								value={tab}
-								className='rounded-none border-transparent px-3 py-1.5 text-[12px] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground'
+								className='rounded-none border-transparent px-3 py-2 text-[15px] data-[state=active]:border-[#2e5f9f] data-[state=active]:bg-transparent data-[state=active]:text-[#2f343c]'
 							>
 								{tab}
 							</TabsTrigger>
 						))}
 					</TabsList>
 				</Tabs>
-				<div className='ml-auto flex items-center gap-1'>
-					<Button type='button' variant='outline' size='sm' onClick={onPreview}>
+				<div className='ml-auto flex items-center gap-2 pr-1'>
+					<Button
+						type='button'
+						variant='outline'
+						size='sm'
+						onClick={onPreview}
+						className='h-8 rounded-[4px] border-[#cfd2d9] bg-white text-[#2f343b] text-[14px] hover:bg-[#f5f6f8]'
+					>
 						<Eye className='size-3' />
 						Preview
 					</Button>
-					<Button type='button' variant='default' size='sm' onClick={onSave}>
+					<Button
+						type='button'
+						variant='outline'
+						size='sm'
+						onClick={onSave}
+						className='h-8 rounded-[4px] border border-[#2e5f9f] bg-[#3a6db1] text-[14px] text-white hover:bg-[#335f9a]'
+					>
 						<Save className='size-3' />
 						Save
 					</Button>
 				</div>
 			</div>
+			<div
+				className='flex items-center border-b px-2 py-1 text-[#4e4e4f] text-[13px]'
+				style={{
+					background: 'var(--designer-warning-bg)',
+					borderColor: 'var(--designer-ribbon-border)',
+				}}
+			>
+				You are using the trial version of Stimulsoft Reports and Dashboards. To
+				use the software in production you should purchase a license.
+				<Button
+					type='button'
+					variant='outline'
+					size='xs'
+					className='ml-auto h-7 border-[#cfccbc] bg-[#e7e2cf] px-3 text-[#535454] text-[13px]'
+				>
+					Upgrade
+				</Button>
+			</div>
 
-			<div className='flex items-start gap-2 overflow-x-auto border-border border-b bg-background px-2 py-2'>
+			<div
+				className='flex items-start gap-2 overflow-x-auto border-b bg-[#f7f7f8] px-2 py-2'
+				style={{ borderColor: 'var(--designer-ribbon-border)' }}
+			>
 				{groups.map((group, index) => (
 					<React.Fragment key={group.title}>
 						<RibbonGroup group={group} />
 						{index < groups.length - 1 ? (
-							<Separator orientation='vertical' />
+							<Separator
+								orientation='vertical'
+								className='h-[102px] bg-[#d8dce3]'
+							/>
 						) : null}
 					</React.Fragment>
 				))}
 
-				<div className='ml-auto flex min-h-[72px] flex-col justify-between rounded-sm border border-border bg-muted/25 px-2 py-1 text-[10px]'>
-					<div className='grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground'>
+				<div className='ml-auto flex min-h-[102px] flex-col justify-between rounded-[4px] border border-[#d1d4db] bg-[#f9f9fa] px-2 py-1 text-[11px]'>
+					<div className='grid grid-cols-2 gap-x-3 gap-y-0.5 text-[#6c727d]'>
 						<span>Grid</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{grid.show ? 'On' : 'Off'}
 						</span>
 						<span>Snap</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{grid.snap ? 'On' : 'Off'}
 						</span>
 						<span>Rulers</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{rulers.show ? 'On' : 'Off'}
 						</span>
 						<span>Headers</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{showBandHeaders ? 'On' : 'Off'}
 						</span>
 						<span>Order</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{showElementOrder ? 'On' : 'Off'}
 						</span>
 						<span>Selection</span>
-						<span className='text-right text-foreground'>
+						<span className='text-right text-[#2d3137]'>
 							{selectedElementIds.length > 0
 								? `${selectedElementIds.length} el`
 								: selectedBandId
@@ -697,7 +747,10 @@ export function DesignerToolbar({
 				</div>
 			</div>
 
-			<div className='flex items-center gap-2 bg-muted/30 px-2 py-1.5'>
+			<div
+				className='flex items-center gap-2 border-t bg-[#f3f4f5] px-2 py-1.5'
+				style={{ borderColor: 'var(--designer-ribbon-border)' }}
+			>
 				<Button
 					type='button'
 					variant='outline'
