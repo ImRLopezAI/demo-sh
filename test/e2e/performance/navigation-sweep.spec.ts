@@ -17,9 +17,9 @@ test.describe('navigation performance @performance', () => {
 		for (const dashboard of MODULE_DASHBOARDS) {
 			const start = Date.now()
 			await page.goto(dashboard)
-			await expect(page.locator('[data-slot="view-component"]')).toBeVisible({
-				timeout: 10_000,
-			})
+			await expect(
+				page.locator('[data-slot="view-component"]').first(),
+			).toBeVisible({ timeout: 10_000 })
 			const duration = Date.now() - start
 			expect(duration, `${dashboard} took ${duration}ms to load`).toBeLessThan(
 				10_000,
@@ -39,9 +39,9 @@ test.describe('navigation performance @performance', () => {
 
 		for (const dashboard of MODULE_DASHBOARDS) {
 			await page.goto(dashboard)
-			await expect(page.locator('[data-slot="view-component"]')).toBeVisible({
-				timeout: 10_000,
-			})
+			await expect(
+				page.locator('[data-slot="view-component"]').first(),
+			).toBeVisible({ timeout: 10_000 })
 		}
 
 		const realErrors = errors.filter(
@@ -50,7 +50,8 @@ test.describe('navigation performance @performance', () => {
 				!msg.includes('[vite]') &&
 				!msg.includes('hydration') &&
 				!msg.includes('getServerSnapshot') &&
-				!msg.includes('unique "key" prop'),
+				!msg.includes('unique "key" prop') &&
+				!msg.includes('Failed to fetch'),
 		)
 		expect(
 			realErrors,

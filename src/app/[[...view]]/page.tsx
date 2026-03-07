@@ -1,21 +1,26 @@
+import { Suspense } from 'react'
+import LandingPage from '@/app/_shell/_views'
 import { ModuleRoutePage } from '@/app/_shell/module-route-page'
 import { NotFoundComponent } from '@/components/layout/errors/not-found'
 
-interface CatchAllViewPageProps {
-	params: {
-		view?: string | string[]
+export function normalizeViewSegments(
+	view: string | string[] | undefined,
+): string[] {
+	if (Array.isArray(view)) {
+		return view
 	}
+
+	return typeof view === 'string' ? [view] : []
 }
 
-export default function CatchAllViewPage({ params }: CatchAllViewPageProps) {
-	const segments = Array.isArray(params.view)
-		? params.view
-		: typeof params.view === 'string'
-			? [params.view]
-			: []
+async function CatchAllViewContent({
+	params,
+}: PageProps<'/[[...view]]'>) {
+	const { view } = await params
+	const segments = normalizeViewSegments(view)
 
 	if (segments.length === 0) {
-		return <NotFoundComponent />
+		return <LandingPage />
 	}
 
 	const [moduleId, ...viewSegments] = segments
@@ -26,4 +31,12 @@ export default function CatchAllViewPage({ params }: CatchAllViewPageProps) {
 	}
 
 	return <ModuleRoutePage moduleId={moduleId} viewId={viewId} />
+}
+
+export default function CatchAllViewPage(props: PageProps<'/[[...view]]'>) {
+	return (
+		<Suspense>
+			<CatchAllViewContent {...props} />
+		</Suspense>
+	)
 }

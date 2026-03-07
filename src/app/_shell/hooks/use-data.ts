@@ -228,10 +228,11 @@ export function useModuleList<M extends UplinkModule>(
 	options?: { limit?: number; search?: string },
 ) {
 	const rpc = ($rpc[moduleId] as unknown as Record<string, EntityRpc>)[entityId]
-	const normalizedLimit =
+	const normalizedLimitRaw =
 		typeof options?.limit === 'number' && Number.isFinite(options.limit)
 			? options.limit
 			: 50
+	const normalizedLimit = Math.max(1, Math.min(200, normalizedLimitRaw))
 	const normalizedSearch =
 		typeof options?.search === 'string'
 			? options.search.trim() || undefined

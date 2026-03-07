@@ -12,7 +12,7 @@ export function NotFoundComponent() {
 								key={i}
 								className='border border-primary/30'
 								style={{
-									opacity: Math.random() * 0.5 + 0.5,
+									opacity: [0.05, 0.1, 0.15, 0.2, 0.25][Math.floor(i / 20)],
 								}}
 							/>
 						))}

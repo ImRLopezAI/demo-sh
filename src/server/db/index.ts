@@ -29,7 +29,7 @@ import {
 } from './constants'
 import { defineSchema, flowField } from './definitions'
 
-const DOCUMENT_SEED = process.env.NODE_ENV === 'test' ? 20 : 10_000
+const DOCUMENT_SEED = process.env.NODE_ENV === 'test' ? 20 : 200
 const ENTITY_SEED = DOCUMENT_SEED
 const SUPPORTING_SEED = Math.max(25, Math.floor(DOCUMENT_SEED / 8))
 

@@ -21,6 +21,7 @@ import {
 	buildMonthlySeries,
 } from '../_shared/dashboard-utils'
 import { DashboardTrendChart } from '../_shared/dashboard-widgets'
+import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface PurchaseOrder {
@@ -172,6 +173,11 @@ export default function Dashboard() {
 
 	return (
 		<div className='space-y-6 pb-8'>
+			<PageHeader
+				title='Replenishment Dashboard'
+				description='Supply pipeline visibility for purchase orders, receipts, and transfers.'
+			/>
+
 			{/* ── Supply Pipeline ── */}
 			<div className='rounded-2xl border border-border/50 bg-gradient-to-r from-sky-500/5 via-background to-indigo-500/5 p-6'>
 				<p className='mb-4 font-medium text-muted-foreground text-xs uppercase tracking-[0.2em]'>

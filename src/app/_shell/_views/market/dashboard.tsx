@@ -22,6 +22,7 @@ import {
 	buildMonthlySeries,
 	formatPercent,
 } from '../_shared/dashboard-utils'
+import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface SalesOrder {
@@ -129,6 +130,11 @@ export default function MarketDashboard() {
 
 	return (
 		<div className='space-y-6 pb-8'>
+			<PageHeader
+				title='Market Dashboard'
+				description='Revenue trends, customer activity, and order lifecycle health.'
+			/>
+
 			{/* ── Revenue Hero Banner ── */}
 			<div className='relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-emerald-500/10 via-background to-teal-500/5 px-8 py-10'>
 				<div className='pointer-events-none absolute -top-16 right-8 h-56 w-56 rounded-full bg-emerald-500/8 blur-3xl' />

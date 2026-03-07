@@ -23,6 +23,7 @@ import {
 	formatPercent,
 } from '../_shared/dashboard-utils'
 import { DashboardTrendChart } from '../_shared/dashboard-widgets'
+import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface Shipment {
@@ -133,6 +134,11 @@ export default function TraceDashboard() {
 
 	return (
 		<div className='space-y-6 pb-8'>
+			<PageHeader
+				title='Trace Dashboard'
+				description='Shipment pipeline monitoring with delivery risk and carrier performance.'
+			/>
+
 			{/* ── Shipment Journey Steps ── */}
 			<div className='rounded-2xl border border-border/50 bg-background/60 p-6'>
 				<p className='mb-4 font-medium text-muted-foreground text-xs uppercase tracking-[0.2em]'>

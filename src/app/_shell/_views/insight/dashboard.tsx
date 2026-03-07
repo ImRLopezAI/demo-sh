@@ -16,6 +16,7 @@ import {
 	formatPercent,
 } from '../_shared/dashboard-utils'
 import { DashboardTrendChart } from '../_shared/dashboard-widgets'
+import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface ItemLedgerEntry {
@@ -140,6 +141,11 @@ export default function Dashboard() {
 
 	return (
 		<div className='space-y-5 pb-8'>
+			<PageHeader
+				title='Insight Dashboard'
+				description='Inventory movement, cost-to-sales visibility, and location health.'
+			/>
+
 			{/* ── Dense 6-Metric Header Grid ── */}
 			<div className='grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6'>
 				{[

@@ -19,3 +19,7 @@ playwright-report
 coverage
 coverage-ssr
 test-results
+
+# Vercel
+.vercel
+.next

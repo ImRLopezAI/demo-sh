@@ -15,6 +15,7 @@ import {
 	formatPercent,
 } from '../_shared/dashboard-utils'
 import { DashboardTrendChart } from '../_shared/dashboard-widgets'
+import { PageHeader } from '../_shared/page-header'
 
 interface Employee {
 	id: string
@@ -137,6 +138,11 @@ export default function PayrollDashboard() {
 
 	return (
 		<div className='space-y-6 pb-8'>
+			<PageHeader
+				title='Payroll Dashboard'
+				description='Workforce composition, compensation dynamics, and payroll readiness.'
+			/>
+
 			{/* ── People Hero ── */}
 			<div className='rounded-2xl border border-border/50 bg-gradient-to-br from-violet-500/8 via-background to-rose-500/5 p-8'>
 				<div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>

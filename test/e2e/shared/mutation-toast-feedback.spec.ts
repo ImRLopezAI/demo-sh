@@ -44,7 +44,7 @@ async function attemptSalesOrderCreate(page: Page) {
 	await openNewSalesOrderDialog(page)
 	await selectFirstOption(page.getByTestId('sales-order-customer-select'), page)
 	// Fill required fields to avoid validation errors
-	await page.getByLabel(/external doc/i).fill('TEST-DOC-123')
+	await page.getByLabel(/external (doc|ref)/i).fill('TEST-DOC-123')
 	await page
 		.locator('[data-slot="grid-add-row"] [role="gridcell"]')
 		.first()

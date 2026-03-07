@@ -19,6 +19,7 @@ import {
 	DashboardDistributionChart,
 	DashboardTrendChart,
 } from '../_shared/dashboard-widgets'
+import { PageHeader } from '../_shared/page-header'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface PosTransaction {
@@ -141,6 +142,11 @@ export default function PosDashboard() {
 
 	return (
 		<div className='space-y-5 pb-8'>
+			<PageHeader
+				title='POS Dashboard'
+				description='Terminal availability, transaction flow, and checkout performance.'
+			/>
+
 			{/* ── Terminal Status Bar ── */}
 			<div className='rounded-xl border border-border/50 bg-background/60 p-4'>
 				<div className='mb-3 flex items-center justify-between'>

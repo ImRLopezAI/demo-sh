@@ -1,91 +1,100 @@
-import { lazy } from 'react'
+import dynamic from 'next/dynamic'
 
 export const VIEW_COMPONENTS = {
-	'hub/dashboard': lazy(() => import('./_views/hub/dashboard')),
-	'hub/tasks': lazy(() => import('./_views/hub/tasks-list')),
-	'hub/notifications': lazy(() => import('./_views/hub/notifications-list')),
-	'hub/reporting': lazy(() => import('./_views/hub/reporting-center')),
-	'hub/order-fulfillment': lazy(() => import('./_views/hub/order-fulfillment')),
-	'market/dashboard': lazy(() => import('./_views/market/dashboard')),
-	'market/sales-orders': lazy(
+	'/': dynamic(() => import('./_views')),
+	'hub/dashboard': dynamic(() => import('./_views/hub/dashboard')),
+	'hub/tasks': dynamic(() => import('./_views/hub/tasks-list')),
+	'hub/notifications': dynamic(() => import('./_views/hub/notifications-list')),
+	'hub/reporting': dynamic(() => import('./_views/hub/reporting-center')),
+	'hub/order-fulfillment': dynamic(
+		() => import('./_views/hub/order-fulfillment'),
+	),
+	'market/dashboard': dynamic(() => import('./_views/market/dashboard')),
+	'market/sales-orders': dynamic(
 		() => import('./_views/market/sales-orders-list'),
 	),
-	'market/items': lazy(() => import('./_views/market/items-list')),
-	'market/customers': lazy(() => import('./_views/market/customers-list')),
-	'market/carts': lazy(() => import('./_views/market/carts-list')),
-	'market/pricing-returns': lazy(
+	'market/items': dynamic(() => import('./_views/market/items-list')),
+	'market/customers': dynamic(() => import('./_views/market/customers-list')),
+	'market/carts': dynamic(() => import('./_views/market/carts-list')),
+	'market/pricing-returns': dynamic(
 		() => import('./_views/market/pricing-returns'),
 	),
-	'insight/dashboard': lazy(() => import('./_views/insight/dashboard')),
-	'insight/item-ledger': lazy(
+	'insight/dashboard': dynamic(() => import('./_views/insight/dashboard')),
+	'insight/item-ledger': dynamic(
 		() => import('./_views/insight/item-ledger-list'),
 	),
-	'insight/locations': lazy(() => import('./_views/insight/locations-list')),
-	'insight/value-entries': lazy(
+	'insight/locations': dynamic(() => import('./_views/insight/locations-list')),
+	'insight/value-entries': dynamic(
 		() => import('./_views/insight/value-entries-list'),
 	),
-	'insight/forecast-workbench': lazy(
+	'insight/forecast-workbench': dynamic(
 		() => import('./_views/insight/forecast-workbench'),
 	),
-	'replenishment/dashboard': lazy(
+	'replenishment/dashboard': dynamic(
 		() => import('./_views/replenishment/dashboard'),
 	),
-	'replenishment/purchase-orders': lazy(
+	'replenishment/purchase-orders': dynamic(
 		() => import('./_views/replenishment/purchase-orders-list'),
 	),
-	'replenishment/vendors': lazy(
+	'replenishment/vendors': dynamic(
 		() => import('./_views/replenishment/vendors-list'),
 	),
-	'replenishment/transfers': lazy(
+	'replenishment/transfers': dynamic(
 		() => import('./_views/replenishment/transfers-list'),
 	),
-	'replenishment/planning-workbench': lazy(
+	'replenishment/planning-workbench': dynamic(
 		() => import('./_views/replenishment/planning-workbench'),
 	),
-	'ledger/dashboard': lazy(() => import('./_views/ledger/dashboard')),
-	'ledger/invoices': lazy(() => import('./_views/ledger/invoices-list')),
-	'ledger/customer-ledger': lazy(
+	'ledger/dashboard': dynamic(() => import('./_views/ledger/dashboard')),
+	'ledger/invoices': dynamic(() => import('./_views/ledger/invoices-list')),
+	'ledger/customer-ledger': dynamic(
 		() => import('./_views/ledger/customer-ledger-list'),
 	),
-	'ledger/gl-entries': lazy(() => import('./_views/ledger/gl-entries-list')),
-	'ledger/collections-compliance': lazy(
+	'ledger/gl-entries': dynamic(() => import('./_views/ledger/gl-entries-list')),
+	'ledger/collections-compliance': dynamic(
 		() => import('./_views/ledger/collections-compliance'),
 	),
-	'flow/dashboard': lazy(() => import('./_views/flow/dashboard')),
-	'flow/bank-accounts': lazy(() => import('./_views/flow/bank-accounts-list')),
-	'flow/bank-ledger': lazy(() => import('./_views/flow/bank-ledger-list')),
-	'flow/payment-journal': lazy(() => import('./_views/flow/payment-journal')),
-	'flow/gl-entries': lazy(() => import('./_views/flow/gl-entries-list')),
-	'flow/reconciliation-approvals': lazy(
+	'flow/dashboard': dynamic(() => import('./_views/flow/dashboard')),
+	'flow/bank-accounts': dynamic(
+		() => import('./_views/flow/bank-accounts-list'),
+	),
+	'flow/bank-ledger': dynamic(() => import('./_views/flow/bank-ledger-list')),
+	'flow/payment-journal': dynamic(
+		() => import('./_views/flow/payment-journal'),
+	),
+	'flow/gl-entries': dynamic(() => import('./_views/flow/gl-entries-list')),
+	'flow/reconciliation-approvals': dynamic(
 		() => import('./_views/flow/reconciliation-approvals'),
 	),
-	'payroll/dashboard': lazy(() => import('./_views/payroll/dashboard')),
-	'payroll/employees': lazy(() => import('./_views/payroll/employees-list')),
-	'payroll/employee-ledger': lazy(
+	'payroll/dashboard': dynamic(() => import('./_views/payroll/dashboard')),
+	'payroll/employees': dynamic(() => import('./_views/payroll/employees-list')),
+	'payroll/employee-ledger': dynamic(
 		() => import('./_views/payroll/employee-ledger-list'),
 	),
-	'payroll/payroll-journal': lazy(
+	'payroll/payroll-journal': dynamic(
 		() => import('./_views/payroll/payroll-journal'),
 	),
-	'payroll/gl-entries': lazy(() => import('./_views/payroll/gl-entries-list')),
-	'payroll/bank-ledger': lazy(
+	'payroll/gl-entries': dynamic(
+		() => import('./_views/payroll/gl-entries-list'),
+	),
+	'payroll/bank-ledger': dynamic(
 		() => import('./_views/payroll/bank-ledger-list'),
 	),
-	'payroll/adjustments-offcycle': lazy(
+	'payroll/adjustments-offcycle': dynamic(
 		() => import('./_views/payroll/adjustments-offcycle'),
 	),
-	'pos/dashboard': lazy(() => import('./_views/pos/dashboard')),
-	'pos/transactions': lazy(() => import('./_views/pos/transactions-list')),
-	'pos/terminals': lazy(() => import('./_views/pos/terminals-list')),
-	'pos/sessions': lazy(() => import('./_views/pos/sessions-list')),
-	'pos/terminal': lazy(() => import('./_views/pos/terminal-view')),
-	'pos/shift-controls': lazy(() => import('./_views/pos/shift-controls')),
-	'trace/dashboard': lazy(() => import('./_views/trace/dashboard')),
-	'trace/shipments': lazy(() => import('./_views/trace/shipments-list')),
-	'trace/shipment-methods': lazy(
+	'pos/dashboard': dynamic(() => import('./_views/pos/dashboard')),
+	'pos/transactions': dynamic(() => import('./_views/pos/transactions-list')),
+	'pos/terminals': dynamic(() => import('./_views/pos/terminals-list')),
+	'pos/sessions': dynamic(() => import('./_views/pos/sessions-list')),
+	'pos/terminal': dynamic(() => import('./_views/pos/terminal-view')),
+	'pos/shift-controls': dynamic(() => import('./_views/pos/shift-controls')),
+	'trace/dashboard': dynamic(() => import('./_views/trace/dashboard')),
+	'trace/shipments': dynamic(() => import('./_views/trace/shipments-list')),
+	'trace/shipment-methods': dynamic(
 		() => import('./_views/trace/shipment-methods-list'),
 	),
-	'trace/carrier-ops': lazy(() => import('./_views/trace/carrier-ops')),
+	'trace/carrier-ops': dynamic(() => import('./_views/trace/carrier-ops')),
 } as const
 
 export type ViewRouteKey = keyof typeof VIEW_COMPONENTS

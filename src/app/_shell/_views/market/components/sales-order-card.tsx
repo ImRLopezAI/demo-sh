@@ -18,6 +18,11 @@ import {
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
+import {
+	notifyMutationError,
+	notifyMutationSuccess,
+	resolveMutationToastPolicy,
+} from '../../_shared/use-mutation-feedback'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface SalesOrderHeader {
@@ -103,6 +108,10 @@ export function SalesOrderCard({
 		remove: removeLine,
 	} = useEntityMutations('market', 'salesLines')
 	const queryClient = useQueryClient()
+	const mutationToastPolicy = React.useMemo(
+		() => resolveMutationToastPolicy('market'),
+		[],
+	)
 
 	const invalidateSalesOrderQueries = React.useCallback(() => {
 		queryClient.invalidateQueries({
@@ -115,7 +124,21 @@ export function SalesOrderCard({
 
 	const createWithLines = useMutation({
 		...$rpc.market.salesOrders.createWithLines.mutationOptions({
-			onSuccess: invalidateSalesOrderQueries,
+			onSuccess: () => {
+				invalidateSalesOrderQueries()
+				notifyMutationSuccess({
+					moduleId: 'market',
+					operation: 'create',
+					policy: mutationToastPolicy,
+				})
+			},
+			onError: (error) => {
+				notifyMutationError({
+					moduleId: 'market',
+					operation: 'create',
+					error,
+				})
+			},
 		}),
 	})
 	const submitForApproval = useMutation({

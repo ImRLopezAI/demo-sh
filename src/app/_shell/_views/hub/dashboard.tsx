@@ -241,18 +241,6 @@ export default function Dashboard() {
 		[assignRoleToUser, assignmentRoleCode, assignmentUserId],
 	)
 
-	const schedulerBootstrapRef = React.useRef(false)
-
-	const registerScheduledJobs = useMutation({
-		...$rpc.hub.scheduledJobs.registerDefaults.mutationOptions({
-			onSuccess: () => {
-				void queryClient.invalidateQueries({
-					queryKey: $rpc.hub.scheduledJobs.key(),
-				})
-			},
-		}),
-	})
-
 	const setScheduledJobEnabled = useMutation({
 		...$rpc.hub.scheduledJobs.setEnabled.mutationOptions({
 			onSuccess: () => {
@@ -321,12 +309,6 @@ export default function Dashboard() {
 	)
 	const scheduledJobRuns = (scheduledJobRunsQuery.data?.items ??
 		[]) as ScheduledJobRun[]
-
-	React.useEffect(() => {
-		if (schedulerBootstrapRef.current) return
-		schedulerBootstrapRef.current = true
-		void registerScheduledJobs.mutateAsync({})
-	}, [registerScheduledJobs])
 
 	const handleToggleScheduledJob = React.useCallback(
 		async (jobCode: string, enabled: boolean) => {
