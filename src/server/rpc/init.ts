@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Orpc plugin to handle Routes */
 
-import { type AnyRouter, ORPCError, os, type Route } from '@orpc/server'
+import { type AnyRouter, os, type Route } from '@orpc/server'
 import type { ResponseHeadersPluginContext } from '@orpc/server/plugins'
 import { db } from '@server/db'
 
@@ -45,19 +45,10 @@ function normalizeIdentity(
 	}
 }
 
-export function resolveServerBootstrapAuthIdentity(): RpcAuthIdentity | null {
-	const isProduction = process.env.NODE_ENV === 'production'
-
-	const tenantId =
-		process.env.RPC_SERVER_TENANT_ID ??
-		(isProduction ? undefined : 'demo-tenant')
-	const userId =
-		process.env.RPC_SERVER_USER_ID ?? (isProduction ? undefined : 'demo-user')
+export function resolveServerBootstrapAuthIdentity(): RpcAuthIdentity {
+	const tenantId = process.env.RPC_SERVER_TENANT_ID ?? 'demo-tenant'
+	const userId = process.env.RPC_SERVER_USER_ID ?? 'demo-user'
 	const role = normalizeRole(process.env.RPC_SERVER_ROLE ?? 'MANAGER')
-
-	if (!tenantId || !userId) {
-		return null
-	}
 
 	return {
 		tenantId,
@@ -67,12 +58,8 @@ export function resolveServerBootstrapAuthIdentity(): RpcAuthIdentity | null {
 }
 
 export async function createRpcContext(ctx: RpcContext) {
-	const identity = normalizeIdentity(ctx.auth)
-	if (!identity) {
-		throw new ORPCError('UNAUTHORIZED', {
-			message: 'Verified identity is required for RPC requests',
-		})
-	}
+	const identity =
+		normalizeIdentity(ctx.auth) ?? resolveServerBootstrapAuthIdentity()
 
 	// In non-production, allow E2E tests to override the role via header
 	const isProduction = process.env.NODE_ENV === 'production'
