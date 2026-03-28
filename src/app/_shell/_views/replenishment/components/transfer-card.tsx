@@ -4,6 +4,7 @@ import {
 	TRANSFER_TRANSITIONS,
 	type TransferStatus,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -44,12 +50,15 @@ export function TransferCard({
 	onClose,
 	onCreated,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = recordId === 'new'
 	const open = recordId !== null
 
@@ -291,14 +300,14 @@ export function TransferCard({
 					{
 						label: 'Ship Transfer',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement ship action */
 						},
 						disabled: currentStatus !== 'RELEASED',
 					},
 					{
 						label: 'Receive Transfer',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement receive action */
 						},
 						disabled: currentStatus !== 'IN_TRANSIT',
 					},
@@ -309,16 +318,12 @@ export function TransferCard({
 				items: [
 					{
 						label: 'From Location',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/locations'),
 						disabled: !header?.fromLocationCode,
 					},
 					{
 						label: 'To Location',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/locations'),
 						disabled: !header?.toLocationCode,
 					},
 				],
@@ -327,16 +332,12 @@ export function TransferCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Transfer Lines',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Item Ledger Entries',
+						onClick: () => router.push('/insight/item-ledger'),
 					},
 					{
-						label: 'Item Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Transfers',
+						onClick: () => router.push('/replenishment/transfers'),
 					},
 				],
 			},
@@ -347,6 +348,7 @@ export function TransferCard({
 		currentStatus,
 		header?.fromLocationCode,
 		header?.toLocationCode,
+		router,
 		reportGroup,
 	])
 
@@ -359,8 +361,18 @@ export function TransferCard({
 				}}
 				presentation={presentation}
 				actionGroups={actionGroups}
-				title={isNew ? 'New Transfer' : `Transfer ${header?.transferNo ?? ''}`}
-				description='Manage transfer header and lines.'
+				title={
+					isNew
+						? (specCardProps?.newTitle ?? 'New Transfer')
+						: resolveCardTitle(
+								specCardProps?.title,
+								header as unknown as Record<string, unknown> | undefined,
+								`Transfer ${header?.transferNo ?? ''}`,
+							)
+				}
+				description={
+					specCardProps?.description ?? 'Manage transfer header and lines.'
+				}
 				footer={
 					<>
 						<Button variant='outline' size='sm' onClick={onClose}>
@@ -375,180 +387,192 @@ export function TransferCard({
 				<div className='space-y-6'>
 					<Form>
 						{() => (
-							<Form.Group className='grid grid-cols-3 gap-4'>
-								<Form.Item>
-									<Form.Label>Transfer No.</Form.Label>
-									<Form.Field
-										name='transferNo'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input {...field} readOnly autoComplete='off' />
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
-
-								<Form.Item>
-									<Form.Label>Status</Form.Label>
-									<Form.Select
-										value={currentStatus}
-										onValueChange={(toStatus) => {
-											if (toStatus && toStatus !== currentStatus) {
-												void requestTransition(toStatus)
-											}
-										}}
-										disabled={isNew || statusOptions.length === 0}
-									>
-										<Form.Select.Trigger className='w-full'>
-											<Form.Select.Value
-												placeholder={
-													TRANSFER_STATUS_LABELS[
-														currentStatus as TransferStatus
-													] ?? currentStatus
-												}
+							<>
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<Form.Group className='grid grid-cols-3 gap-4'>
+										<Form.Item>
+											<Form.Label>Transfer No.</Form.Label>
+											<Form.Field
+												name='transferNo'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															readOnly
+															autoComplete='off'
+														/>
+													</Form.Control>
+												)}
 											/>
-										</Form.Select.Trigger>
-										<Form.Select.Content>
-											<Form.Select.Item value={currentStatus}>
-												{TRANSFER_STATUS_LABELS[
-													currentStatus as TransferStatus
-												] ?? currentStatus}
-											</Form.Select.Item>
-											{statusOptions.map((opt) => (
-												<Form.Select.Item key={opt.to} value={opt.to}>
-													{opt.label}
-												</Form.Select.Item>
-											))}
-										</Form.Select.Content>
-									</Form.Select>
-								</Form.Item>
-
-								<Form.Field
-									name='fromLocationCode'
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>From Location</Form.Label>
-											<Form.Control>
-												<Form.Combo
-													value={field.value}
-													onValueChange={field.onChange}
-													itemToStringLabel={(code: string) => {
-														const loc = (locationsList?.items ?? []).find(
-															(l: Record<string, unknown>) => l.code === code,
-														) as Record<string, unknown> | undefined
-														return loc
-															? `${loc.code as string} - ${loc.name as string}`
-															: code
-													}}
-												>
-													<Form.Combo.Input
-														showClear
-														placeholder='Search locations\u2026'
-													/>
-													<Form.Combo.Content>
-														<Form.Combo.List>
-															{(locationsList?.items ?? []).map(
-																(l: Record<string, unknown>) => (
-																	<Form.Combo.Item
-																		key={l._id as string}
-																		value={l.code as string}
-																	>
-																		{l.code as string} - {l.name as string}
-																	</Form.Combo.Item>
-																),
-															)}
-															<Form.Combo.Empty>
-																No locations found
-															</Form.Combo.Empty>
-														</Form.Combo.List>
-													</Form.Combo.Content>
-												</Form.Combo>
-											</Form.Control>
 										</Form.Item>
-									)}
-								/>
 
-								<Form.Field
-									name='toLocationCode'
-									render={({ field }) => (
 										<Form.Item>
-											<Form.Label>To Location</Form.Label>
-											<Form.Control>
-												<Form.Combo
-													value={field.value}
-													onValueChange={field.onChange}
-													itemToStringLabel={(code: string) => {
-														const loc = (locationsList?.items ?? []).find(
-															(l: Record<string, unknown>) => l.code === code,
-														) as Record<string, unknown> | undefined
-														return loc
-															? `${loc.code as string} - ${loc.name as string}`
-															: code
-													}}
-												>
-													<Form.Combo.Input
-														showClear
-														placeholder='Search locations\u2026'
+											<Form.Label>Status</Form.Label>
+											<Form.Select
+												value={currentStatus}
+												onValueChange={(toStatus) => {
+													if (toStatus && toStatus !== currentStatus) {
+														void requestTransition(toStatus)
+													}
+												}}
+												disabled={isNew || statusOptions.length === 0}
+											>
+												<Form.Select.Trigger className='w-full'>
+													<Form.Select.Value
+														placeholder={
+															TRANSFER_STATUS_LABELS[
+																currentStatus as TransferStatus
+															] ?? currentStatus
+														}
 													/>
-													<Form.Combo.Content>
-														<Form.Combo.List>
-															{(locationsList?.items ?? []).map(
-																(l: Record<string, unknown>) => (
-																	<Form.Combo.Item
-																		key={l._id as string}
-																		value={l.code as string}
-																	>
-																		{l.code as string} - {l.name as string}
-																	</Form.Combo.Item>
-																),
-															)}
-															<Form.Combo.Empty>
-																No locations found
-															</Form.Combo.Empty>
-														</Form.Combo.List>
-													</Form.Combo.Content>
-												</Form.Combo>
-											</Form.Control>
+												</Form.Select.Trigger>
+												<Form.Select.Content>
+													<Form.Select.Item value={currentStatus}>
+														{TRANSFER_STATUS_LABELS[
+															currentStatus as TransferStatus
+														] ?? currentStatus}
+													</Form.Select.Item>
+													{statusOptions.map((opt) => (
+														<Form.Select.Item key={opt.to} value={opt.to}>
+															{opt.label}
+														</Form.Select.Item>
+													))}
+												</Form.Select.Content>
+											</Form.Select>
 										</Form.Item>
-									)}
-								/>
 
-								<Form.Item>
-									<Form.Label>Shipment Date</Form.Label>
-									<Form.Field
-										name='shipmentDate'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.DatePicker
-													value={field.value}
-													onValueChange={(date) =>
-														field.onChange(date?.toISOString() ?? '')
-													}
-													placeholder='Select shipment date'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Field
+											name='fromLocationCode'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>From Location</Form.Label>
+													<Form.Control>
+														<Form.Combo
+															value={field.value}
+															onValueChange={field.onChange}
+															itemToStringLabel={(code: string) => {
+																const loc = (locationsList?.items ?? []).find(
+																	(l: Record<string, unknown>) =>
+																		l.code === code,
+																) as Record<string, unknown> | undefined
+																return loc
+																	? `${loc.code as string} - ${loc.name as string}`
+																	: code
+															}}
+														>
+															<Form.Combo.Input
+																showClear
+																placeholder='Search locations\u2026'
+															/>
+															<Form.Combo.Content>
+																<Form.Combo.List>
+																	{(locationsList?.items ?? []).map(
+																		(l: Record<string, unknown>) => (
+																			<Form.Combo.Item
+																				key={l._id as string}
+																				value={l.code as string}
+																			>
+																				{l.code as string} - {l.name as string}
+																			</Form.Combo.Item>
+																		),
+																	)}
+																	<Form.Combo.Empty>
+																		No locations found
+																	</Form.Combo.Empty>
+																</Form.Combo.List>
+															</Form.Combo.Content>
+														</Form.Combo>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
 
-								<Form.Item>
-									<Form.Label>Receipt Date</Form.Label>
-									<Form.Field
-										name='receiptDate'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.DatePicker
-													value={field.value}
-													onValueChange={(date) =>
-														field.onChange(date?.toISOString() ?? '')
-													}
-													placeholder='Select receipt date'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
-							</Form.Group>
+										<Form.Field
+											name='toLocationCode'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>To Location</Form.Label>
+													<Form.Control>
+														<Form.Combo
+															value={field.value}
+															onValueChange={field.onChange}
+															itemToStringLabel={(code: string) => {
+																const loc = (locationsList?.items ?? []).find(
+																	(l: Record<string, unknown>) =>
+																		l.code === code,
+																) as Record<string, unknown> | undefined
+																return loc
+																	? `${loc.code as string} - ${loc.name as string}`
+																	: code
+															}}
+														>
+															<Form.Combo.Input
+																showClear
+																placeholder='Search locations\u2026'
+															/>
+															<Form.Combo.Content>
+																<Form.Combo.List>
+																	{(locationsList?.items ?? []).map(
+																		(l: Record<string, unknown>) => (
+																			<Form.Combo.Item
+																				key={l._id as string}
+																				value={l.code as string}
+																			>
+																				{l.code as string} - {l.name as string}
+																			</Form.Combo.Item>
+																		),
+																	)}
+																	<Form.Combo.Empty>
+																		No locations found
+																	</Form.Combo.Empty>
+																</Form.Combo.List>
+															</Form.Combo.Content>
+														</Form.Combo>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+
+										<Form.Item>
+											<Form.Label>Shipment Date</Form.Label>
+											<Form.Field
+												name='shipmentDate'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.DatePicker
+															value={field.value}
+															onValueChange={(date) =>
+																field.onChange(date?.toISOString() ?? '')
+															}
+															placeholder='Select shipment date'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
+
+										<Form.Item>
+											<Form.Label>Receipt Date</Form.Label>
+											<Form.Field
+												name='receiptDate'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.DatePicker
+															value={field.value}
+															onValueChange={(date) =>
+																field.onChange(date?.toISOString() ?? '')
+															}
+															placeholder='Select receipt date'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
+									</Form.Group>
+								)}
+							</>
 						)}
 					</Form>
 

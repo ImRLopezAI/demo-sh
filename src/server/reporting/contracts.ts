@@ -74,6 +74,7 @@ export interface TopLevelRelatedField {
 export type DataSetField = DirectField | TopLevelRelatedField
 
 export interface DataSetDefinition {
+	[key: string]: unknown
 	name?: string
 	type: 'single' | 'list'
 	primaryTable: string

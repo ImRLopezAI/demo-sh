@@ -9,6 +9,13 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { BankAccountCard } from './components/bank-account-card'
@@ -26,14 +33,24 @@ interface BankAccount {
 	currentBalance: number
 }
 
-export default function BankAccountsList() {
+interface BankAccountsListProps {
+	specProps?: SpecListProps
+}
+
+export default function BankAccountsList({
+	specProps,
+}: BankAccountsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'flow', BankAccount>(
 		'flow',
 		'bankAccounts',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidate = React.useCallback(() => {
@@ -69,6 +86,7 @@ export default function BankAccountsList() {
 				<BankAccountCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -78,17 +96,22 @@ export default function BankAccountsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Bank Accounts'
-				description='Manage bank accounts, balances, and integration settings.'
+				title={specProps?.title ?? 'Bank Accounts'}
+				description={
+					specProps?.description ??
+					'Manage bank accounts, balances, and integration settings.'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
-						New Account
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Account'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -102,32 +125,44 @@ export default function BankAccountsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='accountNo'
-							title='Account No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column accessorKey='name' title='Name' />
-						<DataGrid.Column accessorKey='bankName' title='Bank Name' />
-						<DataGrid.Column accessorKey='iban' title='IBAN' />
-						<DataGrid.Column accessorKey='swiftCode' title='SWIFT Code' />
-						<DataGrid.Column accessorKey='currency' title='Currency' />
-						<DataGrid.Column
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column
-							accessorKey='entryCount'
-							title='Entries'
-							cellVariant='number'
-						/>
-						<DataGrid.Column
-							accessorKey='currentBalance'
-							title='Current Balance'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.currentBalance)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<BankAccount>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='accountNo'
+									title='Account No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column accessorKey='name' title='Name' />
+								<DataGrid.Column accessorKey='bankName' title='Bank Name' />
+								<DataGrid.Column accessorKey='iban' title='IBAN' />
+								<DataGrid.Column accessorKey='swiftCode' title='SWIFT Code' />
+								<DataGrid.Column accessorKey='currency' title='Currency' />
+								<DataGrid.Column
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column
+									accessorKey='entryCount'
+									title='Entries'
+									cellVariant='number'
+								/>
+								<DataGrid.Column
+									accessorKey='currentBalance'
+									title='Current Balance'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.currentBalance)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -154,7 +189,13 @@ export default function BankAccountsList() {
 								const allActive = records.every((r) => r.status === 'ACTIVE')
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !allInactive}
 											onClick={() => {
@@ -189,7 +230,7 @@ export default function BankAccountsList() {
 											entityId='bankAccounts'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { GET } from '@/app/api/rpc/[[...path]]/route'
+import { GET } from '@/app/api/[[...path]]/route'
 
 describe('rpc route health', () => {
 	test('responds to health ping requests', async () => {

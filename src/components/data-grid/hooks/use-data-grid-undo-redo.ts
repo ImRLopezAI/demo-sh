@@ -490,7 +490,7 @@ function useDataGridUndoRedo<TData>({
 }
 
 export {
-	useDataGridUndoRedo,
 	//
 	type UndoRedoCellUpdate,
+	useDataGridUndoRedo,
 }

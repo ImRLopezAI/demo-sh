@@ -2,6 +2,10 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 
 interface EmployeeLedgerEntry {
 	_id: string
@@ -18,7 +22,13 @@ interface EmployeeLedgerEntry {
 	payrollPeriod?: string | null
 }
 
-export default function EmployeeLedgerList() {
+interface EmployeeLedgerListProps {
+	specProps?: SpecListProps
+}
+
+export default function EmployeeLedgerList({
+	specProps,
+}: EmployeeLedgerListProps = {}) {
 	const { DataGrid, windowSize } = useModuleData<
 		'payroll',
 		EmployeeLedgerEntry
@@ -27,8 +37,11 @@ export default function EmployeeLedgerList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Employee Ledger Entries'
-				description='Track all payroll postings, adjustments, payments, and benefits per employee.'
+				title={specProps?.title ?? 'Employee Ledger Entries'}
+				description={
+					specProps?.description ??
+					'Track all payroll postings, adjustments, payments, and benefits per employee.'
+				}
 			/>
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -42,54 +55,69 @@ export default function EmployeeLedgerList() {
 					</DataGrid.Header>
 
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='entryNo'
-							title='Entry No.'
-							cellVariant='number'
-						/>
-						<DataGrid.Column accessorKey='employeeName' title='Employee' />
-						<DataGrid.Column
-							accessorKey='postingDate'
-							title='Posting Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.postingDate, { format: 'P' })}
-						/>
-						<DataGrid.Column
-							accessorKey='documentType'
-							title='Document Type'
-							cellVariant='select'
-							opts={{
-								options: [
-									{ label: 'Payroll', value: 'PAYROLL' },
-									{ label: 'Adjustment', value: 'ADJUSTMENT' },
-									{ label: 'Payment', value: 'PAYMENT' },
-									{ label: 'Benefit', value: 'BENEFIT' },
-								],
-							}}
-						/>
-						<DataGrid.Column accessorKey='documentNo' title='Document No.' />
-						<DataGrid.Column accessorKey='description' title='Description' />
-						<DataGrid.Column
-							accessorKey='amount'
-							title='Amount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.amount)}
-						/>
-						<DataGrid.Column
-							accessorKey='remainingAmount'
-							title='Remaining Amount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.remainingAmount)}
-						/>
-						<DataGrid.Column
-							accessorKey='open'
-							title='Open'
-							cellVariant='checkbox'
-						/>
-						<DataGrid.Column
-							accessorKey='payrollPeriod'
-							title='Payroll Period'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<EmployeeLedgerEntry>(
+								DataGrid.Column,
+								specProps.columns,
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='entryNo'
+									title='Entry No.'
+									cellVariant='number'
+								/>
+								<DataGrid.Column accessorKey='employeeName' title='Employee' />
+								<DataGrid.Column
+									accessorKey='postingDate'
+									title='Posting Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.postingDate, { format: 'P' })}
+								/>
+								<DataGrid.Column
+									accessorKey='documentType'
+									title='Document Type'
+									cellVariant='select'
+									opts={{
+										options: [
+											{ label: 'Payroll', value: 'PAYROLL' },
+											{ label: 'Adjustment', value: 'ADJUSTMENT' },
+											{ label: 'Payment', value: 'PAYMENT' },
+											{ label: 'Benefit', value: 'BENEFIT' },
+										],
+									}}
+								/>
+								<DataGrid.Column
+									accessorKey='documentNo'
+									title='Document No.'
+								/>
+								<DataGrid.Column
+									accessorKey='description'
+									title='Description'
+								/>
+								<DataGrid.Column
+									accessorKey='amount'
+									title='Amount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.amount)}
+								/>
+								<DataGrid.Column
+									accessorKey='remainingAmount'
+									title='Remaining Amount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.remainingAmount)}
+								/>
+								<DataGrid.Column
+									accessorKey='open'
+									title='Open'
+									cellVariant='checkbox'
+								/>
+								<DataGrid.Column
+									accessorKey='payrollPeriod'
+									title='Payroll Period'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>

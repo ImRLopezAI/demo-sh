@@ -1121,17 +1121,17 @@ function KanbanOverlay(props: KanbanOverlayProps) {
 
 export {
 	KanbanBoard as Board,
-	KanbanColumn as Column,
-	KanbanColumnHandle as ColumnHandle,
-	KanbanItem as Item,
-	KanbanItemHandle as ItemHandle,
-	KanbanRoot as Kanban,
 	KanbanBoard,
+	KanbanColumn as Column,
 	KanbanColumn,
+	KanbanColumnHandle as ColumnHandle,
 	KanbanColumnHandle,
+	KanbanItem as Item,
 	KanbanItem,
+	KanbanItemHandle as ItemHandle,
 	KanbanItemHandle,
 	KanbanOverlay,
 	KanbanOverlay as Overlay,
+	KanbanRoot as Kanban,
 	KanbanRoot as Root,
 }

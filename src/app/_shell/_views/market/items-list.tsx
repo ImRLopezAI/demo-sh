@@ -5,6 +5,12 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ItemCard } from './components/item-card'
 
@@ -20,8 +26,13 @@ interface Item {
 	barcode: string
 }
 
-export default function ItemsList() {
+interface ItemsListProps {
+	specProps?: SpecListProps
+}
+
+export default function ItemsList({ specProps }: ItemsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'market', Item>(
 		'market',
@@ -38,7 +49,12 @@ export default function ItemsList() {
 	if (selectedId !== null) {
 		return (
 			<div className='space-y-8 pb-8'>
-				<ItemCard selectedId={selectedId} onClose={close} presentation='page' />
+				<ItemCard
+					selectedId={selectedId}
+					onClose={close}
+					specCardProps={specCardProps}
+					presentation='page'
+				/>
 			</div>
 		)
 	}
@@ -46,17 +62,21 @@ export default function ItemsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Items'
-				description='Product catalog and inventory management'
+				title={specProps?.title ?? 'Items'}
+				description={
+					specProps?.description ?? 'Product catalog and inventory management'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Item
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Item'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -70,36 +90,49 @@ export default function ItemsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='itemNo'
-							title='Item No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column accessorKey='description' title='Description' />
-						<DataGrid.Column
-							accessorKey='type'
-							title='Type'
-							cellVariant='select'
-						/>
-						<DataGrid.Column
-							accessorKey='unitPrice'
-							title='Unit Price'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.unitPrice)}
-						/>
-						<DataGrid.Column
-							accessorKey='unitCost'
-							title='Unit Cost'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.unitCost)}
-						/>
-						<DataGrid.Column
-							accessorKey='inventory'
-							title='Inventory'
-							cellVariant='number'
-						/>
-						<DataGrid.Column accessorKey='uom' title='UOM' />
-						<DataGrid.Column accessorKey='barcode' title='Barcode' />
+						{specProps?.columns ? (
+							renderSpecColumns<Item>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='itemNo'
+									title='Item No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column
+									accessorKey='description'
+									title='Description'
+								/>
+								<DataGrid.Column
+									accessorKey='type'
+									title='Type'
+									cellVariant='select'
+								/>
+								<DataGrid.Column
+									accessorKey='unitPrice'
+									title='Unit Price'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.unitPrice)}
+								/>
+								<DataGrid.Column
+									accessorKey='unitCost'
+									title='Unit Cost'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.unitCost)}
+								/>
+								<DataGrid.Column
+									accessorKey='inventory'
+									title='Inventory'
+									cellVariant='number'
+								/>
+								<DataGrid.Column accessorKey='uom' title='UOM' />
+								<DataGrid.Column accessorKey='barcode' title='Barcode' />
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -113,7 +146,13 @@ export default function ItemsList() {
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
 							{(table, state) => (
-								<>
+								<SpecBulkActionItems
+									specBulkActions={specProps?.bulkActions}
+									table={table}
+									selectionState={state.selectionState}
+									onTransition={() => {}}
+									isBusy={false}
+								>
 									<ReportActionItems
 										table={table}
 										selectionState={state.selectionState}
@@ -121,7 +160,7 @@ export default function ItemsList() {
 										entityId='items'
 										isBusy={false}
 									/>
-								</>
+								</SpecBulkActionItems>
 							)}
 						</DataGrid.ActionBar.Group>
 					</DataGrid.ActionBar>

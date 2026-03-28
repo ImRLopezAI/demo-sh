@@ -5,6 +5,7 @@ import {
 	SHIPMENT_TRANSITIONS,
 	type ShipmentStatus,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 import { useStatusTransition } from '../../_shared/use-status-transition'
@@ -63,11 +69,14 @@ export function ShipmentCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
 
@@ -212,8 +221,12 @@ export function ShipmentCard({
 	)
 
 	const dialogTitle = isNew
-		? 'New Shipment'
-		: `Shipment ${(resolvedRecord as ShipmentHeader | undefined)?.shipmentNo ?? ''}`
+		? (specCardProps?.newTitle ?? 'New Shipment')
+		: resolveCardTitle(
+				specCardProps?.title,
+				resolvedRecord as any,
+				`Shipment ${(resolvedRecord as ShipmentHeader | undefined)?.shipmentNo ?? ''}`,
+			)
 
 	const shipmentHeader = resolvedRecord as ShipmentHeader | undefined
 
@@ -232,9 +245,7 @@ export function ShipmentCard({
 				items: [
 					{
 						label: 'Track Delivery',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/trace/carrier-ops'),
 						disabled: !shipmentHeader?.trackingNo,
 					},
 				],
@@ -244,22 +255,16 @@ export function ShipmentCard({
 				items: [
 					{
 						label: 'Sales Order',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/market/sales-orders'),
 						disabled: !shipmentHeader?.sourceDocumentNo,
 					},
 					{
 						label: 'Customer',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/market/customers'),
 					},
 					{
 						label: 'Shipment Method',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/trace/shipments'),
 						disabled: !shipmentHeader?.shipmentMethodCode,
 					},
 				],
@@ -268,16 +273,12 @@ export function ShipmentCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Shipment Lines',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Carrier Ops',
+						onClick: () => router.push('/trace/carrier-ops'),
 					},
 					{
-						label: 'Delivery Status',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Shipments',
+						onClick: () => router.push('/trace/shipments'),
 					},
 				],
 			},
@@ -288,6 +289,7 @@ export function ShipmentCard({
 		shipmentHeader?.trackingNo,
 		shipmentHeader?.sourceDocumentNo,
 		shipmentHeader?.shipmentMethodCode,
+		router,
 		reportGroup,
 	])
 
@@ -299,7 +301,9 @@ export function ShipmentCard({
 				presentation={presentation}
 				actionGroups={actionGroups}
 				title={dialogTitle}
-				description='Shipment header and line details'
+				description={
+					specCardProps?.description ?? 'Shipment header and line details'
+				}
 				footer={
 					<>
 						<Button variant='outline' size='sm' onClick={onClose}>
@@ -329,273 +333,287 @@ export function ShipmentCard({
 					<div className='space-y-6'>
 						<Form>
 							{() => (
-								<div className='grid grid-cols-2 gap-4 lg:grid-cols-3'>
-									<Form.Field
-										name='shipmentNo'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Shipment No.</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														readOnly
-														placeholder='Auto-generated'
-														autoComplete='off'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='status'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Status</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={(field.value as string) ?? ''}
-														onValueChange={(toStatus) => {
-															if (toStatus && toStatus !== field.value) {
-																void requestTransition(toStatus)
-															}
-														}}
-														disabled={isNew || statusOptions.length === 0}
-													>
-														<Form.Select.Trigger className='w-full'>
-															<Form.Select.Value
-																placeholder={
-																	SHIPMENT_STATUS_LABELS[
-																		(field.value as ShipmentStatus) ?? 'PLANNED'
-																	] ?? String(field.value ?? 'PLANNED')
-																}
+								<>
+									{specCardProps?.sections ? (
+										renderSpecSections(Form, specCardProps.sections)
+									) : (
+										<div className='grid grid-cols-2 gap-4 lg:grid-cols-3'>
+											<Form.Field
+												name='shipmentNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Shipment No.</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																readOnly
+																placeholder='Auto-generated'
+																autoComplete='off'
 															/>
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															<Form.Select.Item
-																value={(field.value as string) ?? 'PLANNED'}
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='status'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Status</Form.Label>
+														<Form.Control>
+															<Form.Select
+																value={(field.value as string) ?? ''}
+																onValueChange={(toStatus) => {
+																	if (toStatus && toStatus !== field.value) {
+																		void requestTransition(toStatus)
+																	}
+																}}
+																disabled={isNew || statusOptions.length === 0}
 															>
-																{SHIPMENT_STATUS_LABELS[
-																	(field.value as ShipmentStatus) ?? 'PLANNED'
-																] ?? String(field.value ?? 'PLANNED')}
-															</Form.Select.Item>
-															{statusOptions.map((opt) => (
-																<Form.Select.Item key={opt.to} value={opt.to}>
-																	{opt.label}
-																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='sourceDocumentType'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Source Doc. Type</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='Source document type'
-														autoComplete='off'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='sourceDocumentNo'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Source Doc. No.</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='Source document number'
-														autoComplete='off'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='shipmentMethodCode'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Shipment Method</Form.Label>
-												<Form.Control>
-													<Form.Combo
-														value={field.value as string}
-														onValueChange={field.onChange}
-														itemToStringLabel={(code: string) => {
-															const method = (methodsList?.items ?? []).find(
-																(m: Record<string, unknown>) => m.code === code,
-															) as Record<string, unknown> | undefined
-															return method
-																? `${method.code as string} - ${method.description as string}`
-																: code
-														}}
-													>
-														<Form.Combo.Input
-															showClear
-															placeholder='Search shipment methods\u2026'
-														/>
-														<Form.Combo.Content>
-															<Form.Combo.List>
-																{(methodsList?.items ?? []).map(
-																	(m: Record<string, unknown>) => (
-																		<Form.Combo.Item
-																			key={m._id as string}
-																			value={m.code as string}
+																<Form.Select.Trigger className='w-full'>
+																	<Form.Select.Value
+																		placeholder={
+																			SHIPMENT_STATUS_LABELS[
+																				(field.value as ShipmentStatus) ??
+																					'PLANNED'
+																			] ?? String(field.value ?? 'PLANNED')
+																		}
+																	/>
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	<Form.Select.Item
+																		value={(field.value as string) ?? 'PLANNED'}
+																	>
+																		{SHIPMENT_STATUS_LABELS[
+																			(field.value as ShipmentStatus) ??
+																				'PLANNED'
+																		] ?? String(field.value ?? 'PLANNED')}
+																	</Form.Select.Item>
+																	{statusOptions.map((opt) => (
+																		<Form.Select.Item
+																			key={opt.to}
+																			value={opt.to}
 																		>
-																			{m.code as string} -{' '}
-																			{m.description as string}
-																		</Form.Combo.Item>
-																	),
-																)}
-																<Form.Combo.Empty>
-																	No shipment methods found
-																</Form.Combo.Empty>
-															</Form.Combo.List>
-														</Form.Combo.Content>
-													</Form.Combo>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='priority'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Priority</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={field.value as string}
-														onValueChange={field.onChange}
-													>
-														<Form.Select.Trigger className='w-full'>
-															<Form.Select.Value />
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															{PRIORITIES.map((priority) => (
-																<Form.Select.Item
-																	key={priority}
-																	value={priority}
-																>
-																	{priority.replace(/_/g, ' ')}
-																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='plannedDispatchDate'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Planned Dispatch</Form.Label>
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value as string}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select date'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='plannedDeliveryDate'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Planned Delivery</Form.Label>
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value as string}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select date'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='actualDispatchDate'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Actual Dispatch</Form.Label>
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value as string}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select date'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='actualDeliveryDate'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Actual Delivery</Form.Label>
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value as string}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select date'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='courierName'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Courier</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='Courier name'
-														autoComplete='off'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='trackingNo'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Tracking No.</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='Tracking number'
-														autoComplete='off'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-								</div>
+																			{opt.label}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='sourceDocumentType'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Source Doc. Type</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='Source document type'
+																autoComplete='off'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='sourceDocumentNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Source Doc. No.</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='Source document number'
+																autoComplete='off'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='shipmentMethodCode'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Shipment Method</Form.Label>
+														<Form.Control>
+															<Form.Combo
+																value={field.value as string}
+																onValueChange={field.onChange}
+																itemToStringLabel={(code: string) => {
+																	const method = (
+																		methodsList?.items ?? []
+																	).find(
+																		(m: Record<string, unknown>) =>
+																			m.code === code,
+																	) as Record<string, unknown> | undefined
+																	return method
+																		? `${method.code as string} - ${method.description as string}`
+																		: code
+																}}
+															>
+																<Form.Combo.Input
+																	showClear
+																	placeholder='Search shipment methods\u2026'
+																/>
+																<Form.Combo.Content>
+																	<Form.Combo.List>
+																		{(methodsList?.items ?? []).map(
+																			(m: Record<string, unknown>) => (
+																				<Form.Combo.Item
+																					key={m._id as string}
+																					value={m.code as string}
+																				>
+																					{m.code as string} -{' '}
+																					{m.description as string}
+																				</Form.Combo.Item>
+																			),
+																		)}
+																		<Form.Combo.Empty>
+																			No shipment methods found
+																		</Form.Combo.Empty>
+																	</Form.Combo.List>
+																</Form.Combo.Content>
+															</Form.Combo>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='priority'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Priority</Form.Label>
+														<Form.Control>
+															<Form.Select
+																value={field.value as string}
+																onValueChange={field.onChange}
+															>
+																<Form.Select.Trigger className='w-full'>
+																	<Form.Select.Value />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	{PRIORITIES.map((priority) => (
+																		<Form.Select.Item
+																			key={priority}
+																			value={priority}
+																		>
+																			{priority.replace(/_/g, ' ')}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='plannedDispatchDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Planned Dispatch</Form.Label>
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value as string}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select date'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='plannedDeliveryDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Planned Delivery</Form.Label>
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value as string}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select date'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='actualDispatchDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Actual Dispatch</Form.Label>
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value as string}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select date'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='actualDeliveryDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Actual Delivery</Form.Label>
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value as string}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select date'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='courierName'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Courier</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='Courier name'
+																autoComplete='off'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+											<Form.Field
+												name='trackingNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Tracking No.</Form.Label>
+														<Form.Control>
+															<Form.Input
+																{...field}
+																value={(field.value as string) ?? ''}
+																placeholder='Tracking number'
+																autoComplete='off'
+															/>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
+										</div>
+									)}
+								</>
 							)}
 						</Form>
 

@@ -8,6 +8,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { SessionCard } from './components/session-card'
@@ -27,9 +33,14 @@ interface PosSession {
 	totalSales: number
 }
 
-export default function SessionsList() {
+interface SessionsListProps {
+	specProps?: SpecListProps
+}
+
+export default function SessionsList({ specProps }: SessionsListProps = {}) {
 	const { close, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'pos', PosSession>(
 		'pos',
@@ -71,6 +82,7 @@ export default function SessionsList() {
 				<SessionCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -80,8 +92,10 @@ export default function SessionsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Sessions'
-				description='View and manage POS terminal sessions.'
+				title={specProps?.title ?? 'Sessions'}
+				description={
+					specProps?.description ?? 'View and manage POS terminal sessions.'
+				}
 			/>
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -94,55 +108,67 @@ export default function SessionsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<PosSession>
-							accessorKey='sessionNo'
-							title='Session No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='terminalName'
-							title='Terminal'
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='openedAt'
-							title='Opened'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.openedAt, { format: 'Pp' })}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='closedAt'
-							title='Closed'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.closedAt, { format: 'Pp' })}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='openingBalance'
-							title='Opening Bal.'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.openingBalance)}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='closingBalance'
-							title='Closing Bal.'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.closingBalance)}
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='transactionCount'
-							title='Transactions'
-							cellVariant='number'
-						/>
-						<DataGrid.Column<PosSession>
-							accessorKey='totalSales'
-							title='Total Sales'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalSales)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<PosSession>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<PosSession>
+									accessorKey='sessionNo'
+									title='Session No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='terminalName'
+									title='Terminal'
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='openedAt'
+									title='Opened'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.openedAt, { format: 'Pp' })}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='closedAt'
+									title='Closed'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.closedAt, { format: 'Pp' })}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='openingBalance'
+									title='Opening Bal.'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.openingBalance)}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='closingBalance'
+									title='Closing Bal.'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.closingBalance)}
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='transactionCount'
+									title='Transactions'
+									cellVariant='number'
+								/>
+								<DataGrid.Column<PosSession>
+									accessorKey='totalSales'
+									title='Total Sales'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalSales)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -169,7 +195,13 @@ export default function SessionsList() {
 								const allOpen = records.every((r) => r.status === 'OPEN')
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !allOpenOrPaused}
 											onClick={() => {
@@ -195,7 +227,7 @@ export default function SessionsList() {
 											entityId='sessions'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

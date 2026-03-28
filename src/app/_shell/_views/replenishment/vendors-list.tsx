@@ -9,6 +9,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { VendorCard } from './components/vendor-card'
 
@@ -28,9 +34,14 @@ interface Vendor {
 	totalBalance: number
 }
 
-export default function VendorsList() {
+interface VendorsListProps {
+	specProps?: SpecListProps
+}
+
+export default function VendorsList({ specProps }: VendorsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'replenishment', Vendor>(
 		'replenishment',
@@ -74,6 +85,7 @@ export default function VendorsList() {
 					recordId={selectedId}
 					onClose={close}
 					onCreated={openDetail}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -83,17 +95,22 @@ export default function VendorsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Vendors'
-				description='Manage vendor master records and purchasing details'
+				title={specProps?.title ?? 'Vendors'}
+				description={
+					specProps?.description ??
+					'Manage vendor master records and purchasing details'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Vendor
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Vendor'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -107,37 +124,53 @@ export default function VendorsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<Vendor>
-							accessorKey='vendorNo'
-							title='Vendor No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<Vendor> accessorKey='name' title='Name' />
-						<DataGrid.Column<Vendor>
-							accessorKey='contactName'
-							title='Contact Name'
-						/>
-						<DataGrid.Column<Vendor> accessorKey='email' title='Email' />
-						<DataGrid.Column<Vendor> accessorKey='phone' title='Phone' />
-						<DataGrid.Column<Vendor> accessorKey='city' title='City' />
-						<DataGrid.Column<Vendor> accessorKey='country' title='Country' />
-						<DataGrid.Column<Vendor> accessorKey='currency' title='Currency' />
-						<DataGrid.Column<Vendor>
-							accessorKey='blocked'
-							title='Blocked'
-							cellVariant='checkbox'
-						/>
-						<DataGrid.Column<Vendor>
-							accessorKey='purchaseOrderCount'
-							title='PO Count'
-							cellVariant='number'
-						/>
-						<DataGrid.Column<Vendor>
-							accessorKey='totalBalance'
-							title='Total Balance'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalBalance)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Vendor>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<Vendor>
+									accessorKey='vendorNo'
+									title='Vendor No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<Vendor> accessorKey='name' title='Name' />
+								<DataGrid.Column<Vendor>
+									accessorKey='contactName'
+									title='Contact Name'
+								/>
+								<DataGrid.Column<Vendor> accessorKey='email' title='Email' />
+								<DataGrid.Column<Vendor> accessorKey='phone' title='Phone' />
+								<DataGrid.Column<Vendor> accessorKey='city' title='City' />
+								<DataGrid.Column<Vendor>
+									accessorKey='country'
+									title='Country'
+								/>
+								<DataGrid.Column<Vendor>
+									accessorKey='currency'
+									title='Currency'
+								/>
+								<DataGrid.Column<Vendor>
+									accessorKey='blocked'
+									title='Blocked'
+									cellVariant='checkbox'
+								/>
+								<DataGrid.Column<Vendor>
+									accessorKey='purchaseOrderCount'
+									title='PO Count'
+									cellVariant='number'
+								/>
+								<DataGrid.Column<Vendor>
+									accessorKey='totalBalance'
+									title='Total Balance'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalBalance)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -162,7 +195,13 @@ export default function VendorsList() {
 								const hasBlocked = records.some((r) => r.blocked)
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={() => {}}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !hasUnblocked}
 											onClick={() => {
@@ -188,7 +227,7 @@ export default function VendorsList() {
 											entityId='vendors'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

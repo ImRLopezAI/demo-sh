@@ -6,6 +6,7 @@ import {
 	SLA_STATUS_LABELS,
 	type SlaStatus,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -15,6 +16,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -23,6 +29,7 @@ interface TaskCardProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }
 
 interface TaskFormValues {
@@ -41,7 +48,9 @@ export function TaskCard({
 	open,
 	onOpenChange,
 	presentation = 'dialog',
+	specCardProps,
 }: TaskCardProps) {
+	const router = useRouter()
 	const isNew = recordId === 'new'
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
@@ -169,13 +178,13 @@ export function TaskCard({
 					{
 						label: 'Assign',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement assign action */
 						},
 					},
 					{
 						label: 'Escalate',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement escalate action */
 						},
 						variant: 'destructive',
 					},
@@ -185,9 +194,12 @@ export function TaskCard({
 				label: 'Related',
 				items: [
 					{
-						label: 'Module Records',
+						label: 'Module Dashboard',
 						onClick: () => {
-							/* TODO: implement navigation */
+							const moduleId = record?.moduleId
+							if (moduleId) {
+								router.push(`/${moduleId}/dashboard`)
+							}
 						},
 					},
 				],
@@ -196,16 +208,14 @@ export function TaskCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Task History',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Related Notifications',
+						onClick: () => router.push('/hub/notifications'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, reportGroup])
+	}, [isNew, record?.moduleId, router, reportGroup])
 
 	return (
 		<>
@@ -214,11 +224,20 @@ export function TaskCard({
 				onOpenChange={onOpenChange}
 				presentation={presentation}
 				actionGroups={actionGroups}
-				title={isNew ? 'New Task' : `Task ${record?.taskNo ?? ''}`}
-				description={
+				title={
 					isNew
+						? (specCardProps?.newTitle ?? 'New Task')
+						: resolveCardTitle(
+								specCardProps?.title,
+								record as any,
+								`Task ${record?.taskNo ?? ''}`,
+							)
+				}
+				description={
+					specCardProps?.description ??
+					(isNew
 						? 'Create a new operational task.'
-						: 'View and edit task details.'
+						: 'View and edit task details.')
 				}
 				footer={
 					<>
@@ -243,212 +262,220 @@ export function TaskCard({
 					<Form>
 						{() => (
 							<div className='space-y-8 pt-1'>
-								<FormSection title='General'>
-									<div className='grid gap-4'>
-										{!isNew && (
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<FormSection title='General'>
+										<div className='grid gap-4'>
+											{!isNew && (
+												<Form.Field
+													name='taskNo'
+													render={({ field }) => (
+														<Form.Item>
+															<Form.Label>Task No.</Form.Label>
+															<Form.Control
+																render={
+																	<Form.Input
+																		{...field}
+																		readOnly
+																		className='bg-muted'
+																	/>
+																}
+															/>
+														</Form.Item>
+													)}
+												/>
+											)}
+
 											<Form.Field
-												name='taskNo'
+												name='moduleId'
+												rules={{ required: 'Module is required' }}
 												render={({ field }) => (
 													<Form.Item>
-														<Form.Label>Task No.</Form.Label>
+														<Form.Label>Module</Form.Label>
+														<Form.Control
+															render={
+																<Form.Select
+																	value={field.value}
+																	onValueChange={field.onChange}
+																>
+																	<Form.Select.Trigger>
+																		<Form.Select.Value placeholder='Select module' />
+																	</Form.Select.Trigger>
+																	<Form.Select.Content>
+																		<Form.Select.Item value='hub'>
+																			Hub
+																		</Form.Select.Item>
+																		<Form.Select.Item value='market'>
+																			Market
+																		</Form.Select.Item>
+																		<Form.Select.Item value='insight'>
+																			Insight
+																		</Form.Select.Item>
+																		<Form.Select.Item value='replenishment'>
+																			Replenishment
+																		</Form.Select.Item>
+																		<Form.Select.Item value='ledger'>
+																			Ledger
+																		</Form.Select.Item>
+																		<Form.Select.Item value='pos'>
+																			POS
+																		</Form.Select.Item>
+																		<Form.Select.Item value='trace'>
+																			Trace
+																		</Form.Select.Item>
+																		<Form.Select.Item value='flow'>
+																			Flow
+																		</Form.Select.Item>
+																		<Form.Select.Item value='payroll'>
+																			Payroll
+																		</Form.Select.Item>
+																	</Form.Select.Content>
+																</Form.Select>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='title'
+												rules={{ required: 'Title is required' }}
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Title</Form.Label>
 														<Form.Control
 															render={
 																<Form.Input
 																	{...field}
-																	readOnly
-																	className='bg-muted'
+																	placeholder='Task title\u2026'
+																/>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='description'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Description</Form.Label>
+														<Form.Control
+															render={
+																<Form.Textarea
+																	{...field}
+																	placeholder='Optional description\u2026'
+																	rows={3}
 																/>
 															}
 														/>
 													</Form.Item>
 												)}
 											/>
-										)}
 
-										<Form.Field
-											name='moduleId'
-											rules={{ required: 'Module is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Module</Form.Label>
-													<Form.Control
-														render={
-															<Form.Select
-																value={field.value}
-																onValueChange={field.onChange}
-															>
-																<Form.Select.Trigger>
-																	<Form.Select.Value placeholder='Select module' />
-																</Form.Select.Trigger>
-																<Form.Select.Content>
-																	<Form.Select.Item value='hub'>
-																		Hub
-																	</Form.Select.Item>
-																	<Form.Select.Item value='market'>
-																		Market
-																	</Form.Select.Item>
-																	<Form.Select.Item value='insight'>
-																		Insight
-																	</Form.Select.Item>
-																	<Form.Select.Item value='replenishment'>
-																		Replenishment
-																	</Form.Select.Item>
-																	<Form.Select.Item value='ledger'>
-																		Ledger
-																	</Form.Select.Item>
-																	<Form.Select.Item value='pos'>
-																		POS
-																	</Form.Select.Item>
-																	<Form.Select.Item value='trace'>
-																		Trace
-																	</Form.Select.Item>
-																	<Form.Select.Item value='flow'>
-																		Flow
-																	</Form.Select.Item>
-																	<Form.Select.Item value='payroll'>
-																		Payroll
-																	</Form.Select.Item>
-																</Form.Select.Content>
-															</Form.Select>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
+											<Form.Field
+												name='priority'
+												rules={{ required: 'Priority is required' }}
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Priority</Form.Label>
+														<Form.Control
+															render={
+																<Form.Select
+																	value={field.value}
+																	onValueChange={field.onChange}
+																>
+																	<Form.Select.Trigger>
+																		<Form.Select.Value placeholder='Select priority' />
+																	</Form.Select.Trigger>
+																	<Form.Select.Content>
+																		<Form.Select.Item value='LOW'>
+																			Low
+																		</Form.Select.Item>
+																		<Form.Select.Item value='MEDIUM'>
+																			Medium
+																		</Form.Select.Item>
+																		<Form.Select.Item value='HIGH'>
+																			High
+																		</Form.Select.Item>
+																		<Form.Select.Item value='CRITICAL'>
+																			Critical
+																		</Form.Select.Item>
+																	</Form.Select.Content>
+																</Form.Select>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
 
-										<Form.Field
-											name='title'
-											rules={{ required: 'Title is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Title</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='Task title\u2026'
-															/>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
+											<Form.Field
+												name='assigneeUserId'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Assignee User ID</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	placeholder='User ID (optional)\u2026'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
 
-										<Form.Field
-											name='description'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Description</Form.Label>
-													<Form.Control
-														render={
-															<Form.Textarea
-																{...field}
-																placeholder='Optional description\u2026'
-																rows={3}
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
+											<Form.Field
+												name='dueDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Due Date</Form.Label>
+														<Form.Control
+															render={
+																<Form.DatePicker
+																	value={field.value}
+																	onValueChange={(date) =>
+																		field.onChange(
+																			date ? date.toISOString() : '',
+																		)
+																	}
+																	placeholder='Select due date'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
 
-										<Form.Field
-											name='priority'
-											rules={{ required: 'Priority is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Priority</Form.Label>
-													<Form.Control
-														render={
-															<Form.Select
-																value={field.value}
-																onValueChange={field.onChange}
-															>
-																<Form.Select.Trigger>
-																	<Form.Select.Value placeholder='Select priority' />
-																</Form.Select.Trigger>
-																<Form.Select.Content>
-																	<Form.Select.Item value='LOW'>
-																		Low
-																	</Form.Select.Item>
-																	<Form.Select.Item value='MEDIUM'>
-																		Medium
-																	</Form.Select.Item>
-																	<Form.Select.Item value='HIGH'>
-																		High
-																	</Form.Select.Item>
-																	<Form.Select.Item value='CRITICAL'>
-																		Critical
-																	</Form.Select.Item>
-																</Form.Select.Content>
-															</Form.Select>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='assigneeUserId'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Assignee User ID</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='User ID (optional)\u2026'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='dueDate'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Due Date</Form.Label>
-													<Form.Control
-														render={
-															<Form.DatePicker
-																value={field.value}
-																onValueChange={(date) =>
-																	field.onChange(date ? date.toISOString() : '')
-																}
-																placeholder='Select due date'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='slaTargetAt'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>SLA Target</Form.Label>
-													<Form.Control
-														render={
-															<Form.DatePicker
-																value={field.value}
-																onValueChange={(date) =>
-																	field.onChange(date ? date.toISOString() : '')
-																}
-																placeholder='Optional SLA target'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-									</div>
-								</FormSection>
+											<Form.Field
+												name='slaTargetAt'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>SLA Target</Form.Label>
+														<Form.Control
+															render={
+																<Form.DatePicker
+																	value={field.value}
+																	onValueChange={(date) =>
+																		field.onChange(
+																			date ? date.toISOString() : '',
+																		)
+																	}
+																	placeholder='Optional SLA target'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
+										</div>
+									</FormSection>
+								)}
 
 								{!isNew && (
 									<FormSection title='Status'>

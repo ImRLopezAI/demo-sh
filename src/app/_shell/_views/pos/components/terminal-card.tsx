@@ -4,6 +4,7 @@ import {
 	TERMINAL_TRANSITIONS,
 	type TerminalStatus,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -13,6 +14,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -26,11 +32,14 @@ export function TerminalCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
 
@@ -145,14 +154,14 @@ export function TerminalCard({
 					{
 						label: 'Activate Terminal',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement activate action */
 						},
 						disabled: currentStatus === 'ONLINE',
 					},
 					{
 						label: 'Deactivate Terminal',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement deactivate action */
 						},
 						disabled: currentStatus === 'OFFLINE',
 						variant: 'destructive',
@@ -164,9 +173,7 @@ export function TerminalCard({
 				items: [
 					{
 						label: 'Location',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/locations'),
 					},
 				],
 			},
@@ -175,25 +182,25 @@ export function TerminalCard({
 				items: [
 					{
 						label: 'Sessions',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/pos/sessions'),
 					},
 					{
 						label: 'Transactions',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/pos/transactions'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, reportGroup])
+	}, [isNew, currentStatus, router, reportGroup])
 
 	const dialogTitle = isNew
-		? 'New Terminal'
-		: `Terminal ${resolvedRecord?.terminalCode ?? ''}`
+		? (specCardProps?.newTitle ?? 'New Terminal')
+		: resolveCardTitle(
+				specCardProps?.title,
+				resolvedRecord as any,
+				`Terminal ${resolvedRecord?.terminalCode ?? ''}`,
+			)
 
 	return (
 		<>
@@ -204,9 +211,10 @@ export function TerminalCard({
 				actionGroups={actionGroups}
 				title={dialogTitle}
 				description={
-					isNew
+					specCardProps?.description ??
+					(isNew
 						? 'Register a new POS terminal.'
-						: 'View and edit terminal details.'
+						: 'View and edit terminal details.')
 				}
 				footer={
 					<>
@@ -226,127 +234,137 @@ export function TerminalCard({
 				) : (
 					<Form>
 						{() => (
-							<div className='grid gap-4 pt-4'>
-								{!isNew && (
-									<Form.Field
-										name='terminalCode'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Terminal Code</Form.Label>
-												<Form.Control
-													render={
-														<Form.Input
-															{...field}
-															readOnly
-															className='bg-muted'
+							<>
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<div className='grid gap-4 pt-4'>
+										{!isNew && (
+											<Form.Field
+												name='terminalCode'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Terminal Code</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	readOnly
+																	className='bg-muted'
+																/>
+															}
 														/>
-													}
-												/>
+													</Form.Item>
+												)}
+											/>
+										)}
+
+										<Form.Field
+											name='name'
+											rules={{ required: 'Name is required' }}
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Name</Form.Label>
+													<Form.Control
+														render={
+															<Form.Input
+																{...field}
+																placeholder='Terminal name…'
+															/>
+														}
+													/>
+													<Form.Message />
+												</Form.Item>
+											)}
+										/>
+
+										<Form.Field
+											name='locationCode'
+											rules={{ required: 'Location is required' }}
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Location</Form.Label>
+													<Form.Control>
+														<Form.Combo
+															value={field.value}
+															onValueChange={field.onChange}
+															itemToStringLabel={(code: string) => {
+																const loc = (locationsList?.items ?? []).find(
+																	(l: Record<string, unknown>) =>
+																		l.code === code,
+																) as Record<string, unknown> | undefined
+																return loc
+																	? `${loc.code as string} - ${loc.name as string}`
+																	: code
+															}}
+														>
+															<Form.Combo.Input
+																showClear
+																placeholder='Search locations…'
+															/>
+															<Form.Combo.Content>
+																<Form.Combo.List>
+																	{(locationsList?.items ?? []).map(
+																		(l: Record<string, unknown>) => (
+																			<Form.Combo.Item
+																				key={l._id as string}
+																				value={l.code as string}
+																			>
+																				{l.code as string} - {l.name as string}
+																			</Form.Combo.Item>
+																		),
+																	)}
+																	<Form.Combo.Empty>
+																		No locations found
+																	</Form.Combo.Empty>
+																</Form.Combo.List>
+															</Form.Combo.Content>
+														</Form.Combo>
+													</Form.Control>
+													<Form.Message />
+												</Form.Item>
+											)}
+										/>
+
+										{!isNew && (
+											<Form.Item>
+												<Form.Label>Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
+														}
+													}}
+													disabled={statusOptions.length === 0}
+												>
+													<Form.Select.Trigger>
+														<Form.Select.Value
+															placeholder={
+																TERMINAL_STATUS_LABELS[
+																	currentStatus as TerminalStatus
+																] ?? currentStatus
+															}
+														/>
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{TERMINAL_STATUS_LABELS[
+																currentStatus as TerminalStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
 											</Form.Item>
 										)}
-									/>
+									</div>
 								)}
-
-								<Form.Field
-									name='name'
-									rules={{ required: 'Name is required' }}
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Name</Form.Label>
-											<Form.Control
-												render={
-													<Form.Input {...field} placeholder='Terminal name…' />
-												}
-											/>
-											<Form.Message />
-										</Form.Item>
-									)}
-								/>
-
-								<Form.Field
-									name='locationCode'
-									rules={{ required: 'Location is required' }}
-									render={({ field }) => (
-										<Form.Item>
-											<Form.Label>Location</Form.Label>
-											<Form.Control>
-												<Form.Combo
-													value={field.value}
-													onValueChange={field.onChange}
-													itemToStringLabel={(code: string) => {
-														const loc = (locationsList?.items ?? []).find(
-															(l: Record<string, unknown>) => l.code === code,
-														) as Record<string, unknown> | undefined
-														return loc
-															? `${loc.code as string} - ${loc.name as string}`
-															: code
-													}}
-												>
-													<Form.Combo.Input
-														showClear
-														placeholder='Search locations…'
-													/>
-													<Form.Combo.Content>
-														<Form.Combo.List>
-															{(locationsList?.items ?? []).map(
-																(l: Record<string, unknown>) => (
-																	<Form.Combo.Item
-																		key={l._id as string}
-																		value={l.code as string}
-																	>
-																		{l.code as string} - {l.name as string}
-																	</Form.Combo.Item>
-																),
-															)}
-															<Form.Combo.Empty>
-																No locations found
-															</Form.Combo.Empty>
-														</Form.Combo.List>
-													</Form.Combo.Content>
-												</Form.Combo>
-											</Form.Control>
-											<Form.Message />
-										</Form.Item>
-									)}
-								/>
-
-								{!isNew && (
-									<Form.Item>
-										<Form.Label>Status</Form.Label>
-										<Form.Select
-											value={currentStatus}
-											onValueChange={(toStatus) => {
-												if (toStatus && toStatus !== currentStatus) {
-													void requestTransition(toStatus)
-												}
-											}}
-											disabled={statusOptions.length === 0}
-										>
-											<Form.Select.Trigger>
-												<Form.Select.Value
-													placeholder={
-														TERMINAL_STATUS_LABELS[
-															currentStatus as TerminalStatus
-														] ?? currentStatus
-													}
-												/>
-											</Form.Select.Trigger>
-											<Form.Select.Content>
-												<Form.Select.Item value={currentStatus}>
-													{TERMINAL_STATUS_LABELS[
-														currentStatus as TerminalStatus
-													] ?? currentStatus}
-												</Form.Select.Item>
-												{statusOptions.map((opt) => (
-													<Form.Select.Item key={opt.to} value={opt.to}>
-														{opt.label}
-													</Form.Select.Item>
-												))}
-											</Form.Select.Content>
-										</Form.Select>
-									</Form.Item>
-								)}
-							</div>
+							</>
 						)}
 					</Form>
 				)}

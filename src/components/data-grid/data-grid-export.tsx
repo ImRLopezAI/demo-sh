@@ -325,12 +325,17 @@ export function DataGridExport<TData = unknown>({
 	)
 }
 
-export { DataGridExport as Export }
-export { csvAdapter, jsonAdapter, excelAdapter, defaultAdapters }
 export type {
-	ExportAdapter,
-	ExportContext,
-	ExportColumn,
-	ExportScope,
 	DataGridExportProps,
+	ExportAdapter,
+	ExportColumn,
+	ExportContext,
+	ExportScope,
+}
+export {
+	csvAdapter,
+	DataGridExport as Export,
+	defaultAdapters,
+	excelAdapter,
+	jsonAdapter,
 }

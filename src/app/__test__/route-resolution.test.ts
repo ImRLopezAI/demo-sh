@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { normalizeViewSegments } from '@/app/[[...view]]/page'
+import { normalizeViewSegments } from '@/lib/router/view-segments'
 
 describe('normalizeViewSegments', () => {
 	test('returns an empty list for the root route', () => {

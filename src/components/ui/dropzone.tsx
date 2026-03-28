@@ -854,8 +854,8 @@ const InfiniteProgress = forwardRef<HTMLDivElement, InfiniteProgressProps>(
 InfiniteProgress.displayName = 'InfiniteProgress'
 
 export {
-	Dropzone,
 	DropZoneArea,
+	Dropzone,
 	DropzoneDescription,
 	DropzoneFileList,
 	DropzoneFileListItem,

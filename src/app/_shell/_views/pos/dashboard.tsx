@@ -7,6 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -129,6 +130,57 @@ export default function PosDashboard() {
 			.map(([method, count]) => ({ method, count }))
 			.sort((a, b) => b.count - a.count)
 	}, [transactions])
+
+	const offlineTerminals = terminals.filter(
+		(t) => t.status === 'OFFLINE',
+	).length
+	const todayTransactions = transactions.filter((t) => {
+		const d = new Date(t.transactionAt)
+		const now = new Date()
+		return (
+			d.getDate() === now.getDate() &&
+			d.getMonth() === now.getMonth() &&
+			d.getFullYear() === now.getFullYear()
+		)
+	})
+	const salesToday = todayTransactions.reduce(
+		(sum, t) => sum + (t.paidAmount ?? t.totalAmount ?? 0),
+		0,
+	)
+	const openSessions = terminals.reduce(
+		(sum, t) => sum + (t.sessionCount ?? 0),
+		0,
+	)
+	const staleSessions = 0
+	const topPayment = paymentBreakdown.length > 0 ? paymentBreakdown[0] : null
+
+	const hydrateValues = React.useMemo(
+		() => ({
+			activeTerminals: onlineTerminals,
+			offlineTerminals,
+			salesToday: `$${salesToday.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+			transactionCount: totalTransactions,
+			avgTransaction: `$${avgTicket.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+			openSessions,
+			staleSessions,
+			topPaymentMethod: topPayment?.method ?? 'N/A',
+			topPaymentPct:
+				topPayment && totalTransactions > 0
+					? `${((topPayment.count / totalTransactions) * 100).toFixed(1)}%`
+					: '0%',
+		}),
+		[
+			onlineTerminals,
+			offlineTerminals,
+			salesToday,
+			totalTransactions,
+			avgTicket,
+			openSessions,
+			staleSessions,
+			topPayment,
+		],
+	)
+	useHydrateState('/pos/dashboard', hydrateValues)
 
 	const isLoading = transactionsLoading || terminalsLoading
 

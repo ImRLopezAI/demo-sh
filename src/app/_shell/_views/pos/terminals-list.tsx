@@ -9,6 +9,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TerminalCard } from './components/terminal-card'
@@ -22,9 +28,14 @@ interface Terminal {
 	sessionCount: number
 }
 
-export default function TerminalsList() {
+interface TerminalsListProps {
+	specProps?: SpecListProps
+}
+
+export default function TerminalsList({ specProps }: TerminalsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'pos', Terminal>(
 		'pos',
@@ -66,6 +77,7 @@ export default function TerminalsList() {
 				<TerminalCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -75,17 +87,21 @@ export default function TerminalsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Terminals'
-				description='Manage POS terminals and their status.'
+				title={specProps?.title ?? 'Terminals'}
+				description={
+					specProps?.description ?? 'Manage POS terminals and their status.'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={openCreate}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
-						New Terminal
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={openCreate}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Terminal'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -99,26 +115,38 @@ export default function TerminalsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<Terminal>
-							accessorKey='terminalCode'
-							title='Terminal Code'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<Terminal> accessorKey='name' title='Name' />
-						<DataGrid.Column<Terminal>
-							accessorKey='locationCode'
-							title='Location'
-						/>
-						<DataGrid.Column<Terminal>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<Terminal>
-							accessorKey='sessionCount'
-							title='Sessions'
-							cellVariant='number'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Terminal>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<Terminal>
+									accessorKey='terminalCode'
+									title='Terminal Code'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<Terminal> accessorKey='name' title='Name' />
+								<DataGrid.Column<Terminal>
+									accessorKey='locationCode'
+									title='Location'
+								/>
+								<DataGrid.Column<Terminal>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<Terminal>
+									accessorKey='sessionCount'
+									title='Sessions'
+									cellVariant='number'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -148,7 +176,13 @@ export default function TerminalsList() {
 								)
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={
 												!hasSelection || isBusy || !allOfflineOrMaintenance
@@ -185,7 +219,7 @@ export default function TerminalsList() {
 											entityId='terminals'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

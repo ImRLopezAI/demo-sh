@@ -10,6 +10,13 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransactionCard } from './components/transaction-card'
@@ -30,14 +37,24 @@ interface PosTransaction {
 	lineCount: number
 }
 
-export default function TransactionsList() {
+interface TransactionsListProps {
+	specProps?: SpecListProps
+}
+
+export default function TransactionsList({
+	specProps,
+}: TransactionsListProps = {}) {
 	const { close, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'pos', PosTransaction>(
 		'pos',
 		'transactions',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidate = React.useCallback(() => {
@@ -97,6 +114,7 @@ export default function TransactionsList() {
 				<TransactionCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -106,8 +124,10 @@ export default function TransactionsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Transactions'
-				description='View POS transaction history and details.'
+				title={specProps?.title ?? 'Transactions'}
+				description={
+					specProps?.description ?? 'View POS transaction history and details.'
+				}
 			/>
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -120,68 +140,82 @@ export default function TransactionsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='receiptNo'
-							title='Receipt No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='customerName'
-							title='Customer'
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='totalAmount'
-							title='Total'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalAmount)}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='taxAmount'
-							title='Tax'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.taxAmount)}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='discountAmount'
-							title='Discount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.discountAmount)}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='paidAmount'
-							title='Paid'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.paidAmount)}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='paymentMethod'
-							title='Payment'
-							cellVariant='select'
-							opts={{
-								options: [
-									{ label: 'Cash', value: 'CASH' },
-									{ label: 'Card', value: 'CARD' },
-									{ label: 'Mobile', value: 'MOBILE' },
-									{ label: 'Mixed', value: 'MIXED' },
-								],
-							}}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='transactionAt'
-							title='Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.transactionAt, { format: 'Pp' })}
-						/>
-						<DataGrid.Column<PosTransaction>
-							accessorKey='lineCount'
-							title='Lines'
-							cellVariant='number'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<PosTransaction>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='receiptNo'
+									title='Receipt No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='customerName'
+									title='Customer'
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='totalAmount'
+									title='Total'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalAmount)}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='taxAmount'
+									title='Tax'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.taxAmount)}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='discountAmount'
+									title='Discount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.discountAmount)}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='paidAmount'
+									title='Paid'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.paidAmount)}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='paymentMethod'
+									title='Payment'
+									cellVariant='select'
+									opts={{
+										options: [
+											{ label: 'Cash', value: 'CASH' },
+											{ label: 'Card', value: 'CARD' },
+											{ label: 'Mobile', value: 'MOBILE' },
+											{ label: 'Mixed', value: 'MIXED' },
+										],
+									}}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='transactionAt'
+									title='Date'
+									cellVariant='date'
+									formatter={(v, f) =>
+										f.date(v.transactionAt, { format: 'Pp' })
+									}
+								/>
+								<DataGrid.Column<PosTransaction>
+									accessorKey='lineCount'
+									title='Lines'
+									cellVariant='number'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -209,7 +243,13 @@ export default function TransactionsList() {
 								)
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !allOpen}
 											onClick={() => {
@@ -253,7 +293,7 @@ export default function TransactionsList() {
 											entityId='transactions'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

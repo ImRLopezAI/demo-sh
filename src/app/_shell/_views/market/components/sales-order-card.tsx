@@ -5,6 +5,7 @@ import {
 	type DocumentApprovalStatus,
 	getLabeledTransitions,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -17,13 +18,18 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
+import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 import {
 	notifyMutationError,
 	notifyMutationSuccess,
 	resolveMutationToastPolicy,
 } from '../../_shared/use-mutation-feedback'
-import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface SalesOrderHeader {
 	_id: string
@@ -81,12 +87,15 @@ export function SalesOrderCard({
 	onClose,
 	onCreated,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
 	presentation?: SalesOrderCardPresentation
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const isOpen = selectedId !== null
 
@@ -414,17 +423,14 @@ export function SalesOrderCard({
 				label: 'Related',
 				items: [
 					{
-						label: 'Customer Card',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Customer',
+						onClick: () =>
+							router.push(`/market/customers?id=${header?.customerId ?? ''}`),
 						disabled: !header?.customerId,
 					},
 					{
-						label: 'Order Lines',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Items',
+						onClick: () => router.push('/market/items'),
 					},
 				],
 			},
@@ -432,27 +438,26 @@ export function SalesOrderCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Customer Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
-						disabled: !header?.customerId,
+						label: 'Shipments',
+						onClick: () => router.push('/trace/shipments'),
 					},
 					{
 						label: 'Posted Invoices',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/ledger/invoices'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, header?.customerId, reportGroup])
+	}, [isNew, header?.customerId, router, reportGroup])
 
 	const dialogTitle = isNew
-		? 'New Sales Order'
-		: `Sales Order ${(resolvedRecord as SalesOrderHeader | undefined)?.documentNo ?? ''}`
+		? (specCardProps?.newTitle ?? 'New Sales Order')
+		: resolveCardTitle(
+				specCardProps?.title,
+				resolvedRecord as Record<string, unknown> | undefined,
+				`Sales Order ${(resolvedRecord as SalesOrderHeader | undefined)?.documentNo ?? ''}`,
+			)
 
 	if (!isOpen) {
 		return <>{reasonDialog}</>
@@ -502,185 +507,189 @@ export function SalesOrderCard({
 				<Form>
 					{() => (
 						<>
-							<FormSection title='Header'>
-								<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-									<Form.Field
-										name='documentNo'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Document No.</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														readOnly
-														placeholder='Auto-generated\u2026'
-														autoComplete='off'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='documentType'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Document Type</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={field.value as string}
-														onValueChange={field.onChange}
-													>
-														<Form.Select.Trigger className='w-full bg-background/50'>
-															<Form.Select.Value />
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															{DOCUMENT_TYPES.map((type) => (
-																<Form.Select.Item key={type} value={type}>
-																	{type.replace(/_/g, ' ')}
-																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='status'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Status</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={(field.value as string) ?? ''}
-														onValueChange={(toStatus) => {
-															if (toStatus && toStatus !== field.value) {
-																void requestTransition(toStatus)
-															}
-														}}
-														disabled={isNew || statusOptions.length === 0}
-													>
-														<Form.Select.Trigger className='w-full bg-background/50'>
-															<Form.Select.Value
-																placeholder={
-																	DOCUMENT_APPROVAL_STATUS_LABELS[
+							{specCardProps?.sections ? (
+								renderSpecSections(Form, specCardProps.sections)
+							) : (
+								<FormSection title='Header'>
+									<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+										<Form.Field
+											name='documentNo'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Document No.</Form.Label>
+													<Form.Control>
+														<Form.Input
+															{...field}
+															value={(field.value as string) ?? ''}
+															readOnly
+															placeholder='Auto-generated\u2026'
+															autoComplete='off'
+															className='bg-background/50'
+														/>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='documentType'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Document Type</Form.Label>
+													<Form.Control>
+														<Form.Select
+															value={field.value as string}
+															onValueChange={field.onChange}
+														>
+															<Form.Select.Trigger className='w-full bg-background/50'>
+																<Form.Select.Value />
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																{DOCUMENT_TYPES.map((type) => (
+																	<Form.Select.Item key={type} value={type}>
+																		{type.replace(/_/g, ' ')}
+																	</Form.Select.Item>
+																))}
+															</Form.Select.Content>
+														</Form.Select>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='status'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Status</Form.Label>
+													<Form.Control>
+														<Form.Select
+															value={(field.value as string) ?? ''}
+															onValueChange={(toStatus) => {
+																if (toStatus && toStatus !== field.value) {
+																	void requestTransition(toStatus)
+																}
+															}}
+															disabled={isNew || statusOptions.length === 0}
+														>
+															<Form.Select.Trigger className='w-full bg-background/50'>
+																<Form.Select.Value
+																	placeholder={
+																		DOCUMENT_APPROVAL_STATUS_LABELS[
+																			(field.value as DocumentApprovalStatus) ??
+																				'DRAFT'
+																		] ?? String(field.value ?? 'DRAFT')
+																	}
+																/>
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																<Form.Select.Item
+																	value={(field.value as string) ?? 'DRAFT'}
+																>
+																	{DOCUMENT_APPROVAL_STATUS_LABELS[
 																		(field.value as DocumentApprovalStatus) ??
 																			'DRAFT'
-																	] ?? String(field.value ?? 'DRAFT')
-																}
-															/>
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															<Form.Select.Item
-																value={(field.value as string) ?? 'DRAFT'}
-															>
-																{DOCUMENT_APPROVAL_STATUS_LABELS[
-																	(field.value as DocumentApprovalStatus) ??
-																		'DRAFT'
-																] ?? String(field.value ?? 'DRAFT')}
-															</Form.Select.Item>
-															{statusOptions.map((opt) => (
-																<Form.Select.Item key={opt.to} value={opt.to}>
-																	{opt.label}
+																	] ?? String(field.value ?? 'DRAFT')}
 																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='customerId'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Customer</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={field.value as string}
-														onValueChange={field.onChange}
-														items={customerItemsMap}
-													>
-														<Form.Select.Trigger
-															className='w-full bg-background/50'
-															data-testid='sales-order-customer-select'
+																{statusOptions.map((opt) => (
+																	<Form.Select.Item key={opt.to} value={opt.to}>
+																		{opt.label}
+																	</Form.Select.Item>
+																))}
+															</Form.Select.Content>
+														</Form.Select>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='customerId'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Customer</Form.Label>
+													<Form.Control>
+														<Form.Select
+															value={field.value as string}
+															onValueChange={field.onChange}
+															items={customerItemsMap}
 														>
-															<Form.Select.Value placeholder='Select customer' />
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															{customerOptions.map((customer) => (
-																<Form.Select.Item
-																	key={customer._id}
-																	value={customer._id}
-																>
-																	{customer.name ?? 'Unnamed customer'}
-																	{customer.customerNo
-																		? ` (${customer.customerNo})`
-																		: ''}
-																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='orderDate'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Order Date</Form.Label>
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value as string}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select date\u2026'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='currency'
-										render={({ field }) => (
-											<Form.Item>
-												<Form.Label>Currency</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='USD\u2026'
-														autoComplete='off'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-									<Form.Field
-										name='externalRef'
-										render={({ field }) => (
-											<Form.Item className='col-span-1 md:col-span-2 lg:col-span-3'>
-												<Form.Label>External Reference</Form.Label>
-												<Form.Control>
-													<Form.Input
-														{...field}
-														value={(field.value as string) ?? ''}
-														placeholder='External ref\u2026'
-														autoComplete='off'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											</Form.Item>
-										)}
-									/>
-								</div>
-							</FormSection>
+															<Form.Select.Trigger
+																className='w-full bg-background/50'
+																data-testid='sales-order-customer-select'
+															>
+																<Form.Select.Value placeholder='Select customer' />
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																{customerOptions.map((customer) => (
+																	<Form.Select.Item
+																		key={customer._id}
+																		value={customer._id}
+																	>
+																		{customer.name ?? 'Unnamed customer'}
+																		{customer.customerNo
+																			? ` (${customer.customerNo})`
+																			: ''}
+																	</Form.Select.Item>
+																))}
+															</Form.Select.Content>
+														</Form.Select>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='orderDate'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Order Date</Form.Label>
+													<Form.Control>
+														<Form.DatePicker
+															value={field.value as string}
+															onValueChange={(date) =>
+																field.onChange(date?.toISOString() ?? '')
+															}
+															placeholder='Select date\u2026'
+															className='bg-background/50'
+														/>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='currency'
+											render={({ field }) => (
+												<Form.Item>
+													<Form.Label>Currency</Form.Label>
+													<Form.Control>
+														<Form.Input
+															{...field}
+															value={(field.value as string) ?? ''}
+															placeholder='USD\u2026'
+															autoComplete='off'
+															className='bg-background/50'
+														/>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+										<Form.Field
+											name='externalRef'
+											render={({ field }) => (
+												<Form.Item className='col-span-1 md:col-span-2 lg:col-span-3'>
+													<Form.Label>External Reference</Form.Label>
+													<Form.Control>
+														<Form.Input
+															{...field}
+															value={(field.value as string) ?? ''}
+															placeholder='External ref\u2026'
+															autoComplete='off'
+															className='bg-background/50'
+														/>
+													</Form.Control>
+												</Form.Item>
+											)}
+										/>
+									</div>
+								</FormSection>
+							)}
 
 							<FormSection title='Order Lines'>
 								<div className='overflow-hidden rounded-lg border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -743,7 +752,9 @@ export function SalesOrderCard({
 				open={isOpen}
 				onOpenChange={(open) => !open && onClose()}
 				title={dialogTitle}
-				description='Sales order header and line details'
+				description={
+					specCardProps?.description ?? 'Sales order header and line details'
+				}
 				footer={footerActions}
 				actionGroups={actionGroups}
 				presentation={presentation}

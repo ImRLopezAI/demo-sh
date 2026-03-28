@@ -9,6 +9,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { InvoiceCard } from './components/invoice-card'
@@ -34,14 +40,22 @@ interface SalesInvoiceHeader {
 	totalAmount: number
 }
 
-export default function InvoicesList() {
+interface InvoicesListProps {
+	specProps?: SpecListProps
+}
+
+export default function InvoicesList({ specProps }: InvoicesListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'ledger', SalesInvoiceHeader>(
 		'ledger',
 		'invoices',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidate = React.useCallback(() => {
@@ -95,6 +109,7 @@ export default function InvoicesList() {
 				<InvoiceCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -104,17 +119,22 @@ export default function InvoicesList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Sales Invoices'
-				description='Manage electronic invoices and financial documents'
+				title={specProps?.title ?? 'Sales Invoices'}
+				description={
+					specProps?.description ??
+					'Manage electronic invoices and financial documents'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Invoice
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Invoice'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -128,58 +148,70 @@ export default function InvoicesList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='invoiceNo'
-							title='Invoice No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='eInvoiceStatus'
-							title='E-Invoice'
-							cell={({ row }) => (
-								<StatusBadge status={row.original.eInvoiceStatus} />
-							)}
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='customerName'
-							title='Customer'
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='salesOrderNo'
-							title='Sales Order No.'
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='postingDate'
-							title='Posting Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.postingDate, { format: 'P' })}
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='dueDate'
-							title='Due Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.dueDate, { format: 'P' })}
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='currency'
-							title='Currency'
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='lineCount'
-							title='Lines'
-							cellVariant='number'
-						/>
-						<DataGrid.Column<SalesInvoiceHeader>
-							accessorKey='totalAmount'
-							title='Total Amount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalAmount)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<SalesInvoiceHeader>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='invoiceNo'
+									title='Invoice No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='eInvoiceStatus'
+									title='E-Invoice'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.eInvoiceStatus} />
+									)}
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='customerName'
+									title='Customer'
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='salesOrderNo'
+									title='Sales Order No.'
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='postingDate'
+									title='Posting Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.postingDate, { format: 'P' })}
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='dueDate'
+									title='Due Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.dueDate, { format: 'P' })}
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='currency'
+									title='Currency'
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='lineCount'
+									title='Lines'
+									cellVariant='number'
+								/>
+								<DataGrid.Column<SalesInvoiceHeader>
+									accessorKey='totalAmount'
+									title='Total Amount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalAmount)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>

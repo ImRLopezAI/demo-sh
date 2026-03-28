@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -60,7 +61,13 @@ type Terminal = {
 
 const VARIANCE_APPROVAL_THRESHOLD = 20
 
-export default function ShiftControlsView() {
+interface ShiftControlsViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function ShiftControlsView({
+	specProps,
+}: ShiftControlsViewProps = {}) {
 	const queryClient = useQueryClient()
 	const windowSize = useWindowSize({ defaultWidth: 1280, defaultHeight: 900 })
 
@@ -326,8 +333,11 @@ export default function ShiftControlsView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Shift Controls & Refund Governance'
-				description='Close shifts with policy checks, govern refund/void actions, and monitor terminal health with replay safety.'
+				title={specProps?.title ?? 'Shift Controls & Refund Governance'}
+				description={
+					specProps?.description ??
+					'Close shifts with policy checks, govern refund/void actions, and monitor terminal health with replay safety.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

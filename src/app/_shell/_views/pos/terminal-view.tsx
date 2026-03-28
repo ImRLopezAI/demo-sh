@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useModuleList } from '../../hooks/use-data'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { ActionBar } from './components/action-bar'
 import { CustomerSearchDialog } from './components/customer-search-dialog'
 import { Numpad } from './components/numpad'
@@ -19,7 +20,13 @@ interface CatalogItem {
 	barcode?: string
 }
 
-export default function PosTerminalView() {
+interface PosTerminalViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function PosTerminalView({
+	specProps: _specProps,
+}: PosTerminalViewProps = {}) {
 	const {
 		state,
 		dispatch,

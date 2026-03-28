@@ -9,6 +9,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { ShipmentMethodCard } from './components/shipment-method-card'
 
@@ -19,9 +25,16 @@ interface ShipmentMethod {
 	active: boolean
 }
 
-export default function ShipmentMethodsList() {
+interface ShipmentMethodsListProps {
+	specProps?: SpecListProps
+}
+
+export default function ShipmentMethodsList({
+	specProps,
+}: ShipmentMethodsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 	const { DataGrid, windowSize } = useModuleData<'trace', ShipmentMethod>(
 		'trace',
 		'shipmentMethods',
@@ -49,6 +62,14 @@ export default function ShipmentMethodsList() {
 		[updateMethod],
 	)
 
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
+			const active = toStatus === 'ACTIVE'
+			await handleBulkActive(ids, active)
+		},
+		[handleBulkActive],
+	)
+
 	const handleEdit = React.useCallback(
 		(row: ShipmentMethod) => openDetail(row._id),
 		[openDetail],
@@ -60,6 +81,7 @@ export default function ShipmentMethodsList() {
 				<ShipmentMethodCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -69,17 +91,22 @@ export default function ShipmentMethodsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Shipment Methods'
-				description='Available shipment methods and carrier configurations'
+				title={specProps?.title ?? 'Shipment Methods'}
+				description={
+					specProps?.description ??
+					'Available shipment methods and carrier configurations'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={openCreate}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Method
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={openCreate}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Method'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -93,20 +120,30 @@ export default function ShipmentMethodsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<ShipmentMethod>
-							accessorKey='code'
-							title='Code'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<ShipmentMethod>
-							accessorKey='description'
-							title='Description'
-						/>
-						<DataGrid.Column<ShipmentMethod>
-							accessorKey='active'
-							title='Active'
-							cellVariant='checkbox'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<ShipmentMethod>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<ShipmentMethod>
+									accessorKey='code'
+									title='Code'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<ShipmentMethod>
+									accessorKey='description'
+									title='Description'
+								/>
+								<DataGrid.Column<ShipmentMethod>
+									accessorKey='active'
+									title='Active'
+									cellVariant='checkbox'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -131,7 +168,13 @@ export default function ShipmentMethodsList() {
 								const hasActive = records.some((r) => r.active)
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !hasInactive}
 											onClick={() => {
@@ -157,7 +200,7 @@ export default function ShipmentMethodsList() {
 											entityId='shipmentMethods'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

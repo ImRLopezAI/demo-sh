@@ -4,6 +4,7 @@ import {
 	type BankAccountStatus,
 	getLabeledTransitions,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -14,6 +15,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -21,6 +27,7 @@ interface BankAccountCardProps {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }
 
 interface BankAccountFormValues {
@@ -46,7 +53,9 @@ export function BankAccountCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: BankAccountCardProps) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
 
@@ -162,9 +171,7 @@ export function BankAccountCard({
 				items: [
 					{
 						label: 'Reconcile',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/flow/bank-ledger'),
 						disabled: currentStatus !== 'ACTIVE',
 					},
 				],
@@ -174,9 +181,7 @@ export function BankAccountCard({
 				items: [
 					{
 						label: 'Bank Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/flow/bank-ledger'),
 					},
 				],
 			},
@@ -185,21 +190,17 @@ export function BankAccountCard({
 				items: [
 					{
 						label: 'G/L Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/flow/gl-entries'),
 					},
 					{
-						label: 'Payments',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Payment Journal',
+						onClick: () => router.push('/flow/payment-journal'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, reportGroup])
+	}, [isNew, currentStatus, router, reportGroup])
 
 	return (
 		<>
@@ -211,12 +212,19 @@ export function BankAccountCard({
 				presentation={presentation}
 				actionGroups={actionGroups}
 				title={
-					isNew ? 'New Bank Account' : `Bank Account ${record?.accountNo ?? ''}`
+					isNew
+						? (specCardProps?.newTitle ?? 'New Bank Account')
+						: resolveCardTitle(
+								specCardProps?.title,
+								record as any,
+								`Account ${record?.accountNo ?? ''}`,
+							)
 				}
 				description={
-					isNew
+					specCardProps?.description ??
+					(isNew
 						? 'Add a new bank account to the system.'
-						: 'View and edit bank account details.'
+						: 'View and edit bank account details.')
 				}
 				footer={
 					<>
@@ -237,176 +245,180 @@ export function BankAccountCard({
 					<Form>
 						{() => (
 							<div className='space-y-8 pt-1'>
-								<FormSection title='General'>
-									<div className='grid gap-4'>
-										{!isNew && (
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<FormSection title='General'>
+										<div className='grid gap-4'>
+											{!isNew && (
+												<Form.Field
+													name='accountNo'
+													render={({ field }) => (
+														<Form.Item>
+															<Form.Label>Account No.</Form.Label>
+															<Form.Control
+																render={
+																	<Form.Input
+																		{...field}
+																		readOnly
+																		autoComplete='off'
+																		className='bg-muted'
+																	/>
+																}
+															/>
+														</Form.Item>
+													)}
+												/>
+											)}
+
 											<Form.Field
-												name='accountNo'
+												name='name'
+												rules={{ required: 'Name is required' }}
 												render={({ field }) => (
 													<Form.Item>
-														<Form.Label>Account No.</Form.Label>
+														<Form.Label>Name</Form.Label>
 														<Form.Control
 															render={
 																<Form.Input
 																	{...field}
-																	readOnly
+																	placeholder='Account name\u2026'
 																	autoComplete='off'
-																	className='bg-muted'
+																/>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='bankName'
+												rules={{ required: 'Bank name is required' }}
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Bank Name</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	placeholder='Bank name\u2026'
+																	autoComplete='off'
+																/>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='iban'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>IBAN</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	placeholder='IBAN number\u2026'
+																	autoComplete='off'
 																/>
 															}
 														/>
 													</Form.Item>
 												)}
 											/>
-										)}
 
-										<Form.Field
-											name='name'
-											rules={{ required: 'Name is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Name</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='Account name\u2026'
-																autoComplete='off'
-															/>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='bankName'
-											rules={{ required: 'Bank name is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Bank Name</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='Bank name\u2026'
-																autoComplete='off'
-															/>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='iban'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>IBAN</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='IBAN number\u2026'
-																autoComplete='off'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='swiftCode'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>SWIFT Code</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='SWIFT / BIC code\u2026'
-																autoComplete='off'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='currency'
-											rules={{ required: 'Currency is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Currency</Form.Label>
-													<Form.Control
-														render={
-															<Form.Select
-																value={field.value}
-																onValueChange={field.onChange}
-															>
-																<Form.Select.Trigger>
-																	<Form.Select.Value placeholder='Select currency\u2026' />
-																</Form.Select.Trigger>
-																<Form.Select.Content>
-																	{CURRENCY_OPTIONS.map((option) => (
-																		<Form.Select.Item
-																			key={option.value}
-																			value={option.value}
-																		>
-																			{option.label}
-																		</Form.Select.Item>
-																	))}
-																</Form.Select.Content>
-															</Form.Select>
-														}
-													/>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
-
-										{!isNew && (
-											<Form.Item>
-												<Form.Label>Status</Form.Label>
-												<Form.Select
-													value={currentStatus}
-													onValueChange={(toStatus) => {
-														if (toStatus && toStatus !== currentStatus) {
-															void requestTransition(toStatus)
-														}
-													}}
-													disabled={statusOptions.length === 0}
-												>
-													<Form.Select.Trigger>
-														<Form.Select.Value
-															placeholder={
-																BANK_ACCOUNT_STATUS_LABELS[
-																	currentStatus as BankAccountStatus
-																] ?? currentStatus
+											<Form.Field
+												name='swiftCode'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>SWIFT Code</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	placeholder='SWIFT / BIC code\u2026'
+																	autoComplete='off'
+																/>
 															}
 														/>
-													</Form.Select.Trigger>
-													<Form.Select.Content>
-														<Form.Select.Item value={currentStatus}>
-															{BANK_ACCOUNT_STATUS_LABELS[
-																currentStatus as BankAccountStatus
-															] ?? currentStatus}
-														</Form.Select.Item>
-														{statusOptions.map((opt) => (
-															<Form.Select.Item key={opt.to} value={opt.to}>
-																{opt.label}
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='currency'
+												rules={{ required: 'Currency is required' }}
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Currency</Form.Label>
+														<Form.Control
+															render={
+																<Form.Select
+																	value={field.value}
+																	onValueChange={field.onChange}
+																>
+																	<Form.Select.Trigger>
+																		<Form.Select.Value placeholder='Select currency\u2026' />
+																	</Form.Select.Trigger>
+																	<Form.Select.Content>
+																		{CURRENCY_OPTIONS.map((option) => (
+																			<Form.Select.Item
+																				key={option.value}
+																				value={option.value}
+																			>
+																				{option.label}
+																			</Form.Select.Item>
+																		))}
+																	</Form.Select.Content>
+																</Form.Select>
+															}
+														/>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											{!isNew && (
+												<Form.Item>
+													<Form.Label>Status</Form.Label>
+													<Form.Select
+														value={currentStatus}
+														onValueChange={(toStatus) => {
+															if (toStatus && toStatus !== currentStatus) {
+																void requestTransition(toStatus)
+															}
+														}}
+														disabled={statusOptions.length === 0}
+													>
+														<Form.Select.Trigger>
+															<Form.Select.Value
+																placeholder={
+																	BANK_ACCOUNT_STATUS_LABELS[
+																		currentStatus as BankAccountStatus
+																	] ?? currentStatus
+																}
+															/>
+														</Form.Select.Trigger>
+														<Form.Select.Content>
+															<Form.Select.Item value={currentStatus}>
+																{BANK_ACCOUNT_STATUS_LABELS[
+																	currentStatus as BankAccountStatus
+																] ?? currentStatus}
 															</Form.Select.Item>
-														))}
-													</Form.Select.Content>
-												</Form.Select>
-											</Form.Item>
-										)}
-									</div>
-								</FormSection>
+															{statusOptions.map((opt) => (
+																<Form.Select.Item key={opt.to} value={opt.to}>
+																	{opt.label}
+																</Form.Select.Item>
+															))}
+														</Form.Select.Content>
+													</Form.Select>
+												</Form.Item>
+											)}
+										</div>
+									</FormSection>
+								)}
 
 								{!isNew && (
 									<FormSection title='Statistics'>

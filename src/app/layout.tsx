@@ -2,6 +2,7 @@ import { Providers } from '@components/layout/providers'
 import type { Metadata } from 'next'
 import type { PropsWithChildren } from 'react'
 import './styles.css'
+
 export const metadata: Metadata = {
 	title: 'Uplink',
 	description: 'Uplink operations suite',

@@ -410,4 +410,4 @@ function autoDetectColumns(
 
 // ---- Exported Utilities ----
 
-export { REPORTING_ALLOWED_TABLES, FORBIDDEN_KEYS, getTable }
+export { FORBIDDEN_KEYS, getTable, REPORTING_ALLOWED_TABLES }

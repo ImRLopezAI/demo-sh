@@ -1,14 +1,18 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
-import { Ban, PackageCheck, Plus, Send, Truck } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
 import {
-	resolveSelectedIds,
-	resolveSelectedRecords,
-} from '../_shared/resolve-selected-ids'
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TransferCard } from './components/transfer-card'
@@ -24,14 +28,22 @@ interface Transfer {
 	lineCount: number
 }
 
-export default function TransfersList() {
+interface TransfersListProps {
+	specProps?: SpecListProps
+}
+
+export default function TransfersList({ specProps }: TransfersListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'replenishment', Transfer>(
 		'replenishment',
 		'transfers',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidate = React.useCallback(() => {
@@ -70,6 +82,7 @@ export default function TransfersList() {
 					recordId={selectedId}
 					onClose={close}
 					onCreated={openDetail}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -79,17 +92,22 @@ export default function TransfersList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Transfers'
-				description='Manage internal inventory movement between locations'
+				title={specProps?.title ?? 'Transfers'}
+				description={
+					specProps?.description ??
+					'Manage internal inventory movement between locations'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Transfer
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Transfer'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -103,41 +121,53 @@ export default function TransfersList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<Transfer>
-							accessorKey='transferNo'
-							title='Transfer No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='fromLocationCode'
-							title='From Location'
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='toLocationCode'
-							title='To Location'
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='shipmentDate'
-							title='Shipment Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.shipmentDate, { format: 'P' })}
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='receiptDate'
-							title='Receipt Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.receiptDate, { format: 'P' })}
-						/>
-						<DataGrid.Column<Transfer>
-							accessorKey='lineCount'
-							title='Lines'
-							cellVariant='number'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Transfer>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column<Transfer>
+									accessorKey='transferNo'
+									title='Transfer No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='fromLocationCode'
+									title='From Location'
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='toLocationCode'
+									title='To Location'
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='shipmentDate'
+									title='Shipment Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.shipmentDate, { format: 'P' })}
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='receiptDate'
+									title='Receipt Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.receiptDate, { format: 'P' })}
+								/>
+								<DataGrid.Column<Transfer>
+									accessorKey='lineCount'
+									title='Lines'
+									cellVariant='number'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -150,70 +180,23 @@ export default function TransfersList() {
 						</DataGrid.ActionBar.Selection>
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
-							{(table, state) => {
-								const records = resolveSelectedRecords(
-									table,
-									state.selectionState,
-								)
-								const ids = records.map((r) => r._id)
-								const hasSelection = ids.length > 0
-								const isBusy = transitionStatus.isPending
-								const allDraft = records.every((r) => r.status === 'DRAFT')
-								const allReleased = records.every(
-									(r) => r.status === 'RELEASED',
-								)
-								const allInTransit = records.every(
-									(r) => r.status === 'IN_TRANSIT',
-								)
-
-								return (
-									<>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allDraft}
-											onClick={() => {
-												void handleBulkTransition(ids, 'RELEASED')
-											}}
-										>
-											<Send className='size-3.5' aria-hidden='true' />
-											Release
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allReleased}
-											onClick={() => {
-												void handleBulkTransition(ids, 'IN_TRANSIT')
-											}}
-										>
-											<Truck className='size-3.5' aria-hidden='true' />
-											Ship
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allInTransit}
-											onClick={() => {
-												void handleBulkTransition(ids, 'RECEIVED')
-											}}
-										>
-											<PackageCheck className='size-3.5' aria-hidden='true' />
-											Receive
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allDraft}
-											onClick={() => {
-												void handleBulkTransition(ids, 'CANCELED')
-											}}
-										>
-											<Ban className='size-3.5' aria-hidden='true' />
-											Cancel
-										</DataGrid.ActionBar.Item>
-										<ReportActionItems
-											table={table}
-											selectionState={state.selectionState}
-											moduleId='replenishment'
-											entityId='transfers'
-											isBusy={isBusy}
-										/>
-									</>
-								)
-							}}
+							{(table, state) => (
+								<SpecBulkActionItems
+									specBulkActions={specProps?.bulkActions}
+									table={table}
+									selectionState={state.selectionState}
+									onTransition={handleBulkTransition}
+									isBusy={transitionStatus.isPending}
+								>
+									<ReportActionItems
+										table={table}
+										selectionState={state.selectionState}
+										moduleId='replenishment'
+										entityId='transfers'
+										isBusy={transitionStatus.isPending}
+									/>
+								</SpecBulkActionItems>
+							)}
 						</DataGrid.ActionBar.Group>
 					</DataGrid.ActionBar>
 				</DataGrid>

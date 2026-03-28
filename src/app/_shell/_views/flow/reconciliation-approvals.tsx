@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -39,7 +40,13 @@ type JournalLine = {
 	status: 'OPEN' | 'APPROVED' | 'POSTED' | 'VOIDED'
 }
 
-export default function ReconciliationApprovalsView() {
+interface ReconciliationApprovalsViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function ReconciliationApprovalsView({
+	specProps,
+}: ReconciliationApprovalsViewProps = {}) {
 	const queryClient = useQueryClient()
 	const [transitionReason, setTransitionReason] = React.useState(
 		'Reviewed in reconciliation console',
@@ -137,8 +144,13 @@ export default function ReconciliationApprovalsView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Reconciliation, Approvals & Scenario Planner'
-				description='Operate reconciliation transitions, enforce maker-checker workflow, and compare cash scenarios.'
+				title={
+					specProps?.title ?? 'Reconciliation, Approvals & Scenario Planner'
+				}
+				description={
+					specProps?.description ??
+					'Operate reconciliation transitions, enforce maker-checker workflow, and compare cash scenarios.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

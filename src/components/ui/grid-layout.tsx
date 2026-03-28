@@ -1084,8 +1084,8 @@ export function ResponsiveGridLayout({
 // Exports
 // ============================================================================
 
-export { useContainerWidth }
 export type { Layout, LayoutItem, ResponsiveLayouts }
+export { useContainerWidth }
 
 export interface LazyProxyOptions {
 	/** If true, invalidates cache when target properties change */

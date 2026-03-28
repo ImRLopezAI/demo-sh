@@ -1456,18 +1456,17 @@ function MapClusterLayer<
 	return null
 }
 
+export type { MapRef, MapViewport }
 export {
 	Map,
-	useMap,
+	MapClusterLayer,
+	MapControls,
 	MapMarker,
+	MapPopup,
+	MapRoute,
 	MarkerContent,
+	MarkerLabel,
 	MarkerPopup,
 	MarkerTooltip,
-	MarkerLabel,
-	MapPopup,
-	MapControls,
-	MapRoute,
-	MapClusterLayer,
+	useMap,
 }
-
-export type { MapRef, MapViewport }

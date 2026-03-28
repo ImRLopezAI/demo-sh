@@ -26,10 +26,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface ModuleNotification {
@@ -109,7 +114,13 @@ const canTransitionTo = (
 	toStatus: 'READ' | 'ARCHIVED',
 ) => NOTIFICATION_TRANSITIONS[status].includes(toStatus)
 
-export default function NotificationsList() {
+interface NotificationsListProps {
+	specProps?: SpecListProps
+}
+
+export default function NotificationsList({
+	specProps,
+}: NotificationsListProps = {}) {
 	const queryClient = useQueryClient()
 	const [bulkResult, setBulkResult] =
 		React.useState<BulkTransitionResult | null>(null)
@@ -132,10 +143,24 @@ export default function NotificationsList() {
 		React.useState<string>('all')
 	const [auditActionFilter, setAuditActionFilter] = React.useState('')
 
-	const { DataGrid, windowSize } = useModuleData<'hub', ModuleNotification>(
-		'hub',
-		'notifications',
-		'all',
+	const {
+		DataGrid,
+		windowSize,
+		items: notificationItems,
+	} = useModuleData<'hub', ModuleNotification>('hub', 'notifications', 'all')
+
+	/* ── Hydrate json-render state for spec-driven alert banner ── */
+	const criticalCount = React.useMemo(
+		() =>
+			notificationItems.filter(
+				(n) => n.severity === 'ERROR' && n.status !== 'ARCHIVED',
+			).length,
+		[notificationItems],
+	)
+
+	useHydrateState(
+		'/hub/notifications',
+		React.useMemo(() => ({ criticalCount }), [criticalCount]),
 	)
 
 	const invalidateHubViews = React.useCallback(() => {
@@ -345,8 +370,11 @@ export default function NotificationsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Notifications'
-				description='Module notifications and alerts across the platform.'
+				title={specProps?.title ?? 'Notifications'}
+				description={
+					specProps?.description ??
+					'Module notifications and alerts across the platform.'
+				}
 			/>
 
 			<div className='space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4'>
@@ -762,74 +790,149 @@ export default function NotificationsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<ModuleNotification>
-							accessorKey='moduleId'
-							title='Module'
-						/>
-						<DataGrid.Column<ModuleNotification>
-							accessorKey='title'
-							title='Title'
-						/>
-						<DataGrid.Column<ModuleNotification>
-							accessorKey='body'
-							title='Body'
-						/>
-						<DataGrid.Column<ModuleNotification>
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column<ModuleNotification>
-							accessorKey='severity'
-							title='Severity'
-							cell={({ row }) => <StatusBadge status={row.original.severity} />}
-						/>
-						<DataGrid.Column<ModuleNotification>
-							id='actions'
-							title='Actions'
-							cell={({ row }) => {
-								const notification = row.original
-								const canMarkRead = canTransitionTo(notification.status, 'READ')
-								const canArchive = canTransitionTo(
-									notification.status,
-									'ARCHIVED',
-								)
-								const isBusy =
-									transitionNotification.isPending || bulkTransition.isPending
+						{specProps?.columns ? (
+							<>
+								{renderSpecColumns<ModuleNotification>(
+									DataGrid.Column,
+									specProps.columns,
+								)}
+								<DataGrid.Column<ModuleNotification>
+									id='actions'
+									title='Actions'
+									cell={({ row }) => {
+										const notification = row.original
+										const canMarkRead = canTransitionTo(
+											notification.status,
+											'READ',
+										)
+										const canArchive = canTransitionTo(
+											notification.status,
+											'ARCHIVED',
+										)
+										const isBusy =
+											transitionNotification.isPending ||
+											bulkTransition.isPending
 
-								return (
-									<div className='flex items-center gap-1.5'>
-										<Button
-											size='sm'
-											variant='outline'
-											disabled={!canMarkRead || isBusy}
-											onClick={(event) => {
-												event.stopPropagation()
-												void handleSingleTransition(notification._id, 'READ')
-											}}
-										>
-											<Check className='size-3.5' aria-hidden='true' />
-											Read
-										</Button>
-										<Button
-											size='sm'
-											variant='outline'
-											disabled={!canArchive || isBusy}
-											onClick={(event) => {
-												event.stopPropagation()
-												void handleSingleTransition(
-													notification._id,
-													'ARCHIVED',
-												)
-											}}
-										>
-											<Archive className='size-3.5' aria-hidden='true' />
-											Archive
-										</Button>
-									</div>
-								)
-							}}
-						/>
+										return (
+											<div className='flex items-center gap-1.5'>
+												<Button
+													size='sm'
+													variant='outline'
+													disabled={!canMarkRead || isBusy}
+													onClick={(event) => {
+														event.stopPropagation()
+														void handleSingleTransition(
+															notification._id,
+															'READ',
+														)
+													}}
+												>
+													<Check className='size-3.5' aria-hidden='true' />
+													Read
+												</Button>
+												<Button
+													size='sm'
+													variant='outline'
+													disabled={!canArchive || isBusy}
+													onClick={(event) => {
+														event.stopPropagation()
+														void handleSingleTransition(
+															notification._id,
+															'ARCHIVED',
+														)
+													}}
+												>
+													<Archive className='size-3.5' aria-hidden='true' />
+													Archive
+												</Button>
+											</div>
+										)
+									}}
+								/>
+							</>
+						) : (
+							<>
+								<DataGrid.Column<ModuleNotification>
+									accessorKey='moduleId'
+									title='Module'
+								/>
+								<DataGrid.Column<ModuleNotification>
+									accessorKey='title'
+									title='Title'
+								/>
+								<DataGrid.Column<ModuleNotification>
+									accessorKey='body'
+									title='Body'
+								/>
+								<DataGrid.Column<ModuleNotification>
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column<ModuleNotification>
+									accessorKey='severity'
+									title='Severity'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.severity} />
+									)}
+								/>
+								<DataGrid.Column<ModuleNotification>
+									id='actions'
+									title='Actions'
+									cell={({ row }) => {
+										const notification = row.original
+										const canMarkRead = canTransitionTo(
+											notification.status,
+											'READ',
+										)
+										const canArchive = canTransitionTo(
+											notification.status,
+											'ARCHIVED',
+										)
+										const isBusy =
+											transitionNotification.isPending ||
+											bulkTransition.isPending
+
+										return (
+											<div className='flex items-center gap-1.5'>
+												<Button
+													size='sm'
+													variant='outline'
+													disabled={!canMarkRead || isBusy}
+													onClick={(event) => {
+														event.stopPropagation()
+														void handleSingleTransition(
+															notification._id,
+															'READ',
+														)
+													}}
+												>
+													<Check className='size-3.5' aria-hidden='true' />
+													Read
+												</Button>
+												<Button
+													size='sm'
+													variant='outline'
+													disabled={!canArchive || isBusy}
+													onClick={(event) => {
+														event.stopPropagation()
+														void handleSingleTransition(
+															notification._id,
+															'ARCHIVED',
+														)
+													}}
+												>
+													<Archive className='size-3.5' aria-hidden='true' />
+													Archive
+												</Button>
+											</div>
+										)
+									}}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>

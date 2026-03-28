@@ -1,12 +1,5 @@
 import { $rpc, useMutation, useQuery, useQueryClient } from '@lib/rpc'
-import {
-	CheckCircle,
-	Play,
-	Plus,
-	RotateCcw,
-	Save,
-	ShieldAlert,
-} from 'lucide-react'
+import { Plus, Save } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,10 +21,14 @@ import {
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
 import {
-	resolveSelectedIds,
-	resolveSelectedRecords,
-} from '../_shared/resolve-selected-ids'
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { TaskCard } from './components/task-card'
 
@@ -69,16 +66,24 @@ interface HubRolePermission {
 	permissionId: string
 }
 
-export default function TasksList() {
+interface TasksListProps {
+	specProps?: SpecListProps
+}
+
+export default function TasksList({ specProps }: TasksListProps = {}) {
 	const queryClient = useQueryClient()
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const [selectedRoleCode, setSelectedRoleCode] = React.useState('VIEWER')
 	const [permissionCodesInput, setPermissionCodesInput] = React.useState('')
 
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
+
 	const { DataGrid, windowSize } = useModuleData<'hub', OperationTask>(
 		'hub',
 		'operationTasks',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidateTasks = React.useCallback(() => {
@@ -221,6 +226,7 @@ export default function TasksList() {
 					onOpenChange={(open) => {
 						if (!open) close()
 					}}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -230,16 +236,20 @@ export default function TasksList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Operation Tasks'
-				description='Manage cross-module operational tasks.'
+				title={specProps?.title ?? 'Operation Tasks'}
+				description={
+					specProps?.description ?? 'Manage cross-module operational tasks.'
+				}
 				actions={
-					<Button
-						onClick={openCreate}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus data-icon='inline-start' />
-						New
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							onClick={openCreate}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus data-icon='inline-start' />
+							{specProps?.newLabel ?? 'New'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -253,45 +263,48 @@ export default function TasksList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column<OperationTask>
-							accessorKey='taskNo'
-							title='Task No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='moduleId'
-							title='Module'
-						/>
-						<DataGrid.Column<OperationTask> accessorKey='title' title='Title' />
-						<DataGrid.Column<OperationTask>
-							accessorKey='status'
-							title='Status'
-							cellVariant='select'
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='priority'
-							title='Priority'
-							cellVariant='select'
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='assigneeUserId'
-							title='Assignee'
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='dueDate'
-							title='Due Date'
-							formatter={(v, f) => f.date(v.dueDate, { format: 'P' })}
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='slaStatus'
-							title='SLA'
-							cellVariant='select'
-						/>
-						<DataGrid.Column<OperationTask>
-							accessorKey='escalationLevel'
-							title='Escalation'
-							cellVariant='select'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns(DataGrid.Column, specProps.columns, handleEdit)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='taskNo'
+									title='Task No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column accessorKey='moduleId' title='Module' />
+								<DataGrid.Column accessorKey='title' title='Title' />
+								<DataGrid.Column
+									accessorKey='status'
+									title='Status'
+									cellVariant='select'
+								/>
+								<DataGrid.Column
+									accessorKey='priority'
+									title='Priority'
+									cellVariant='select'
+								/>
+								<DataGrid.Column
+									accessorKey='assigneeUserId'
+									title='Assignee'
+								/>
+								<DataGrid.Column
+									accessorKey='dueDate'
+									title='Due Date'
+									formatter={(v, f) => f.date(v.dueDate, { format: 'P' })}
+								/>
+								<DataGrid.Column
+									accessorKey='slaStatus'
+									title='SLA'
+									cellVariant='select'
+								/>
+								<DataGrid.Column
+									accessorKey='escalationLevel'
+									title='Escalation'
+									cellVariant='select'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -304,73 +317,23 @@ export default function TasksList() {
 						</DataGrid.ActionBar.Selection>
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
-							{(table, state) => {
-								const records = resolveSelectedRecords(
-									table,
-									state.selectionState,
-								)
-								const ids = records.map((r) => r._id)
-								const hasSelection = ids.length > 0
-								const isBusy = transitionStatus.isPending
-								const allOpen = records.every((r) => r.status === 'OPEN')
-								const allInProgress = records.every(
-									(r) => r.status === 'IN_PROGRESS',
-								)
-								const allOpenOrInProgress = records.every(
-									(r) => r.status === 'OPEN' || r.status === 'IN_PROGRESS',
-								)
-								const allBlockedOrDone = records.every(
-									(r) => r.status === 'BLOCKED' || r.status === 'DONE',
-								)
-
-								return (
-									<>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allOpen}
-											onClick={() => {
-												void handleBulkTransition(ids, 'IN_PROGRESS')
-											}}
-										>
-											<Play className='size-3.5' aria-hidden='true' />
-											Start
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allInProgress}
-											onClick={() => {
-												void handleBulkTransition(ids, 'DONE')
-											}}
-										>
-											<CheckCircle className='size-3.5' aria-hidden='true' />
-											Complete
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allOpenOrInProgress}
-											onClick={() => {
-												void handleBulkTransition(ids, 'BLOCKED')
-											}}
-										>
-											<ShieldAlert className='size-3.5' aria-hidden='true' />
-											Block
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allBlockedOrDone}
-											onClick={() => {
-												void handleBulkTransition(ids, 'OPEN')
-											}}
-										>
-											<RotateCcw className='size-3.5' aria-hidden='true' />
-											Reopen
-										</DataGrid.ActionBar.Item>
-										<ReportActionItems
-											table={table}
-											selectionState={state.selectionState}
-											moduleId='hub'
-											entityId='operationTasks'
-											isBusy={isBusy}
-										/>
-									</>
-								)
-							}}
+							{(table, state) => (
+								<SpecBulkActionItems
+									specBulkActions={specProps?.bulkActions}
+									table={table}
+									selectionState={state.selectionState}
+									onTransition={handleBulkTransition}
+									isBusy={transitionStatus.isPending}
+								>
+									<ReportActionItems
+										table={table}
+										selectionState={state.selectionState}
+										moduleId='hub'
+										entityId='operationTasks'
+										isBusy={transitionStatus.isPending}
+									/>
+								</SpecBulkActionItems>
+							)}
 						</DataGrid.ActionBar.Group>
 					</DataGrid.ActionBar>
 				</DataGrid>

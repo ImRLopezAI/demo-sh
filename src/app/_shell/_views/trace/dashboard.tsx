@@ -15,6 +15,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -103,6 +104,47 @@ export default function TraceDashboard() {
 		})
 		.filter((value): value is number => typeof value === 'number')
 	const averageLeadTime = average(leadTimes)
+
+	const activeShipments = totalShipments - delivered
+	const delayedCount = exceptions
+	const inTransitCount = statusCounts.IN_TRANSIT ?? 0
+	const deliveredToday = shipments.filter((s) => {
+		if (s.status !== 'DELIVERED' || !s.actualDeliveryDate) return false
+		const d = new Date(s.actualDeliveryDate)
+		const now = new Date()
+		return (
+			d.getDate() === now.getDate() &&
+			d.getMonth() === now.getMonth() &&
+			d.getFullYear() === now.getFullYear()
+		)
+	}).length
+
+	// On-time delivery rate as a percentage; considered "improving" when above 80%
+	const onTimeRate = delivered > 0 ? (onTimeDelivered / delivered) * 100 : 0
+
+	const hydrateValues = React.useMemo(
+		() => ({
+			activeShipments,
+			delayedCount,
+			inTransitCount,
+			deliveredToday,
+			onTimeDeliveries: onTimeDelivered,
+			totalDeliveries: delivered,
+			onTimeImproving: onTimeRate > 80,
+			avgTransitDays: Number(averageLeadTime.toFixed(1)),
+		}),
+		[
+			activeShipments,
+			delayedCount,
+			inTransitCount,
+			deliveredToday,
+			onTimeDelivered,
+			delivered,
+			onTimeRate,
+			averageLeadTime,
+		],
+	)
+	useHydrateState('/trace/dashboard', hydrateValues)
 
 	const monthlyShipmentVolume = React.useMemo(
 		() =>

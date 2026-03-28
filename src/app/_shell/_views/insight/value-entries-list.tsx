@@ -2,6 +2,10 @@ import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
 import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 
 interface ValueEntry {
 	_id: string
@@ -20,7 +24,13 @@ interface ValueEntry {
 	costPerUnit: number
 }
 
-export default function ValueEntriesList() {
+interface ValueEntriesListProps {
+	specProps?: SpecListProps
+}
+
+export default function ValueEntriesList({
+	specProps,
+}: ValueEntriesListProps = {}) {
 	const { DataGrid, windowSize } = useModuleData<'insight', ValueEntry>(
 		'insight',
 		'valueEntries',
@@ -30,8 +40,11 @@ export default function ValueEntriesList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Value Entries'
-				description='View cost and sales value entries for inventory items.'
+				title={specProps?.title ?? 'Value Entries'}
+				description={
+					specProps?.description ??
+					'View cost and sales value entries for inventory items.'
+				}
 			/>
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -45,54 +58,60 @@ export default function ValueEntriesList() {
 					</DataGrid.Header>
 
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='entryNo'
-							title='Entry No.'
-							cellVariant='number'
-						/>
-						<DataGrid.Column accessorKey='itemDescription' title='Item' />
-						<DataGrid.Column
-							accessorKey='postingDate'
-							title='Posting Date'
-							cellVariant='date'
-							formatter={(v, f) =>
-								f.date(v.postingDate, {
-									format: 'Pp',
-								})
-							}
-						/>
-						<DataGrid.Column
-							accessorKey='entryType'
-							title='Entry Type'
-							cellVariant='select'
-							opts={{
-								options: [
-									{ label: 'Direct Cost', value: 'DIRECT_COST' },
-									{ label: 'Revaluation', value: 'REVALUATION' },
-									{ label: 'Rounding', value: 'ROUNDING' },
-									{ label: 'Indirect Cost', value: 'INDIRECT_COST' },
-									{ label: 'Variance', value: 'VARIANCE' },
-								],
-							}}
-						/>
-						<DataGrid.Column
-							accessorKey='costAmountActual'
-							title='Cost Amount (Actual)'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.costAmountActual)}
-						/>
-						<DataGrid.Column
-							accessorKey='salesAmountActual'
-							title='Sales Amount (Actual)'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.salesAmountActual)}
-						/>
-						<DataGrid.Column
-							accessorKey='costPerUnit'
-							title='Cost Per Unit'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.costPerUnit)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<ValueEntry>(DataGrid.Column, specProps.columns)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='entryNo'
+									title='Entry No.'
+									cellVariant='number'
+								/>
+								<DataGrid.Column accessorKey='itemDescription' title='Item' />
+								<DataGrid.Column
+									accessorKey='postingDate'
+									title='Posting Date'
+									cellVariant='date'
+									formatter={(v, f) =>
+										f.date(v.postingDate, {
+											format: 'Pp',
+										})
+									}
+								/>
+								<DataGrid.Column
+									accessorKey='entryType'
+									title='Entry Type'
+									cellVariant='select'
+									opts={{
+										options: [
+											{ label: 'Direct Cost', value: 'DIRECT_COST' },
+											{ label: 'Revaluation', value: 'REVALUATION' },
+											{ label: 'Rounding', value: 'ROUNDING' },
+											{ label: 'Indirect Cost', value: 'INDIRECT_COST' },
+											{ label: 'Variance', value: 'VARIANCE' },
+										],
+									}}
+								/>
+								<DataGrid.Column
+									accessorKey='costAmountActual'
+									title='Cost Amount (Actual)'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.costAmountActual)}
+								/>
+								<DataGrid.Column
+									accessorKey='salesAmountActual'
+									title='Sales Amount (Actual)'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.salesAmountActual)}
+								/>
+								<DataGrid.Column
+									accessorKey='costPerUnit'
+									title='Cost Per Unit'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.costPerUnit)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>

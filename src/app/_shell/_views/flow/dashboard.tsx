@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/chart'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { formatCurrency } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -173,6 +174,38 @@ export default function Dashboard() {
 	const adverseVarianceDays = (cashForecast?.variance ?? []).filter(
 		(point) => point.isAdverse,
 	).length
+
+	/* ── Hydrate json-render state for spec-driven KPIs ── */
+	const pendingPaymentLines = journalLines.filter(
+		(l) => l.status === 'OPEN' && l.documentType === 'PAYMENT',
+	)
+	const projected30d = cashForecast?.forecast?.at(-1)?.forecastBalance ?? 0
+
+	useHydrateState(
+		'/flow/dashboard',
+		React.useMemo(
+			() => ({
+				accountCount: totalAccounts,
+				totalBalance,
+				projected30d,
+				projectedNegative: projected30d < 0,
+				pendingPayments: pendingPaymentLines.reduce(
+					(sum, l) =>
+						sum + Math.abs((l.debitAmount ?? 0) - (l.creditAmount ?? 0)),
+					0,
+				),
+				pendingPaymentCount: pendingPaymentLines.length,
+				unreconciledCount: openJournalEntries,
+			}),
+			[
+				totalAccounts,
+				totalBalance,
+				projected30d,
+				pendingPaymentLines,
+				openJournalEntries,
+			],
+		),
+	)
 
 	const kpis = React.useMemo<KpiCardDef[]>(
 		() => [

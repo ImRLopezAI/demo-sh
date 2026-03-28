@@ -5,6 +5,7 @@ import {
 	type DocumentApprovalStatus,
 	getLabeledTransitions,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -73,12 +79,15 @@ export function PurchaseOrderCard({
 	onClose,
 	onCreated,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = recordId === 'new'
 	const open = recordId !== null
 
@@ -428,17 +437,13 @@ export function PurchaseOrderCard({
 				label: 'Related',
 				items: [
 					{
-						label: 'Vendor Card',
-						onClick: () => {
-							/* TODO: navigate to vendor card */
-						},
+						label: 'Vendor',
+						onClick: () => router.push('/replenishment/vendors'),
 						disabled: !header?.vendorId,
 					},
 					{
-						label: 'Purchase Lines',
-						onClick: () => {
-							/* TODO: scroll to lines section */
-						},
+						label: 'Transfer Orders',
+						onClick: () => router.push('/replenishment/transfers'),
 					},
 				],
 			},
@@ -447,16 +452,12 @@ export function PurchaseOrderCard({
 				items: [
 					{
 						label: 'Vendor Ledger Entries',
-						onClick: () => {
-							/* TODO: navigate to vendor ledger entries */
-						},
+						onClick: () => router.push('/replenishment/purchase-orders'),
 						disabled: !header?.vendorId,
 					},
 					{
 						label: 'Posted Invoices',
-						onClick: () => {
-							/* TODO: navigate to posted invoices */
-						},
+						onClick: () => router.push('/ledger/invoices'),
 					},
 				],
 			},
@@ -471,6 +472,7 @@ export function PurchaseOrderCard({
 		receivePurchaseOrder.isPending,
 		createInvoiceFromOrder.isPending,
 		header?.vendorId,
+		router,
 		reportGroup,
 	])
 
@@ -484,10 +486,17 @@ export function PurchaseOrderCard({
 				presentation={presentation}
 				title={
 					isNew
-						? 'New Purchase Order'
-						: `Purchase Order ${header?.documentNo ?? ''}`
+						? (specCardProps?.newTitle ?? 'New Purchase Order')
+						: resolveCardTitle(
+								specCardProps?.title,
+								header as unknown as Record<string, unknown> | undefined,
+								`Purchase Order ${header?.documentNo ?? ''}`,
+							)
 				}
-				description='Manage purchase order header and lines.'
+				description={
+					specCardProps?.description ??
+					'Manage purchase order header and lines.'
+				}
 				actionGroups={actionGroups}
 				footer={
 					<>
@@ -541,182 +550,188 @@ export function PurchaseOrderCard({
 				<div className='space-y-8 pt-2'>
 					<Form>
 						{() => (
-							<FormSection title='Header'>
-								<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-									<Form.Item>
-										<Form.Label>Document No.</Form.Label>
-										<Form.Field
-											name='documentNo'
-											render={({ field }) => (
-												<Form.Control>
-													<Form.Input
-														{...field}
-														readOnly
-														autoComplete='off'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											)}
-										/>
-									</Form.Item>
-
-									<Form.Item>
-										<Form.Label>Document Type</Form.Label>
-										<Form.Field
-											name='documentType'
-											render={({ field }) => (
-												<Form.Control>
-													<Form.Select
-														value={field.value}
-														onValueChange={field.onChange}
-													>
-														<Form.Select.Trigger className='w-full bg-background/50'>
-															<Form.Select.Value />
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															<Form.Select.Item value='ORDER'>
-																Order
-															</Form.Select.Item>
-															<Form.Select.Item value='RETURN_ORDER'>
-																Return Order
-															</Form.Select.Item>
-															<Form.Select.Item value='QUOTE'>
-																Quote
-															</Form.Select.Item>
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
-											)}
-										/>
-									</Form.Item>
-
-									<Form.Item>
-										<Form.Label>Status</Form.Label>
-										<Form.Select
-											value={currentStatus}
-											onValueChange={(toStatus) => {
-												if (toStatus && toStatus !== currentStatus) {
-													void requestTransition(toStatus)
-												}
-											}}
-											disabled={isNew || statusOptions.length === 0}
-										>
-											<Form.Select.Trigger className='w-full bg-background/50'>
-												<Form.Select.Value
-													placeholder={
-														DOCUMENT_APPROVAL_STATUS_LABELS[
-															currentStatus as DocumentApprovalStatus
-														] ?? currentStatus
-													}
-												/>
-											</Form.Select.Trigger>
-											<Form.Select.Content>
-												<Form.Select.Item value={currentStatus}>
-													{DOCUMENT_APPROVAL_STATUS_LABELS[
-														currentStatus as DocumentApprovalStatus
-													] ?? currentStatus}
-												</Form.Select.Item>
-												{statusOptions.map((opt) => (
-													<Form.Select.Item key={opt.to} value={opt.to}>
-														{opt.label}
-													</Form.Select.Item>
-												))}
-											</Form.Select.Content>
-										</Form.Select>
-									</Form.Item>
-
-									<Form.Field
-										name='vendorId'
-										render={({ field }) => (
+							<>
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<FormSection title='Header'>
+										<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
 											<Form.Item>
-												<Form.Label>Vendor</Form.Label>
-												<Form.Control>
-													<Form.Select
-														value={field.value}
-														onValueChange={field.onChange}
-														items={vendorItemsMap}
-													>
-														<Form.Select.Trigger
-															className='w-full bg-background/50'
-															data-testid='purchase-order-vendor-select'
-														>
-															<Form.Select.Value placeholder='Select vendor' />
-														</Form.Select.Trigger>
-														<Form.Select.Content>
-															{vendorOptions.map((vendor) => (
-																<Form.Select.Item
-																	key={vendor._id}
-																	value={vendor._id}
-																>
-																	{vendor.name ?? 'Unnamed vendor'}
-																	{vendor.vendorNo
-																		? ` (${vendor.vendorNo})`
-																		: ''}
-																</Form.Select.Item>
-															))}
-														</Form.Select.Content>
-													</Form.Select>
-												</Form.Control>
+												<Form.Label>Document No.</Form.Label>
+												<Form.Field
+													name='documentNo'
+													render={({ field }) => (
+														<Form.Control>
+															<Form.Input
+																{...field}
+																readOnly
+																autoComplete='off'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													)}
+												/>
 											</Form.Item>
-										)}
-									/>
 
-									<Form.Item>
-										<Form.Label>Order Date</Form.Label>
-										<Form.Field
-											name='orderDate'
-											render={({ field }) => (
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
+											<Form.Item>
+												<Form.Label>Document Type</Form.Label>
+												<Form.Field
+													name='documentType'
+													render={({ field }) => (
+														<Form.Control>
+															<Form.Select
+																value={field.value}
+																onValueChange={field.onChange}
+															>
+																<Form.Select.Trigger className='w-full bg-background/50'>
+																	<Form.Select.Value />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	<Form.Select.Item value='ORDER'>
+																		Order
+																	</Form.Select.Item>
+																	<Form.Select.Item value='RETURN_ORDER'>
+																		Return Order
+																	</Form.Select.Item>
+																	<Form.Select.Item value='QUOTE'>
+																		Quote
+																	</Form.Select.Item>
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													)}
+												/>
+											</Form.Item>
+
+											<Form.Item>
+												<Form.Label>Status</Form.Label>
+												<Form.Select
+													value={currentStatus}
+													onValueChange={(toStatus) => {
+														if (toStatus && toStatus !== currentStatus) {
+															void requestTransition(toStatus)
 														}
-														placeholder='Select order date'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											)}
-										/>
-									</Form.Item>
+													}}
+													disabled={isNew || statusOptions.length === 0}
+												>
+													<Form.Select.Trigger className='w-full bg-background/50'>
+														<Form.Select.Value
+															placeholder={
+																DOCUMENT_APPROVAL_STATUS_LABELS[
+																	currentStatus as DocumentApprovalStatus
+																] ?? currentStatus
+															}
+														/>
+													</Form.Select.Trigger>
+													<Form.Select.Content>
+														<Form.Select.Item value={currentStatus}>
+															{DOCUMENT_APPROVAL_STATUS_LABELS[
+																currentStatus as DocumentApprovalStatus
+															] ?? currentStatus}
+														</Form.Select.Item>
+														{statusOptions.map((opt) => (
+															<Form.Select.Item key={opt.to} value={opt.to}>
+																{opt.label}
+															</Form.Select.Item>
+														))}
+													</Form.Select.Content>
+												</Form.Select>
+											</Form.Item>
 
-									<Form.Item>
-										<Form.Label>Expected Receipt Date</Form.Label>
-										<Form.Field
-											name='expectedReceiptDate'
-											render={({ field }) => (
-												<Form.Control>
-													<Form.DatePicker
-														value={field.value}
-														onValueChange={(date) =>
-															field.onChange(date?.toISOString() ?? '')
-														}
-														placeholder='Select receipt date'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											)}
-										/>
-									</Form.Item>
+											<Form.Field
+												name='vendorId'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Vendor</Form.Label>
+														<Form.Control>
+															<Form.Select
+																value={field.value}
+																onValueChange={field.onChange}
+																items={vendorItemsMap}
+															>
+																<Form.Select.Trigger
+																	className='w-full bg-background/50'
+																	data-testid='purchase-order-vendor-select'
+																>
+																	<Form.Select.Value placeholder='Select vendor' />
+																</Form.Select.Trigger>
+																<Form.Select.Content>
+																	{vendorOptions.map((vendor) => (
+																		<Form.Select.Item
+																			key={vendor._id}
+																			value={vendor._id}
+																		>
+																			{vendor.name ?? 'Unnamed vendor'}
+																			{vendor.vendorNo
+																				? ` (${vendor.vendorNo})`
+																				: ''}
+																		</Form.Select.Item>
+																	))}
+																</Form.Select.Content>
+															</Form.Select>
+														</Form.Control>
+													</Form.Item>
+												)}
+											/>
 
-									<Form.Item>
-										<Form.Label>Currency</Form.Label>
-										<Form.Field
-											name='currency'
-											render={({ field }) => (
-												<Form.Control>
-													<Form.Input
-														{...field}
-														placeholder='USD\u2026'
-														autoComplete='off'
-														className='bg-background/50'
-													/>
-												</Form.Control>
-											)}
-										/>
-									</Form.Item>
-								</div>
-							</FormSection>
+											<Form.Item>
+												<Form.Label>Order Date</Form.Label>
+												<Form.Field
+													name='orderDate'
+													render={({ field }) => (
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select order date'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													)}
+												/>
+											</Form.Item>
+
+											<Form.Item>
+												<Form.Label>Expected Receipt Date</Form.Label>
+												<Form.Field
+													name='expectedReceiptDate'
+													render={({ field }) => (
+														<Form.Control>
+															<Form.DatePicker
+																value={field.value}
+																onValueChange={(date) =>
+																	field.onChange(date?.toISOString() ?? '')
+																}
+																placeholder='Select receipt date'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													)}
+												/>
+											</Form.Item>
+
+											<Form.Item>
+												<Form.Label>Currency</Form.Label>
+												<Form.Field
+													name='currency'
+													render={({ field }) => (
+														<Form.Control>
+															<Form.Input
+																{...field}
+																placeholder='USD\u2026'
+																autoComplete='off'
+																className='bg-background/50'
+															/>
+														</Form.Control>
+													)}
+												/>
+											</Form.Item>
+										</div>
+									</FormSection>
+								)}
+							</>
 						)}
 					</Form>
 

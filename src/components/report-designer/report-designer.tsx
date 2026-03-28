@@ -49,35 +49,37 @@ function ReportDesignerRoot({
 				'flex h-full min-h-[740px] flex-col overflow-hidden border bg-[var(--designer-bg)] text-[var(--designer-ink)] shadow-none',
 				className,
 			)}
-				style={{
+			style={
+				{
 					...((theme === 'dark'
 						? DARK_THEME_VARS
 						: DEFAULT_THEME_VARS) as React.CSSProperties),
-				fontFamily: DESIGNER_FONT_STACK.body,
-				borderColor: 'var(--designer-panel-border)',
-				colorScheme: 'light',
-				'--background': '#f6f6f8',
-				'--foreground': '#2f343b',
-				'--card': '#ffffff',
-				'--card-foreground': '#2f343b',
-				'--popover': '#ffffff',
-				'--popover-foreground': '#2f343b',
-				'--primary': '#3564a4',
-				'--primary-foreground': '#ffffff',
-				'--secondary': '#eceef2',
-				'--secondary-foreground': '#2f343b',
-				'--muted': '#eceef2',
-				'--muted-foreground': '#68707d',
-				'--accent': '#e9eef6',
-				'--accent-foreground': '#2f343b',
-				'--destructive': '#b34040',
-				'--destructive-foreground': '#ffffff',
-				'--border': '#cfd3db',
+					fontFamily: DESIGNER_FONT_STACK.body,
+					borderColor: 'var(--designer-panel-border)',
+					colorScheme: 'light',
+					'--background': '#f6f6f8',
+					'--foreground': '#2f343b',
+					'--card': '#ffffff',
+					'--card-foreground': '#2f343b',
+					'--popover': '#ffffff',
+					'--popover-foreground': '#2f343b',
+					'--primary': '#3564a4',
+					'--primary-foreground': '#ffffff',
+					'--secondary': '#eceef2',
+					'--secondary-foreground': '#2f343b',
+					'--muted': '#eceef2',
+					'--muted-foreground': '#68707d',
+					'--accent': '#e9eef6',
+					'--accent-foreground': '#2f343b',
+					'--destructive': '#b34040',
+					'--destructive-foreground': '#ffffff',
+					'--border': '#cfd3db',
 					'--input': '#cfd3db',
 					'--ring': '#3564a4',
 					'--radius': '4px',
-				} as React.CSSProperties}
-			>
+				} as React.CSSProperties
+			}
+		>
 			{children}
 		</div>
 	)

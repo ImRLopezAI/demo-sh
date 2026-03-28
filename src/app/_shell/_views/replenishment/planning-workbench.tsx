@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -95,7 +96,13 @@ type ExceptionRow = {
 	owner?: string
 }
 
-export default function PlanningWorkbenchView() {
+interface PlanningWorkbenchViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function PlanningWorkbenchView({
+	specProps,
+}: PlanningWorkbenchViewProps = {}) {
 	const windowSize = useWindowSize({ defaultWidth: 1280, defaultHeight: 900 })
 	const [proposalLimit, setProposalLimit] = React.useState('25')
 	const [selectedItemId, setSelectedItemId] = React.useState('')
@@ -350,8 +357,11 @@ export default function PlanningWorkbenchView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Planning Workbench'
-				description='Generate replenishment proposals, evaluate supplier performance, and triage planning exceptions.'
+				title={specProps?.title ?? 'Planning Workbench'}
+				description={
+					specProps?.description ??
+					'Generate replenishment proposals, evaluate supplier performance, and triage planning exceptions.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

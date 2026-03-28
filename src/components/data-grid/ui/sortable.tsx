@@ -3,8 +3,6 @@
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
 
-
-
 import {
 	type Announcements,
 	closestCenter,
@@ -586,14 +584,14 @@ function SortableOverlay(props: SortableOverlayProps) {
 }
 
 export {
-	SortableRoot as Sortable,
 	SortableContent,
-	SortableItem,
-	SortableItemHandle,
-	SortableOverlay,
-	SortableRoot as Root,
 	SortableContent as Content,
+	SortableItem,
 	SortableItem as Item,
+	SortableItemHandle,
 	SortableItemHandle as ItemHandle,
+	SortableOverlay,
 	SortableOverlay as Overlay,
+	SortableRoot as Sortable,
+	SortableRoot as Root,
 }

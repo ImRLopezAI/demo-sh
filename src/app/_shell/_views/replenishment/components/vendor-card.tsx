@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -7,6 +8,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface VendorRecord {
@@ -30,12 +36,15 @@ export function VendorCard({
 	onClose,
 	onCreated,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	recordId: string | null
 	onClose: () => void
 	onCreated?: (id: string) => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = recordId === 'new'
 	const open = recordId !== null
 
@@ -171,9 +180,7 @@ export function VendorCard({
 				items: [
 					{
 						label: 'Create Purchase Order',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/replenishment/purchase-orders'),
 						disabled: vendor?.blocked === true,
 					},
 				],
@@ -183,9 +190,7 @@ export function VendorCard({
 				items: [
 					{
 						label: 'Purchase Orders',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/replenishment/purchase-orders'),
 					},
 				],
 			},
@@ -194,15 +199,13 @@ export function VendorCard({
 				items: [
 					{
 						label: 'Vendor Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/replenishment/purchase-orders'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, vendor?.blocked, reportGroup])
+	}, [isNew, vendor?.blocked, router, reportGroup])
 
 	return (
 		<RecordDialog
@@ -212,8 +215,19 @@ export function VendorCard({
 			}}
 			presentation={presentation}
 			actionGroups={actionGroups}
-			title={isNew ? 'New Vendor' : `Vendor ${vendor?.vendorNo ?? ''}`}
-			description='Manage vendor details, address, and purchasing information.'
+			title={
+				isNew
+					? (specCardProps?.newTitle ?? 'New Vendor')
+					: resolveCardTitle(
+							specCardProps?.title,
+							vendor as unknown as Record<string, unknown> | undefined,
+							`Vendor ${vendor?.vendorNo ?? ''}`,
+						)
+			}
+			description={
+				specCardProps?.description ??
+				'Manage vendor details, address, and purchasing information.'
+			}
 			footer={
 				<>
 					<Button variant='outline' size='sm' onClick={onClose}>
@@ -227,220 +241,240 @@ export function VendorCard({
 		>
 			<Form>
 				{() => (
-					<div className='space-y-8 pt-1'>
-						<FormSection title='General'>
-							<Form.Group className='grid grid-cols-2 gap-4'>
-								<Form.Item>
-									<Form.Label>Vendor No.</Form.Label>
-									<Form.Field
-										name='vendorNo'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input {...field} readOnly autoComplete='off' />
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+					<>
+						{specCardProps?.sections ? (
+							renderSpecSections(Form, specCardProps.sections)
+						) : (
+							<div className='space-y-8 pt-1'>
+								<FormSection title='General'>
+									<Form.Group className='grid grid-cols-2 gap-4'>
+										<Form.Item>
+											<Form.Label>Vendor No.</Form.Label>
+											<Form.Field
+												name='vendorNo'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															readOnly
+															autoComplete='off'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Name</Form.Label>
-									<Form.Field
-										name='name'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													placeholder='Vendor name'
-													autoComplete='organization'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>Name</Form.Label>
+											<Form.Field
+												name='name'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															placeholder='Vendor name'
+															autoComplete='organization'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Contact Name</Form.Label>
-									<Form.Field
-										name='contactName'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													placeholder='Contact person'
-													autoComplete='name'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>Contact Name</Form.Label>
+											<Form.Field
+												name='contactName'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															placeholder='Contact person'
+															autoComplete='name'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Email</Form.Label>
-									<Form.Field
-										name='email'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													type='email'
-													placeholder='vendor@example.com'
-													autoComplete='email'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>Email</Form.Label>
+											<Form.Field
+												name='email'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															type='email'
+															placeholder='vendor@example.com'
+															autoComplete='email'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Phone</Form.Label>
-									<Form.Field
-										name='phone'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													type='tel'
-													placeholder='+1 (555) 000-0000'
-													autoComplete='tel'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>Phone</Form.Label>
+											<Form.Field
+												name='phone'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															type='tel'
+															placeholder='+1 (555) 000-0000'
+															autoComplete='tel'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Blocked</Form.Label>
-									<Form.Field
-										name='blocked'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
-							</Form.Group>
-						</FormSection>
+										<Form.Item>
+											<Form.Label>Blocked</Form.Label>
+											<Form.Field
+												name='blocked'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Switch
+															checked={field.value}
+															onCheckedChange={field.onChange}
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
+									</Form.Group>
+								</FormSection>
 
-						<FormSection title='Address'>
-							<Form.Group className='grid grid-cols-2 gap-4'>
-								<Form.Item className='col-span-2'>
-									<Form.Label>Address</Form.Label>
-									<Form.Field
-										name='address'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													placeholder='Street address'
-													autoComplete='street-address'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+								<FormSection title='Address'>
+									<Form.Group className='grid grid-cols-2 gap-4'>
+										<Form.Item className='col-span-2'>
+											<Form.Label>Address</Form.Label>
+											<Form.Field
+												name='address'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															placeholder='Street address'
+															autoComplete='street-address'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>City</Form.Label>
-									<Form.Field
-										name='city'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													placeholder='City'
-													autoComplete='address-level2'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>City</Form.Label>
+											<Form.Field
+												name='city'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															placeholder='City'
+															autoComplete='address-level2'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Country</Form.Label>
-									<Form.Field
-										name='country'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													placeholder='Country'
-													autoComplete='country-name'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
-							</Form.Group>
-						</FormSection>
+										<Form.Item>
+											<Form.Label>Country</Form.Label>
+											<Form.Field
+												name='country'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															placeholder='Country'
+															autoComplete='country-name'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
+									</Form.Group>
+								</FormSection>
 
-						<FormSection title='Purchasing'>
-							<Form.Group className='grid grid-cols-2 gap-4'>
-								<Form.Item>
-									<Form.Label>Currency</Form.Label>
-									<Form.Field
-										name='currency'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Select
-													value={field.value}
-													onValueChange={field.onChange}
-												>
-													<Form.Select.Trigger className='w-full'>
-														<Form.Select.Value />
-													</Form.Select.Trigger>
-													<Form.Select.Content>
-														<Form.Select.Item value='USD'>USD</Form.Select.Item>
-														<Form.Select.Item value='EUR'>EUR</Form.Select.Item>
-														<Form.Select.Item value='GBP'>GBP</Form.Select.Item>
-														<Form.Select.Item value='MXN'>MXN</Form.Select.Item>
-														<Form.Select.Item value='CAD'>CAD</Form.Select.Item>
-													</Form.Select.Content>
-												</Form.Select>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+								<FormSection title='Purchasing'>
+									<Form.Group className='grid grid-cols-2 gap-4'>
+										<Form.Item>
+											<Form.Label>Currency</Form.Label>
+											<Form.Field
+												name='currency'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Select
+															value={field.value}
+															onValueChange={field.onChange}
+														>
+															<Form.Select.Trigger className='w-full'>
+																<Form.Select.Value />
+															</Form.Select.Trigger>
+															<Form.Select.Content>
+																<Form.Select.Item value='USD'>
+																	USD
+																</Form.Select.Item>
+																<Form.Select.Item value='EUR'>
+																	EUR
+																</Form.Select.Item>
+																<Form.Select.Item value='GBP'>
+																	GBP
+																</Form.Select.Item>
+																<Form.Select.Item value='MXN'>
+																	MXN
+																</Form.Select.Item>
+																<Form.Select.Item value='CAD'>
+																	CAD
+																</Form.Select.Item>
+															</Form.Select.Content>
+														</Form.Select>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Purchase Order Count</Form.Label>
-									<Form.Field
-										name='purchaseOrderCount'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													type='number'
-													readOnly
-													autoComplete='off'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
+										<Form.Item>
+											<Form.Label>Purchase Order Count</Form.Label>
+											<Form.Field
+												name='purchaseOrderCount'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															type='number'
+															readOnly
+															autoComplete='off'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
 
-								<Form.Item>
-									<Form.Label>Total Balance</Form.Label>
-									<Form.Field
-										name='totalBalance'
-										render={({ field }) => (
-											<Form.Control>
-												<Form.Input
-													{...field}
-													type='number'
-													readOnly
-													autoComplete='off'
-												/>
-											</Form.Control>
-										)}
-									/>
-								</Form.Item>
-							</Form.Group>
-						</FormSection>
-					</div>
+										<Form.Item>
+											<Form.Label>Total Balance</Form.Label>
+											<Form.Field
+												name='totalBalance'
+												render={({ field }) => (
+													<Form.Control>
+														<Form.Input
+															{...field}
+															type='number'
+															readOnly
+															autoComplete='off'
+														/>
+													</Form.Control>
+												)}
+											/>
+										</Form.Item>
+									</Form.Group>
+								</FormSection>
+							</div>
+						)}
+					</>
 				)}
 			</Form>
 		</RecordDialog>

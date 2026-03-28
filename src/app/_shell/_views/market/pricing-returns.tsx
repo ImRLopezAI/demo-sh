@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -66,7 +67,11 @@ type PricingLineInput = {
 	discountPercent: number
 }
 
-export default function PricingReturnsView() {
+export default function PricingReturnsView({
+	specProps,
+}: {
+	specProps?: SpecWorkbenchProps
+} = {}) {
 	const queryClient = useQueryClient()
 	const [customerId, setCustomerId] = React.useState('')
 	const [taxJurisdiction, setTaxJurisdiction] = React.useState('US-DEFAULT')
@@ -264,8 +269,11 @@ export default function PricingReturnsView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Pricing, Reservations & Returns'
-				description='Simulate pricing before commit, control reservation aging, and post return credit memos.'
+				title={specProps?.title ?? 'Pricing, Reservations & Returns'}
+				description={
+					specProps?.description ??
+					'Simulate pricing before commit, control reservation aging, and post return credit memos.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
@@ -8,6 +9,10 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
 
@@ -40,11 +45,14 @@ export function SessionCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isOpen = selectedId !== null
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
@@ -114,7 +122,7 @@ export function SessionCard({
 					{
 						label: 'Close Session',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement close action */
 						},
 						disabled: sessionStatus === 'CLOSED',
 						variant: 'destructive',
@@ -122,7 +130,7 @@ export function SessionCard({
 					{
 						label: 'Print Z-Report',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement print action */
 						},
 					},
 				],
@@ -132,15 +140,11 @@ export function SessionCard({
 				items: [
 					{
 						label: 'Terminal',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/pos/terminals'),
 					},
 					{
 						label: 'Cashier',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/payroll/employees'),
 					},
 				],
 			},
@@ -149,15 +153,13 @@ export function SessionCard({
 				items: [
 					{
 						label: 'Transactions',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/pos/transactions'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [selectedId, resolvedRecord?.status, reportGroup])
+	}, [selectedId, resolvedRecord?.status, router, reportGroup])
 
 	return (
 		<RecordDialog
@@ -165,8 +167,14 @@ export function SessionCard({
 			onOpenChange={(open) => !open && onClose()}
 			presentation={presentation}
 			actionGroups={actionGroups}
-			title={`Session ${resolvedRecord?.sessionNo ?? ''}`}
-			description='POS session details and transactions'
+			title={resolveCardTitle(
+				specCardProps?.title,
+				resolvedRecord as any,
+				`Session ${resolvedRecord?.sessionNo ?? ''}`,
+			)}
+			description={
+				specCardProps?.description ?? 'POS session details and transactions'
+			}
 		>
 			{recordLoading ? (
 				<div className='space-y-3'>

@@ -7,6 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -105,6 +106,35 @@ export default function Dashboard() {
 		(location) => location.type === 'DISTRIBUTION_CENTER',
 	).length
 	const openEntries = ledgerEntries.filter((entry) => entry.open).length
+
+	const uniqueItemIds = React.useMemo(
+		() => new Set(ledgerEntries.map((e) => e.itemId)).size,
+		[ledgerEntries],
+	)
+
+	const computedTurnoverRate = totalCost > 0 ? totalSales / totalCost : 0
+
+	const hydrateValues = React.useMemo(
+		() => ({
+			totalSKUs: uniqueItemIds,
+			inventoryValue: totalCost.toLocaleString('en-US', {
+				style: 'currency',
+				currency: 'USD',
+				maximumFractionDigits: 0,
+			}),
+			locationCount: activeLocations,
+			turnoverRate: computedTurnoverRate.toFixed(2),
+			// Turnover is considered improving when the sales-to-cost ratio exceeds 1.0
+			turnoverImproving: computedTurnoverRate > 1.0,
+			// TODO: forecastAccurate requires forecast entity data (e.g., demand forecasts vs actuals) not available in this dashboard scope.
+			// The insight dashboard only fetches itemLedgerEntries, valueEntries, and locations.
+			forecastAccurate: 0,
+			// TODO: forecastTotal requires forecast entity data not available in this dashboard scope.
+			forecastTotal: 0,
+		}),
+		[uniqueItemIds, totalCost, activeLocations, computedTurnoverRate],
+	)
+	useHydrateState('/insight/dashboard', hydrateValues)
 
 	const monthlyMovement = React.useMemo(
 		() => buildMonthlySeries(ledgerEntries, (entry) => entry.postingDate),

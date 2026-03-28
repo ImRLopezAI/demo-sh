@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -6,6 +7,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 interface ShipmentMethod {
@@ -19,11 +25,14 @@ export function ShipmentMethodCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
 
@@ -91,9 +100,7 @@ export function ShipmentMethodCard({
 				items: [
 					{
 						label: 'Shipments Using Method',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/trace/shipments'),
 					},
 				],
 			},
@@ -101,16 +108,14 @@ export function ShipmentMethodCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Active Shipments',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Shipments',
+						onClick: () => router.push('/trace/shipments'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, reportGroup])
+	}, [isNew, router, reportGroup])
 
 	return (
 		<RecordDialog
@@ -120,9 +125,18 @@ export function ShipmentMethodCard({
 			}}
 			presentation={presentation}
 			title={
-				isNew ? 'New Shipment Method' : `Shipment Method ${method?.code ?? ''}`
+				isNew
+					? (specCardProps?.newTitle ?? 'New Shipment Method')
+					: resolveCardTitle(
+							specCardProps?.title,
+							method as any,
+							`Shipment Method ${method?.code ?? ''}`,
+						)
 			}
-			description='Manage shipment method carrier configuration.'
+			description={
+				specCardProps?.description ??
+				'Manage shipment method carrier configuration.'
+			}
 			actionGroups={actionGroups}
 			footer={
 				<>
@@ -149,57 +163,63 @@ export function ShipmentMethodCard({
 			) : (
 				<Form>
 					{() => (
-						<div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-							<Form.Field
-								name='code'
-								rules={{ required: 'Code is required' }}
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>Code</Form.Label>
-										<Form.Control>
-											<Form.Input
-												{...field}
-												placeholder='e.g. EXPRESS'
-												autoComplete='off'
-											/>
-										</Form.Control>
-										<Form.Message />
-									</Form.Item>
-								)}
-							/>
-							<Form.Field
-								name='description'
-								rules={{ required: 'Description is required' }}
-								render={({ field }) => (
-									<Form.Item>
-										<Form.Label>Description</Form.Label>
-										<Form.Control>
-											<Form.Input
-												{...field}
-												placeholder='Carrier and delivery profile'
-												autoComplete='off'
-											/>
-										</Form.Control>
-										<Form.Message />
-									</Form.Item>
-								)}
-							/>
-							<Form.Field
-								name='active'
-								render={({ field }) => (
-									<Form.Item className='flex items-center gap-3 md:col-span-2'>
-										<Form.Label>Active</Form.Label>
-										<Form.Control>
-											<Form.Switch
-												checked={Boolean(field.value)}
-												onCheckedChange={field.onChange}
-											/>
-										</Form.Control>
-										<Form.Message />
-									</Form.Item>
-								)}
-							/>
-						</div>
+						<>
+							{specCardProps?.sections ? (
+								renderSpecSections(Form, specCardProps.sections)
+							) : (
+								<div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+									<Form.Field
+										name='code'
+										rules={{ required: 'Code is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Code</Form.Label>
+												<Form.Control>
+													<Form.Input
+														{...field}
+														placeholder='e.g. EXPRESS'
+														autoComplete='off'
+													/>
+												</Form.Control>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+									<Form.Field
+										name='description'
+										rules={{ required: 'Description is required' }}
+										render={({ field }) => (
+											<Form.Item>
+												<Form.Label>Description</Form.Label>
+												<Form.Control>
+													<Form.Input
+														{...field}
+														placeholder='Carrier and delivery profile'
+														autoComplete='off'
+													/>
+												</Form.Control>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+									<Form.Field
+										name='active'
+										render={({ field }) => (
+											<Form.Item className='flex items-center gap-3 md:col-span-2'>
+												<Form.Label>Active</Form.Label>
+												<Form.Control>
+													<Form.Switch
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+												</Form.Control>
+												<Form.Message />
+											</Form.Item>
+										)}
+									/>
+								</div>
+							)}
+						</>
 					)}
 				</Form>
 			)}

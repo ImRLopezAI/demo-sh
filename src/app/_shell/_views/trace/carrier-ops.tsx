@@ -24,6 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 type Shipment = {
@@ -83,7 +84,13 @@ const DEFAULT_TEMPLATE: CustomerCommsTemplate = {
 		'Shipment {{shipmentNo}} encountered a delay. Our support team is on it.',
 }
 
-export default function CarrierOpsView() {
+interface CarrierOpsViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function CarrierOpsView({
+	specProps,
+}: CarrierOpsViewProps = {}) {
 	const queryClient = useQueryClient()
 	const windowSize = useWindowSize({ defaultWidth: 1280, defaultHeight: 900 })
 
@@ -333,8 +340,13 @@ export default function CarrierOpsView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Carrier Operations & Customer Communications'
-				description='Quote/purchase labels, ingest carrier events with dedupe, and operate customer communication templates with timeline triage.'
+				title={
+					specProps?.title ?? 'Carrier Operations & Customer Communications'
+				}
+				description={
+					specProps?.description ??
+					'Quote/purchase labels, ingest carrier events with dedupe, and operate customer communication templates with timeline triage.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-3'>

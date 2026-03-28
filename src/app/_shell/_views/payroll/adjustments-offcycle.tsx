@@ -28,6 +28,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -84,7 +85,13 @@ const kindDescriptor: Record<RunKind, string> = {
 	RETRO: 'Retroactive correction run',
 }
 
-export default function AdjustmentsOffcycleView() {
+interface AdjustmentsOffcycleViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function AdjustmentsOffcycleView({
+	specProps,
+}: AdjustmentsOffcycleViewProps = {}) {
 	const queryClient = useQueryClient()
 	const windowSize = useWindowSize({ defaultWidth: 1280, defaultHeight: 900 })
 
@@ -346,8 +353,11 @@ export default function AdjustmentsOffcycleView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Adjustments & Off-cycle Operations'
-				description='Build retro/off-cycle payroll runs, apply controlled corrections, and publish statutory artifacts.'
+				title={specProps?.title ?? 'Adjustments & Off-cycle Operations'}
+				description={
+					specProps?.description ??
+					'Build retro/off-cycle payroll runs, apply controlled corrections, and publish statutory artifacts.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-3'>

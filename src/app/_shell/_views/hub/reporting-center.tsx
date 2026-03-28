@@ -1,10 +1,17 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { DesignerIntegration } from './reporting/designer-integration'
 import { LayoutManager } from './reporting/layout-manager'
 import { TemplateGallery } from './reporting/template-gallery'
 import { useReportBuilder } from './reporting/use-report-builder'
 
-export default function ReportingCenter() {
+interface ReportingCenterProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function ReportingCenter({
+	specProps: _specProps,
+}: ReportingCenterProps = {}) {
 	const builder = useReportBuilder()
 
 	return (

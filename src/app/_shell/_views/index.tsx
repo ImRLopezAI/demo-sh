@@ -8,17 +8,15 @@ import {
 	CreditCard,
 	FileText,
 	GitBranch,
-	Github,
 	Landmark,
 	LayoutDashboard,
 	LineChart,
-	Linkedin,
+	Link2,
 	Package,
 	Scan,
 	ShoppingCart,
 	TrendingUp,
 	Truck,
-	Twitter,
 	Users,
 	Wallet,
 	Zap,
@@ -594,7 +592,7 @@ function Footer() {
 					&copy; 2026 Uplink Inc. All rights reserved.
 				</span>
 				<div className='flex items-center gap-5'>
-					{[Twitter, Github, Linkedin].map((Icon, i) => (
+					{[Zap, GitBranch, Link2].map((Icon, i) => (
 						<a
 							key={i}
 							href='/#'

@@ -28,6 +28,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import {
 	average,
@@ -389,6 +390,66 @@ export default function Dashboard() {
 	const recentNotifications = React.useMemo(
 		() => notifications.slice(0, 5),
 		[notifications],
+	)
+
+	/* ── Hydrate json-render state for spec-driven KPIs ── */
+	const openTasks = tasks.filter((t) => t.status === 'OPEN').length
+	const inProgressTasks = tasks.filter((t) => t.status === 'IN_PROGRESS').length
+	const doneTasks = tasks.filter((t) => t.status === 'DONE').length
+	const moduleSet = new Set(tasks.map((t) => t.moduleId).filter(Boolean))
+
+	const notificationsBySeverity = React.useMemo(() => {
+		const severity: Record<string, number> = {
+			critical: 0,
+			warning: 0,
+			info: 0,
+			resolved: 0,
+		}
+		for (const n of notifications) {
+			if (n.severity === 'ERROR') severity.critical++
+			else if (n.severity === 'WARNING') severity.warning++
+			else severity.info++
+			if (n.status === 'ARCHIVED') severity.resolved++
+		}
+		return severity
+	}, [notifications])
+
+	useHydrateState(
+		'/hub/dashboard',
+		React.useMemo(
+			() => ({
+				lastRefresh: new Date().toLocaleTimeString(),
+				openTasks,
+				tasksDelta: '+0',
+				slaOnTime: slaScoreboard
+					? slaScoreboard.summary.openTasks -
+						slaScoreboard.summary.breachedTasks
+					: 0,
+				slaTotal: slaScoreboard?.summary.openTasks ?? 0,
+				activeModules: moduleSet.size,
+				unreadAlerts: unreadNotifications,
+				criticalAlerts: errorNotifications,
+				'tasksByStatus/open': openTasks,
+				'tasksByStatus/inProgress': inProgressTasks,
+				'tasksByStatus/blocked': blockedTasks,
+				'tasksByStatus/done': doneTasks,
+				'alertsBySeverity/critical': notificationsBySeverity.critical,
+				'alertsBySeverity/warning': notificationsBySeverity.warning,
+				'alertsBySeverity/info': notificationsBySeverity.info,
+				'alertsBySeverity/resolved': notificationsBySeverity.resolved,
+			}),
+			[
+				openTasks,
+				inProgressTasks,
+				blockedTasks,
+				doneTasks,
+				unreadNotifications,
+				errorNotifications,
+				moduleSet.size,
+				slaScoreboard,
+				notificationsBySeverity,
+			],
+		),
 	)
 
 	const isLoading = tasksLoading || notificationsLoading

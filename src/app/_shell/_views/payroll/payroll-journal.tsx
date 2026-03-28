@@ -6,6 +6,7 @@ import { useWindowSize } from '@/components/data-grid/hooks/use-window-size'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
 
@@ -59,7 +60,13 @@ interface RunExecutionResult {
 	netAmount: number
 }
 
-export default function PayrollJournal() {
+interface PayrollJournalProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function PayrollJournal({
+	specProps,
+}: PayrollJournalProps = {}) {
 	const windowSize = useWindowSize({ defaultHeight: 900, defaultWidth: 1280 })
 	const queryClient = useQueryClient()
 	const [runResult, setRunResult] = React.useState<RunExecutionResult | null>(
@@ -187,8 +194,11 @@ export default function PayrollJournal() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Payroll Journal'
-				description='Review payroll journal entries and execute payroll cycles.'
+				title={specProps?.title ?? 'Payroll Journal'}
+				description={
+					specProps?.description ??
+					'Review payroll journal entries and execute payroll cycles.'
+				}
 				actions={
 					<div className='flex flex-wrap items-center gap-2'>
 						<Button

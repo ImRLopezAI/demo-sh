@@ -9,6 +9,12 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { CustomerCard } from './components/customer-card'
 
@@ -26,9 +32,14 @@ interface Customer {
 	totalBalance: number
 }
 
-export default function CustomersList() {
+interface CustomersListProps {
+	specProps?: SpecListProps
+}
+
+export default function CustomersList({ specProps }: CustomersListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'market', Customer>(
 		'market',
@@ -78,6 +89,7 @@ export default function CustomersList() {
 				<CustomerCard
 					selectedId={selectedId}
 					onClose={close}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -87,17 +99,22 @@ export default function CustomersList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Customers'
-				description='Customer profiles, contacts, and order history'
+				title={specProps?.title ?? 'Customers'}
+				description={
+					specProps?.description ??
+					'Customer profiles, contacts, and order history'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Customer
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Customer'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -111,32 +128,42 @@ export default function CustomersList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='customerNo'
-							title='Customer No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column accessorKey='name' title='Name' />
-						<DataGrid.Column accessorKey='email' title='Email' />
-						<DataGrid.Column accessorKey='phone' title='Phone' />
-						<DataGrid.Column accessorKey='city' title='City' />
-						<DataGrid.Column accessorKey='country' title='Country' />
-						<DataGrid.Column
-							accessorKey='blocked'
-							title='Blocked'
-							cellVariant='checkbox'
-						/>
-						<DataGrid.Column
-							accessorKey='orderCount'
-							title='Orders'
-							cellVariant='number'
-						/>
-						<DataGrid.Column
-							accessorKey='totalBalance'
-							title='Balance'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalBalance)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Customer>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='customerNo'
+									title='Customer No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column accessorKey='name' title='Name' />
+								<DataGrid.Column accessorKey='email' title='Email' />
+								<DataGrid.Column accessorKey='phone' title='Phone' />
+								<DataGrid.Column accessorKey='city' title='City' />
+								<DataGrid.Column accessorKey='country' title='Country' />
+								<DataGrid.Column
+									accessorKey='blocked'
+									title='Blocked'
+									cellVariant='checkbox'
+								/>
+								<DataGrid.Column
+									accessorKey='orderCount'
+									title='Orders'
+									cellVariant='number'
+								/>
+								<DataGrid.Column
+									accessorKey='totalBalance'
+									title='Balance'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalBalance)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -161,7 +188,13 @@ export default function CustomersList() {
 								const someBlocked = records.some((r) => r.blocked)
 
 								return (
-									<>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={() => {}}
+										isBusy={isBusy}
+									>
 										<DataGrid.ActionBar.Item
 											disabled={!hasSelection || isBusy || !someNotBlocked}
 											onClick={() => {
@@ -187,7 +220,7 @@ export default function CustomersList() {
 											entityId='customers'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>

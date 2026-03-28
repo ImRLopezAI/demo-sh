@@ -7,6 +7,7 @@ import {
 	SALES_INVOICE_TRANSITIONS,
 	type SalesInvoiceStatus,
 } from '@server/db/constants'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useTransitionWithReason } from '../../_shared/transition-reason'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
@@ -25,6 +31,7 @@ interface InvoiceCardProps {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }
 
 interface InvoiceFormValues {
@@ -63,7 +70,9 @@ export function InvoiceCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: InvoiceCardProps) {
+	const router = useRouter()
 	const isNew = selectedId === 'new'
 	const open = selectedId !== null
 
@@ -371,14 +380,14 @@ export function InvoiceCard({
 					{
 						label: 'Post Invoice',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement post action */
 						},
 						disabled: currentStatus !== 'DRAFT',
 					},
 					{
 						label: 'Print',
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement print action */
 						},
 					},
 				],
@@ -387,17 +396,13 @@ export function InvoiceCard({
 				label: 'Related',
 				items: [
 					{
-						label: 'Customer Card',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Customer',
+						onClick: () => router.push('/market/customers'),
 						disabled: !invoice?.customerId,
 					},
 					{
-						label: 'Invoice Lines',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Customer Ledger',
+						onClick: () => router.push('/ledger/customer-ledger'),
 					},
 				],
 			},
@@ -406,22 +411,18 @@ export function InvoiceCard({
 				items: [
 					{
 						label: 'Customer Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/ledger/customer-ledger'),
 						disabled: !invoice?.customerId,
 					},
 					{
 						label: 'G/L Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/ledger/gl-entries'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, currentStatus, invoice?.customerId, reportGroup])
+	}, [isNew, currentStatus, invoice?.customerId, router, reportGroup])
 
 	return (
 		<>
@@ -432,11 +433,20 @@ export function InvoiceCard({
 				}}
 				presentation={presentation}
 				actionGroups={actionGroups}
-				title={isNew ? 'New Invoice' : `Invoice ${invoice?.invoiceNo ?? ''}`}
-				description={
+				title={
 					isNew
+						? (specCardProps?.newTitle ?? 'New Invoice')
+						: resolveCardTitle(
+								specCardProps?.title,
+								invoice as any,
+								`Invoice ${invoice?.invoiceNo ?? ''}`,
+							)
+				}
+				description={
+					specCardProps?.description ??
+					(isNew
 						? 'Create a new sales invoice.'
-						: 'View and edit invoice details.'
+						: 'View and edit invoice details.')
 				}
 				footer={
 					<>
@@ -499,207 +509,215 @@ export function InvoiceCard({
 					<Form>
 						{() => (
 							<div className='space-y-8 pt-2'>
-								<FormSection title='Header'>
-									<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-										{!isNew && (
+								{specCardProps?.sections ? (
+									renderSpecSections(Form, specCardProps.sections)
+								) : (
+									<FormSection title='Header'>
+										<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+											{!isNew && (
+												<Form.Field
+													name='invoiceNo'
+													render={({ field }) => (
+														<Form.Item>
+															<Form.Label>Invoice No.</Form.Label>
+															<Form.Control
+																render={
+																	<Form.Input
+																		{...field}
+																		readOnly
+																		className='bg-muted/50'
+																		autoComplete='off'
+																	/>
+																}
+															/>
+														</Form.Item>
+													)}
+												/>
+											)}
+
+											{!isNew && (
+												<Form.Item>
+													<Form.Label>Status</Form.Label>
+													<Form.Select
+														value={currentStatus}
+														onValueChange={(toStatus) => {
+															if (toStatus && toStatus !== currentStatus) {
+																void requestTransition(toStatus)
+															}
+														}}
+														disabled={statusOptions.length === 0}
+													>
+														<Form.Select.Trigger className='w-full bg-background/50'>
+															<Form.Select.Value
+																placeholder={
+																	SALES_INVOICE_STATUS_LABELS[
+																		currentStatus as SalesInvoiceStatus
+																	] ?? currentStatus
+																}
+															/>
+														</Form.Select.Trigger>
+														<Form.Select.Content>
+															<Form.Select.Item value={currentStatus}>
+																{SALES_INVOICE_STATUS_LABELS[
+																	currentStatus as SalesInvoiceStatus
+																] ?? currentStatus}
+															</Form.Select.Item>
+															{statusOptions.map((opt) => (
+																<Form.Select.Item key={opt.to} value={opt.to}>
+																	{opt.label}
+																</Form.Select.Item>
+															))}
+														</Form.Select.Content>
+													</Form.Select>
+												</Form.Item>
+											)}
+											{!isNew && (
+												<Form.Item>
+													<Form.Label>E-Invoice Status</Form.Label>
+													<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3 text-sm'>
+														{E_INVOICE_STATUS_LABELS[
+															currentEInvoiceStatus as EInvoiceStatus
+														] ?? currentEInvoiceStatus}
+													</div>
+												</Form.Item>
+											)}
+
 											<Form.Field
-												name='invoiceNo'
+												name='customerId'
+												rules={{ required: 'Customer is required' }}
 												render={({ field }) => (
 													<Form.Item>
-														<Form.Label>Invoice No.</Form.Label>
+														<Form.Label>Customer</Form.Label>
+														<Form.Control>
+															<Form.Combo
+																value={field.value as string}
+																onValueChange={field.onChange}
+																itemToStringLabel={(id: string) => {
+																	const c = (customersList?.items ?? []).find(
+																		(item: Record<string, unknown>) =>
+																			item._id === id,
+																	) as Record<string, unknown> | undefined
+																	return c
+																		? `${c.customerNo as string} - ${c.name as string}`
+																		: id
+																}}
+															>
+																<Form.Combo.Input
+																	showClear
+																	placeholder='Search customers...'
+																	className='bg-background/50'
+																/>
+																<Form.Combo.Content>
+																	<Form.Combo.List>
+																		{(customersList?.items ?? []).map(
+																			(c: Record<string, unknown>) => (
+																				<Form.Combo.Item
+																					key={c._id as string}
+																					value={c._id as string}
+																				>
+																					{c.customerNo as string} -{' '}
+																					{c.name as string}
+																				</Form.Combo.Item>
+																			),
+																		)}
+																		<Form.Combo.Empty>
+																			No customers found
+																		</Form.Combo.Empty>
+																	</Form.Combo.List>
+																</Form.Combo.Content>
+															</Form.Combo>
+														</Form.Control>
+														<Form.Message />
+													</Form.Item>
+												)}
+											/>
+
+											<Form.Field
+												name='salesOrderNo'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Sales Order No.</Form.Label>
 														<Form.Control
 															render={
 																<Form.Input
 																	{...field}
-																	readOnly
-																	className='bg-muted/50'
+																	placeholder='Sales order reference...'
 																	autoComplete='off'
+																	className='bg-background/50'
 																/>
 															}
 														/>
 													</Form.Item>
 												)}
 											/>
-										)}
 
-										{!isNew && (
-											<Form.Item>
-												<Form.Label>Status</Form.Label>
-												<Form.Select
-													value={currentStatus}
-													onValueChange={(toStatus) => {
-														if (toStatus && toStatus !== currentStatus) {
-															void requestTransition(toStatus)
-														}
-													}}
-													disabled={statusOptions.length === 0}
-												>
-													<Form.Select.Trigger className='w-full bg-background/50'>
-														<Form.Select.Value
-															placeholder={
-																SALES_INVOICE_STATUS_LABELS[
-																	currentStatus as SalesInvoiceStatus
-																] ?? currentStatus
+											<Form.Field
+												name='postingDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Posting Date</Form.Label>
+														<Form.Control
+															render={
+																<Form.DatePicker
+																	value={field.value}
+																	onValueChange={(date) =>
+																		field.onChange(
+																			date ? date.toISOString() : '',
+																		)
+																	}
+																	placeholder='Select posting date...'
+																	className='bg-background/50'
+																/>
 															}
 														/>
-													</Form.Select.Trigger>
-													<Form.Select.Content>
-														<Form.Select.Item value={currentStatus}>
-															{SALES_INVOICE_STATUS_LABELS[
-																currentStatus as SalesInvoiceStatus
-															] ?? currentStatus}
-														</Form.Select.Item>
-														{statusOptions.map((opt) => (
-															<Form.Select.Item key={opt.to} value={opt.to}>
-																{opt.label}
-															</Form.Select.Item>
-														))}
-													</Form.Select.Content>
-												</Form.Select>
-											</Form.Item>
-										)}
-										{!isNew && (
-											<Form.Item>
-												<Form.Label>E-Invoice Status</Form.Label>
-												<div className='flex h-10 items-center rounded-md border border-border/50 bg-background/30 px-3 text-sm'>
-													{E_INVOICE_STATUS_LABELS[
-														currentEInvoiceStatus as EInvoiceStatus
-													] ?? currentEInvoiceStatus}
-												</div>
-											</Form.Item>
-										)}
+													</Form.Item>
+												)}
+											/>
 
-										<Form.Field
-											name='customerId'
-											rules={{ required: 'Customer is required' }}
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Customer</Form.Label>
-													<Form.Control>
-														<Form.Combo
-															value={field.value as string}
-															onValueChange={field.onChange}
-															itemToStringLabel={(id: string) => {
-																const c = (customersList?.items ?? []).find(
-																	(item: Record<string, unknown>) =>
-																		item._id === id,
-																) as Record<string, unknown> | undefined
-																return c
-																	? `${c.customerNo as string} - ${c.name as string}`
-																	: id
-															}}
-														>
-															<Form.Combo.Input
-																showClear
-																placeholder='Search customers...'
-																className='bg-background/50'
-															/>
-															<Form.Combo.Content>
-																<Form.Combo.List>
-																	{(customersList?.items ?? []).map(
-																		(c: Record<string, unknown>) => (
-																			<Form.Combo.Item
-																				key={c._id as string}
-																				value={c._id as string}
-																			>
-																				{c.customerNo as string} -{' '}
-																				{c.name as string}
-																			</Form.Combo.Item>
-																		),
-																	)}
-																	<Form.Combo.Empty>
-																		No customers found
-																	</Form.Combo.Empty>
-																</Form.Combo.List>
-															</Form.Combo.Content>
-														</Form.Combo>
-													</Form.Control>
-													<Form.Message />
-												</Form.Item>
-											)}
-										/>
+											<Form.Field
+												name='dueDate'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Due Date</Form.Label>
+														<Form.Control
+															render={
+																<Form.DatePicker
+																	value={field.value}
+																	onValueChange={(date) =>
+																		field.onChange(
+																			date ? date.toISOString() : '',
+																		)
+																	}
+																	placeholder='Select due date...'
+																	className='bg-background/50'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
 
-										<Form.Field
-											name='salesOrderNo'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Sales Order No.</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='Sales order reference...'
-																autoComplete='off'
-																className='bg-background/50'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='postingDate'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Posting Date</Form.Label>
-													<Form.Control
-														render={
-															<Form.DatePicker
-																value={field.value}
-																onValueChange={(date) =>
-																	field.onChange(date ? date.toISOString() : '')
-																}
-																placeholder='Select posting date...'
-																className='bg-background/50'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='dueDate'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Due Date</Form.Label>
-													<Form.Control
-														render={
-															<Form.DatePicker
-																value={field.value}
-																onValueChange={(date) =>
-																	field.onChange(date ? date.toISOString() : '')
-																}
-																placeholder='Select due date...'
-																className='bg-background/50'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-
-										<Form.Field
-											name='currency'
-											render={({ field }) => (
-												<Form.Item>
-													<Form.Label>Currency</Form.Label>
-													<Form.Control
-														render={
-															<Form.Input
-																{...field}
-																placeholder='USD...'
-																autoComplete='off'
-																className='bg-background/50'
-															/>
-														}
-													/>
-												</Form.Item>
-											)}
-										/>
-									</div>
-								</FormSection>
+											<Form.Field
+												name='currency'
+												render={({ field }) => (
+													<Form.Item>
+														<Form.Label>Currency</Form.Label>
+														<Form.Control
+															render={
+																<Form.Input
+																	{...field}
+																	placeholder='USD...'
+																	autoComplete='off'
+																	className='bg-background/50'
+																/>
+															}
+														/>
+													</Form.Item>
+												)}
+											/>
+										</div>
+									</FormSection>
+								)}
 
 								{(isNew || invoice) && (
 									<FormSection title='Lines'>

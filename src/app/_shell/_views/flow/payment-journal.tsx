@@ -6,6 +6,7 @@ import { useWindowSize } from '@/components/data-grid/hooks/use-window-size'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface GenJournalLine {
@@ -49,7 +50,13 @@ interface JournalBatchResult {
 	postedAt: string
 }
 
-export default function PaymentJournal() {
+interface PaymentJournalProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function PaymentJournal({
+	specProps,
+}: PaymentJournalProps = {}) {
 	const windowSize = useWindowSize({ defaultHeight: 900, defaultWidth: 1280 })
 	const queryClient = useQueryClient()
 	const [batchResult, setBatchResult] =
@@ -106,8 +113,11 @@ export default function PaymentJournal() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Payment Journal'
-				description='Create and manage payment journal entries for posting.'
+				title={specProps?.title ?? 'Payment Journal'}
+				description={
+					specProps?.description ??
+					'Create and manage payment journal entries for posting.'
+				}
 				actions={
 					<Button
 						size='sm'

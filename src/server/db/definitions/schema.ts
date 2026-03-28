@@ -67,7 +67,7 @@ import {
 } from './types'
 
 // Re-export for backward compatibility
-export { FIELD_TYPES, flowField, type FieldType }
+export { FIELD_TYPES, type FieldType, flowField }
 
 // ============================================================================
 // Callback-based defineSchema (Type-Safe Relations)

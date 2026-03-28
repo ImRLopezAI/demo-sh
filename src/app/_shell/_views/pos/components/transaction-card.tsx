@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useGrid } from '@/components/data-grid/compound'
 import { useCreateForm } from '@/components/ui/form'
@@ -7,6 +8,10 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { StatusBadge } from '../../_shared/status-badge'
 import { useEntityRecord } from '../../_shared/use-entity'
 
@@ -41,11 +46,14 @@ export function TransactionCard({
 	selectedId,
 	onClose,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	selectedId: string | null
 	onClose: () => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isOpen = selectedId !== null
 
 	const { data: record, isLoading: recordLoading } = useEntityRecord(
@@ -116,14 +124,14 @@ export function TransactionCard({
 						variant: 'destructive',
 						disabled: isTerminal,
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement void action */
 						},
 					},
 					{
 						label: 'Issue Refund',
 						disabled: isTerminal,
 						onClick: () => {
-							/* TODO: implement navigation */
+							/* TODO: implement refund action */
 						},
 					},
 				],
@@ -133,16 +141,12 @@ export function TransactionCard({
 				items: [
 					{
 						label: 'Session',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/pos/sessions'),
 					},
 					{
 						label: 'Customer',
 						disabled: !resolvedRecord?.customerId,
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/market/customers'),
 					},
 				],
 			},
@@ -150,30 +154,32 @@ export function TransactionCard({
 				label: 'Navigate',
 				items: [
 					{
-						label: 'Receipt Details',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Terminal',
+						onClick: () => router.push('/pos/terminals'),
 					},
 					{
-						label: 'Payment History',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						label: 'Transactions',
+						onClick: () => router.push('/pos/transactions'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [selectedId, isTerminal, resolvedRecord?.customerId, reportGroup])
+	}, [selectedId, isTerminal, resolvedRecord?.customerId, router, reportGroup])
 
 	return (
 		<RecordDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && onClose()}
 			presentation={presentation}
-			title={`Transaction ${resolvedRecord?.receiptNo ?? ''}`}
-			description='POS transaction details and line items'
+			title={resolveCardTitle(
+				specCardProps?.title,
+				resolvedRecord as any,
+				`Transaction ${resolvedRecord?.receiptNo ?? ''}`,
+			)}
+			description={
+				specCardProps?.description ?? 'POS transaction details and line items'
+			}
 			actionGroups={actionGroups}
 		>
 			{recordLoading ? (

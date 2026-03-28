@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 type OrderFulfillmentStep = {
@@ -85,7 +86,13 @@ const MODULE_OPTIONS = [
 
 const SETTING_KEY = 'sla_policy'
 
-export default function OrderFulfillmentView() {
+interface OrderFulfillmentViewProps {
+	specProps?: SpecWorkbenchProps
+}
+
+export default function OrderFulfillmentView({
+	specProps,
+}: OrderFulfillmentViewProps = {}) {
 	const queryClient = useQueryClient()
 	const [orderId, setOrderId] = React.useState('')
 	const [workflowId, setWorkflowId] = React.useState('')
@@ -303,8 +310,11 @@ export default function OrderFulfillmentView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Order Fulfillment Control Room'
-				description='Start, resume, and inspect cross-module fulfillment runs with SLA policy controls.'
+				title={specProps?.title ?? 'Order Fulfillment Control Room'}
+				description={
+					specProps?.description ??
+					'Start, resume, and inspect cross-module fulfillment runs with SLA policy controls.'
+				}
 			/>
 
 			<div className='grid gap-6 lg:grid-cols-2'>

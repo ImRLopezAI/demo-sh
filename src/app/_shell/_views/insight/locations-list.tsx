@@ -9,6 +9,11 @@ import {
 	resolveSelectedIds,
 	resolveSelectedRecords,
 } from '../_shared/resolve-selected-ids'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
+import {
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { useRecordSearchState } from '../_shared/use-record-search-state'
 import { LocationCard } from './components/location-card'
 
@@ -24,9 +29,14 @@ interface Location {
 	itemCount: number
 }
 
-export default function LocationsList() {
+interface LocationsListProps {
+	specProps?: SpecListProps
+}
+
+export default function LocationsList({ specProps }: LocationsListProps = {}) {
 	const { close, openCreate, openDetail, selectedId } = useRecordSearchState()
 	const queryClient = useQueryClient()
+	const specCardProps = extractSpecCardProps(specProps)
 
 	const { DataGrid, windowSize } = useModuleData<'insight', Location>(
 		'insight',
@@ -64,6 +74,7 @@ export default function LocationsList() {
 					onOpenChange={(open) => {
 						if (!open) close()
 					}}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -73,17 +84,22 @@ export default function LocationsList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Locations'
-				description='Manage warehouse, store, and distribution center locations.'
+				title={specProps?.title ?? 'Locations'}
+				description={
+					specProps?.description ??
+					'Manage warehouse, store, and distribution center locations.'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={openCreate}
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Location
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={openCreate}
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Location'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -98,40 +114,50 @@ export default function LocationsList() {
 					</DataGrid.Header>
 
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='code'
-							title='Code'
-							handleEdit={(row) => openDetail(row._id)}
-						/>
-						<DataGrid.Column accessorKey='name' title='Name' />
-						<DataGrid.Column
-							accessorKey='type'
-							title='Type'
-							cellVariant='select'
-							opts={{
-								options: [
-									{ label: 'Warehouse', value: 'WAREHOUSE' },
-									{ label: 'Store', value: 'STORE' },
-									{
-										label: 'Distribution Center',
-										value: 'DISTRIBUTION_CENTER',
-									},
-								],
-							}}
-						/>
-						<DataGrid.Column accessorKey='address' title='Address' />
-						<DataGrid.Column accessorKey='city' title='City' />
-						<DataGrid.Column accessorKey='country' title='Country' />
-						<DataGrid.Column
-							accessorKey='active'
-							title='Active'
-							cellVariant='checkbox'
-						/>
-						<DataGrid.Column
-							accessorKey='itemCount'
-							title='Item Count'
-							cellVariant='number'
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Location>(
+								DataGrid.Column,
+								specProps.columns,
+								(row) => openDetail(row._id),
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='code'
+									title='Code'
+									handleEdit={(row) => openDetail(row._id)}
+								/>
+								<DataGrid.Column accessorKey='name' title='Name' />
+								<DataGrid.Column
+									accessorKey='type'
+									title='Type'
+									cellVariant='select'
+									opts={{
+										options: [
+											{ label: 'Warehouse', value: 'WAREHOUSE' },
+											{ label: 'Store', value: 'STORE' },
+											{
+												label: 'Distribution Center',
+												value: 'DISTRIBUTION_CENTER',
+											},
+										],
+									}}
+								/>
+								<DataGrid.Column accessorKey='address' title='Address' />
+								<DataGrid.Column accessorKey='city' title='City' />
+								<DataGrid.Column accessorKey='country' title='Country' />
+								<DataGrid.Column
+									accessorKey='active'
+									title='Active'
+									cellVariant='checkbox'
+								/>
+								<DataGrid.Column
+									accessorKey='itemCount'
+									title='Item Count'
+									cellVariant='number'
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>

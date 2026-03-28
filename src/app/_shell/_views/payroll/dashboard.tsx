@@ -7,6 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -107,6 +108,51 @@ export default function PayrollDashboard() {
 		},
 		{},
 	)
+
+	// Compute next payroll run date as the 1st of next month (standard monthly payroll cycle)
+	const nextRunDateValue = React.useMemo(() => {
+		const now = new Date()
+		const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+		return nextMonth.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		})
+	}, [])
+
+	const hydrateValues = React.useMemo(
+		() => ({
+			activeEmployees,
+			monthlyPayroll: totalOutstanding,
+			// TODO: payrollDelta requires historical payroll run data (previous month totals) to compute month-over-month comparison.
+			// The payroll dashboard currently only fetches employees; a payroll runs/history entity query is needed.
+			payrollDelta: 0,
+			headcount: totalEmployees,
+			newHires: employees.filter((e) => {
+				if (!e.hireDate) return false
+				const now = new Date()
+				const hire = new Date(e.hireDate)
+				return (
+					hire.getMonth() === now.getMonth() &&
+					hire.getFullYear() === now.getFullYear()
+				)
+			}).length,
+			avgSalary,
+			nextRunDate: nextRunDateValue,
+			// TODO: pendingAdjustments requires a payroll adjustments entity query not available in this dashboard scope.
+			// This would track salary changes, bonus entries, or deduction modifications awaiting processing.
+			pendingAdjustments: 0,
+		}),
+		[
+			activeEmployees,
+			totalOutstanding,
+			totalEmployees,
+			employees,
+			avgSalary,
+			nextRunDateValue,
+		],
+	)
+	useHydrateState('/payroll/dashboard', hydrateValues)
 
 	const monthlyHiringTrend = React.useMemo(
 		() => buildMonthlySeries(employees, (employee) => employee.hireDate),

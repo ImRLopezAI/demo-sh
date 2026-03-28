@@ -20,8 +20,13 @@ import {
 } from '@/components/ui/select'
 import { useModuleData, useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { useEntityMutations } from '../_shared/use-entity'
+
+interface CollectionsComplianceViewProps {
+	specProps?: SpecWorkbenchProps
+}
 
 type Customer = { _id: string; name?: string }
 type Item = { _id: string; itemNo?: string; description?: string }
@@ -76,7 +81,9 @@ type CustomerLedgerEntry = {
 	currency: string
 }
 
-export default function CollectionsComplianceView() {
+export default function CollectionsComplianceView({
+	specProps,
+}: CollectionsComplianceViewProps = {}) {
 	const queryClient = useQueryClient()
 	const [customerId, setCustomerId] = React.useState('')
 	const [invoiceNo, setInvoiceNo] = React.useState('')
@@ -228,8 +235,11 @@ export default function CollectionsComplianceView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Collections & Compliance Operations'
-				description='Manage credit memo lifecycle, e-invoice queue outcomes, and receivables follow-up workflows.'
+				title={specProps?.title ?? 'Collections & Compliance Operations'}
+				description={
+					specProps?.description ??
+					'Manage credit memo lifecycle, e-invoice queue outcomes, and receivables follow-up workflows.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

@@ -1,14 +1,17 @@
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
-import { ShoppingCart, XCircle } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
+import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
 import {
-	resolveSelectedIds,
-	resolveSelectedRecords,
-} from '../_shared/resolve-selected-ids'
+	renderSpecColumns,
+	type SpecListProps,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 interface Cart {
@@ -21,32 +24,48 @@ interface Cart {
 	totalAmount: number
 }
 
-export default function CartsList() {
-	const { DataGrid, windowSize } = useModuleData<'market', Cart>(
-		'market',
-		'carts',
-		'all',
-	)
+interface CartsListProps {
+	specProps?: SpecListProps
+}
+
+export default function CartsList({ specProps }: CartsListProps = {}) {
+	const {
+		DataGrid,
+		windowSize,
+		items: cartItems,
+	} = useModuleData<'market', Cart>('market', 'carts', 'all')
 	const queryClient = useQueryClient()
-	const [activeCheckoutId, setActiveCheckoutId] = React.useState<string | null>(
-		null,
+
+	// ── Hydrate abandonedCount for the spec alert banner visibility ──
+	const abandonedCount = React.useMemo(
+		() => cartItems.filter((c) => c.status === 'ABANDONED').length,
+		[cartItems],
 	)
+
+	useHydrateState(
+		'/market/carts',
+		React.useMemo(() => ({ abandonedCount }), [abandonedCount]),
+	)
+
+	// ── Mutations ──
+	const invalidate = React.useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.market.carts.key(),
+		})
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.market.cartLines.key(),
+		})
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.market.salesOrders.key(),
+		})
+		void queryClient.invalidateQueries({
+			queryKey: $rpc.market.salesLines.key(),
+		})
+	}, [queryClient])
+
 	const checkoutCart = useMutation({
 		...$rpc.market.carts.checkout.mutationOptions({
-			onSuccess: () => {
-				queryClient.invalidateQueries({
-					queryKey: $rpc.market.carts.key(),
-				})
-				queryClient.invalidateQueries({
-					queryKey: $rpc.market.cartLines.key(),
-				})
-				queryClient.invalidateQueries({
-					queryKey: $rpc.market.salesOrders.key(),
-				})
-				queryClient.invalidateQueries({
-					queryKey: $rpc.market.salesLines.key(),
-				})
-			},
+			onSuccess: invalidate,
 		}),
 	})
 
@@ -60,38 +79,41 @@ export default function CartsList() {
 		}),
 	})
 
-	const handleCheckout = async (cartId: string) => {
-		setActiveCheckoutId(cartId)
-		try {
-			await checkoutCart.mutateAsync({ cartId })
-		} finally {
-			setActiveCheckoutId(null)
-		}
-	}
-
-	const handleBulkCheckout = React.useCallback(
-		async (ids: string[]) => {
+	// ── Unified bulk transition handler ──
+	// Routes 'CHECKED_OUT' to the checkout endpoint, everything else to transitionStatus
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
 			for (const id of ids) {
-				await checkoutCart.mutateAsync({ cartId: id })
+				if (toStatus === 'CHECKED_OUT') {
+					await checkoutCart.mutateAsync({ cartId: id })
+				} else {
+					await transitionStatus.mutateAsync({ id, toStatus })
+				}
 			}
 		},
-		[checkoutCart],
+		[checkoutCart, transitionStatus],
 	)
 
-	const handleBulkAbandon = React.useCallback(
-		async (ids: string[]) => {
-			for (const id of ids) {
-				await transitionStatus.mutateAsync({ id, toStatus: 'ABANDONED' })
-			}
-		},
-		[transitionStatus],
-	)
+	const isBusy = checkoutCart.isPending || transitionStatus.isPending
 
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Carts'
-				description='Active and abandoned shopping carts'
+				title={specProps?.title ?? 'Carts'}
+				description={
+					specProps?.description ?? 'Active and abandoned shopping carts'
+				}
+				actions={
+					specProps?.enableNew === true ? (
+						<Button
+							size='sm'
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-3.5' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Cart'}
+						</Button>
+					) : undefined
+				}
 			/>
 
 			<div className='overflow-hidden rounded-xl border border-border/50 bg-background/50 shadow-sm backdrop-blur-xl'>
@@ -104,50 +126,32 @@ export default function CartsList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column accessorKey='customerName' title='Customer' />
-						<DataGrid.Column
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column accessorKey='currency' title='Currency' />
-						<DataGrid.Column
-							accessorKey='itemCount'
-							title='Items'
-							cellVariant='number'
-						/>
-						<DataGrid.Column
-							accessorKey='totalAmount'
-							title='Total Amount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalAmount)}
-						/>
-						<DataGrid.Column
-							accessorKey='_id'
-							title='Actions'
-							cell={({ row }) =>
-								row.original.status === 'OPEN' ? (
-									<Button
-										size='sm'
-										variant='outline'
-										onClick={() => {
-											void handleCheckout(row.original._id)
-										}}
-										disabled={
-											checkoutCart.isPending &&
-											activeCheckoutId === row.original._id
-										}
-									>
-										{checkoutCart.isPending &&
-										activeCheckoutId === row.original._id
-											? 'Checking out...'
-											: 'Checkout'}
-									</Button>
-								) : (
-									<span className='text-muted-foreground text-xs'>-</span>
-								)
-							}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<Cart>(DataGrid.Column, specProps.columns)
+						) : (
+							<>
+								<DataGrid.Column accessorKey='customerName' title='Customer' />
+								<DataGrid.Column
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column accessorKey='currency' title='Currency' />
+								<DataGrid.Column
+									accessorKey='itemCount'
+									title='Items'
+									cellVariant='number'
+								/>
+								<DataGrid.Column
+									accessorKey='totalAmount'
+									title='Total Amount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalAmount)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -160,47 +164,23 @@ export default function CartsList() {
 						</DataGrid.ActionBar.Selection>
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
-							{(table, state) => {
-								const records = resolveSelectedRecords(
-									table,
-									state.selectionState,
-								)
-								const ids = records.map((r) => r._id)
-								const hasSelection = ids.length > 0
-								const isBusy =
-									checkoutCart.isPending || transitionStatus.isPending
-								const allOpen = records.every((r) => r.status === 'OPEN')
-
-								return (
-									<>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allOpen}
-											onClick={() => {
-												void handleBulkCheckout(ids)
-											}}
-										>
-											<ShoppingCart className='size-3.5' aria-hidden='true' />
-											Checkout
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allOpen}
-											onClick={() => {
-												void handleBulkAbandon(ids)
-											}}
-										>
-											<XCircle className='size-3.5' aria-hidden='true' />
-											Abandon
-										</DataGrid.ActionBar.Item>
-										<ReportActionItems
-											table={table}
-											selectionState={state.selectionState}
-											moduleId='market'
-											entityId='carts'
-											isBusy={isBusy}
-										/>
-									</>
-								)
-							}}
+							{(table, state) => (
+								<SpecBulkActionItems
+									specBulkActions={specProps?.bulkActions}
+									table={table}
+									selectionState={state.selectionState}
+									onTransition={handleBulkTransition}
+									isBusy={isBusy}
+								>
+									<ReportActionItems
+										table={table}
+										selectionState={state.selectionState}
+										moduleId='market'
+										entityId='carts'
+										isBusy={isBusy}
+									/>
+								</SpecBulkActionItems>
+							)}
 						</DataGrid.ActionBar.Group>
 					</DataGrid.ActionBar>
 				</DataGrid>

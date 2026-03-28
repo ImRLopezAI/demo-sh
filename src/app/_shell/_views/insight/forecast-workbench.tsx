@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useModuleList } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
+import type { SpecWorkbenchProps } from '../_shared/spec-workbench-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 
 type ForecastSignal = {
@@ -50,7 +51,11 @@ type AlertPolicy = {
 
 const ALERT_SETTING_KEY = 'insight_alert_subscription'
 
-export default function ForecastWorkbenchView() {
+export default function ForecastWorkbenchView({
+	specProps,
+}: {
+	specProps?: SpecWorkbenchProps
+} = {}) {
 	const queryClient = useQueryClient()
 	const windowSize = useWindowSize({ defaultWidth: 1280, defaultHeight: 900 })
 	const [horizonDays, setHorizonDays] = React.useState('30')
@@ -183,8 +188,11 @@ export default function ForecastWorkbenchView() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Forecast Workbench & Alerting'
-				description='Run demand signals, segment risk posture, and tune alert subscriptions for Insight.'
+				title={specProps?.title ?? 'Forecast Workbench & Alerting'}
+				description={
+					specProps?.description ??
+					'Run demand signals, segment risk posture, and tune alert subscriptions for Insight.'
+				}
 			/>
 
 			<div className='grid gap-6 xl:grid-cols-2'>

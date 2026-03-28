@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useCreateForm } from '@/components/ui/form'
@@ -13,6 +14,11 @@ import {
 	RecordDialog,
 	type RecordDialogActionGroup,
 } from '../../_shared/record-dialog'
+import {
+	renderSpecSections,
+	resolveCardTitle,
+	type SpecCardProps,
+} from '../../_shared/spec-card-helpers'
 import { useEntityMutations, useEntityRecord } from '../../_shared/use-entity'
 
 type LocationFormValues = {
@@ -86,12 +92,15 @@ export function LocationCard({
 	open,
 	onOpenChange,
 	presentation = 'dialog',
+	specCardProps,
 }: {
 	locationId: string | null
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	presentation?: 'dialog' | 'page'
+	specCardProps?: SpecCardProps
 }) {
+	const router = useRouter()
 	const isNew = locationId === 'new'
 	const { data: record, isLoading } = useEntityRecord(
 		'insight',
@@ -189,15 +198,11 @@ export function LocationCard({
 				items: [
 					{
 						label: 'Stock Count',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/item-ledger'),
 					},
 					{
 						label: 'Transfer Stock',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/replenishment/transfers'),
 					},
 				],
 			},
@@ -206,9 +211,7 @@ export function LocationCard({
 				items: [
 					{
 						label: 'Inventory at Location',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/item-ledger'),
 					},
 				],
 			},
@@ -217,21 +220,17 @@ export function LocationCard({
 				items: [
 					{
 						label: 'Item Ledger Entries',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/insight/item-ledger'),
 					},
 					{
 						label: 'Transfer Orders',
-						onClick: () => {
-							/* TODO: implement navigation */
-						},
+						onClick: () => router.push('/replenishment/transfers'),
 					},
 				],
 			},
 			...(reportGroup ? [reportGroup] : []),
 		]
-	}, [isNew, reportGroup])
+	}, [isNew, router, reportGroup])
 
 	if (isLoading) return null
 
@@ -240,11 +239,20 @@ export function LocationCard({
 			open={open}
 			onOpenChange={onOpenChange}
 			presentation={presentation}
-			title={isNew ? 'New Location' : 'Location Details'}
-			description={
+			title={
 				isNew
+					? (specCardProps?.newTitle ?? 'New Location')
+					: resolveCardTitle(
+							specCardProps?.title,
+							record as any,
+							`Location ${record?.code ?? ''}`,
+						)
+			}
+			description={
+				specCardProps?.description ??
+				(isNew
 					? 'Create a new location for inventory tracking.'
-					: 'View and edit location information.'
+					: 'View and edit location information.')
 			}
 			size='md'
 			actionGroups={actionGroups}
@@ -265,253 +273,262 @@ export function LocationCard({
 		>
 			<Form>
 				{() => (
-					<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-						<Form.Field
-							name='code'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Code</Form.Label>
-									<Form.Control>
-										<Form.Input
-											{...field}
-											readOnly={!isNew}
-											placeholder={isNew ? 'Auto-generated...' : undefined}
-											className='bg-background/50'
-										/>
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+					<>
+						{specCardProps?.sections ? (
+							renderSpecSections(Form, specCardProps.sections)
+						) : (
+							<div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+								<Form.Field
+									name='code'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Code</Form.Label>
+											<Form.Control>
+												<Form.Input
+													{...field}
+													readOnly={!isNew}
+													placeholder={isNew ? 'Auto-generated...' : undefined}
+													className='bg-background/50'
+												/>
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='name'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Name</Form.Label>
-									<Form.Control>
-										<Form.Input {...field} className='bg-background/50' />
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='name'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Name</Form.Label>
+											<Form.Control>
+												<Form.Input {...field} className='bg-background/50' />
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='type'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Type</Form.Label>
-									<Form.Select
-										value={field.value}
-										onValueChange={field.onChange}
-									>
-										<Form.Control>
-											<Form.Select.Trigger>
-												<Form.Select.Value placeholder='Select type' />
-											</Form.Select.Trigger>
-										</Form.Control>
-										<Form.Select.Content>
-											<Form.Select.Item value='WAREHOUSE'>
-												Warehouse
-											</Form.Select.Item>
-											<Form.Select.Item value='STORE'>Store</Form.Select.Item>
-											<Form.Select.Item value='DISTRIBUTION_CENTER'>
-												Distribution Center
-											</Form.Select.Item>
-										</Form.Select.Content>
-									</Form.Select>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='type'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Type</Form.Label>
+											<Form.Select
+												value={field.value}
+												onValueChange={field.onChange}
+											>
+												<Form.Control>
+													<Form.Select.Trigger>
+														<Form.Select.Value placeholder='Select type' />
+													</Form.Select.Trigger>
+												</Form.Control>
+												<Form.Select.Content>
+													<Form.Select.Item value='WAREHOUSE'>
+														Warehouse
+													</Form.Select.Item>
+													<Form.Select.Item value='STORE'>
+														Store
+													</Form.Select.Item>
+													<Form.Select.Item value='DISTRIBUTION_CENTER'>
+														Distribution Center
+													</Form.Select.Item>
+												</Form.Select.Content>
+											</Form.Select>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='address'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Address</Form.Label>
-									<Form.Control>
-										<Form.Input {...field} className='bg-background/50' />
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='address'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Address</Form.Label>
+											<Form.Control>
+												<Form.Input {...field} className='bg-background/50' />
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='city'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>City</Form.Label>
-									<Form.Control>
-										<Form.Input {...field} className='bg-background/50' />
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='city'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>City</Form.Label>
+											<Form.Control>
+												<Form.Input {...field} className='bg-background/50' />
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='country'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Country</Form.Label>
-									<Form.Control>
-										<Form.Input {...field} className='bg-background/50' />
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='country'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Country</Form.Label>
+											<Form.Control>
+												<Form.Input {...field} className='bg-background/50' />
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='latitude'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Latitude</Form.Label>
-									<Form.Control>
-										<Form.Input
-											{...field}
-											className='bg-background/50'
-											type='number'
-											step='any'
-											min={AMERICAS_COORDINATE_BOUNDS.latitude.min}
-											max={AMERICAS_COORDINATE_BOUNDS.latitude.max}
-											value={toAmericanLatitude(field.value) ?? ''}
-											placeholder='e.g. 40.7128\u2026'
-											onChange={(e) =>
-												field.onChange(
-													parseCoordinateInput(
-														e.target.value,
-														AMERICAS_COORDINATE_BOUNDS.latitude,
-													),
-												)
-											}
-										/>
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='latitude'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Latitude</Form.Label>
+											<Form.Control>
+												<Form.Input
+													{...field}
+													className='bg-background/50'
+													type='number'
+													step='any'
+													min={AMERICAS_COORDINATE_BOUNDS.latitude.min}
+													max={AMERICAS_COORDINATE_BOUNDS.latitude.max}
+													value={toAmericanLatitude(field.value) ?? ''}
+													placeholder='e.g. 40.7128\u2026'
+													onChange={(e) =>
+														field.onChange(
+															parseCoordinateInput(
+																e.target.value,
+																AMERICAS_COORDINATE_BOUNDS.latitude,
+															),
+														)
+													}
+												/>
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='longitude'
-							render={({ field }) => (
-								<Form.Item>
-									<Form.Label>Longitude</Form.Label>
-									<Form.Control>
-										<Form.Input
-											{...field}
-											className='bg-background/50'
-											type='number'
-											step='any'
-											min={AMERICAS_COORDINATE_BOUNDS.longitude.min}
-											max={AMERICAS_COORDINATE_BOUNDS.longitude.max}
-											value={toAmericanLongitude(field.value) ?? ''}
-											placeholder='e.g. -74.0060\u2026'
-											onChange={(e) =>
-												field.onChange(
-													parseCoordinateInput(
-														e.target.value,
-														AMERICAS_COORDINATE_BOUNDS.longitude,
-													),
-												)
-											}
-										/>
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='longitude'
+									render={({ field }) => (
+										<Form.Item>
+											<Form.Label>Longitude</Form.Label>
+											<Form.Control>
+												<Form.Input
+													{...field}
+													className='bg-background/50'
+													type='number'
+													step='any'
+													min={AMERICAS_COORDINATE_BOUNDS.longitude.min}
+													max={AMERICAS_COORDINATE_BOUNDS.longitude.max}
+													value={toAmericanLongitude(field.value) ?? ''}
+													placeholder='e.g. -74.0060\u2026'
+													onChange={(e) =>
+														field.onChange(
+															parseCoordinateInput(
+																e.target.value,
+																AMERICAS_COORDINATE_BOUNDS.longitude,
+															),
+														)
+													}
+												/>
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<Form.Field
-							name='active'
-							render={({ field }) => (
-								<Form.Item className='flex items-center gap-3 sm:col-span-2'>
-									<Form.Label>Active</Form.Label>
-									<Form.Control>
-										<Form.Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-										/>
-									</Form.Control>
-									<Form.Message />
-								</Form.Item>
-							)}
-						/>
+								<Form.Field
+									name='active'
+									render={({ field }) => (
+										<Form.Item className='flex items-center gap-3 sm:col-span-2'>
+											<Form.Label>Active</Form.Label>
+											<Form.Control>
+												<Form.Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</Form.Control>
+											<Form.Message />
+										</Form.Item>
+									)}
+								/>
 
-						<div className='space-y-2 sm:col-span-2'>
-							<p className='font-medium text-sm'>Map Preview</p>
-							<div className='h-72 overflow-hidden rounded-md border'>
-								<UplinkMap
-									className='h-full w-full'
-									center={[mapLongitude, mapLatitude]}
-									maxBounds={americanMapBounds}
-									zoom={11}
-								>
-									<MapControls
-										position='top-right'
-										showZoom
-										showLocate
-										showCompass
-										onLocate={(coords) => {
-											form.setValue(
-												'latitude',
-												Number(
-													toAmericanLatitude(coords.latitude)?.toFixed(6) ??
-														DEFAULT_COORDINATES.latitude.toFixed(6),
-												),
-											)
-											form.setValue(
-												'longitude',
-												Number(
-													toAmericanLongitude(coords.longitude)?.toFixed(6) ??
-														DEFAULT_COORDINATES.longitude.toFixed(6),
-												),
-											)
-										}}
-									/>
-									<MapMarker
-										longitude={mapLongitude}
-										latitude={mapLatitude}
-										draggable
-										onDragEnd={({ lng, lat }) => {
-											form.setValue(
-												'latitude',
-												Number(
-													toAmericanLatitude(lat)?.toFixed(6) ??
-														DEFAULT_COORDINATES.latitude.toFixed(6),
-												),
-											)
-											form.setValue(
-												'longitude',
-												Number(
-													toAmericanLongitude(lng)?.toFixed(6) ??
-														DEFAULT_COORDINATES.longitude.toFixed(6),
-												),
-											)
-										}}
-									>
-										<MarkerContent />
-										<MarkerPopup closeButton>
-											<div className='space-y-1 text-xs'>
-												<p className='font-medium'>
-													{form.getValues('name') || 'Location'}
-												</p>
-												<p className='text-muted-foreground'>
-													{lngLatToText(mapLatitude, mapLongitude)}
-												</p>
-											</div>
-										</MarkerPopup>
-									</MapMarker>
-								</UplinkMap>
+								<div className='space-y-2 sm:col-span-2'>
+									<p className='font-medium text-sm'>Map Preview</p>
+									<div className='h-72 overflow-hidden rounded-md border'>
+										<UplinkMap
+											className='h-full w-full'
+											center={[mapLongitude, mapLatitude]}
+											maxBounds={americanMapBounds}
+											zoom={11}
+										>
+											<MapControls
+												position='top-right'
+												showZoom
+												showLocate
+												showCompass
+												onLocate={(coords) => {
+													form.setValue(
+														'latitude',
+														Number(
+															toAmericanLatitude(coords.latitude)?.toFixed(6) ??
+																DEFAULT_COORDINATES.latitude.toFixed(6),
+														),
+													)
+													form.setValue(
+														'longitude',
+														Number(
+															toAmericanLongitude(coords.longitude)?.toFixed(
+																6,
+															) ?? DEFAULT_COORDINATES.longitude.toFixed(6),
+														),
+													)
+												}}
+											/>
+											<MapMarker
+												longitude={mapLongitude}
+												latitude={mapLatitude}
+												draggable
+												onDragEnd={({ lng, lat }) => {
+													form.setValue(
+														'latitude',
+														Number(
+															toAmericanLatitude(lat)?.toFixed(6) ??
+																DEFAULT_COORDINATES.latitude.toFixed(6),
+														),
+													)
+													form.setValue(
+														'longitude',
+														Number(
+															toAmericanLongitude(lng)?.toFixed(6) ??
+																DEFAULT_COORDINATES.longitude.toFixed(6),
+														),
+													)
+												}}
+											>
+												<MarkerContent />
+												<MarkerPopup closeButton>
+													<div className='space-y-1 text-xs'>
+														<p className='font-medium'>
+															{form.getValues('name') || 'Location'}
+														</p>
+														<p className='text-muted-foreground'>
+															{lngLatToText(mapLatitude, mapLongitude)}
+														</p>
+													</div>
+												</MarkerPopup>
+											</MapMarker>
+										</UplinkMap>
+									</div>
+									<p className='text-muted-foreground text-xs'>
+										Drag the pin or use locate to update coordinates.
+									</p>
+								</div>
 							</div>
-							<p className='text-muted-foreground text-xs'>
-								Drag the pin or use locate to update coordinates.
-							</p>
-						</div>
-					</div>
+						)}
+					</>
 				)}
 			</Form>
 		</RecordDialog>

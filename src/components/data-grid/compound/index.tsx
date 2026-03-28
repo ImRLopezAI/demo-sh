@@ -750,5 +750,5 @@ export function useGrid<TData extends object>(
 	return TableComponent
 }
 
-export { useCompoundGrid }
 export type { DataGridColumnProps, DataGridToolbarProps, Formatters }
+export { useCompoundGrid }

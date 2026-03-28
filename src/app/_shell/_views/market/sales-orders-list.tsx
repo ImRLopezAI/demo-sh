@@ -1,16 +1,20 @@
 import { parseRouterSearch, stringifyRouterSearch } from '@lib/router/search'
 import { $rpc, useMutation, useQueryClient } from '@lib/rpc'
-import { Ban, Plus, Send, Unlock } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useModuleData } from '../../hooks/use-data'
 import { PageHeader } from '../_shared/page-header'
 import { ReportActionItems } from '../_shared/report-action-items'
+import { resolveSelectedIds } from '../_shared/resolve-selected-ids'
+import { SpecBulkActionItems } from '../_shared/spec-bulk-actions'
+import { extractSpecCardProps } from '../_shared/spec-card-helpers'
 import {
-	resolveSelectedIds,
-	resolveSelectedRecords,
-} from '../_shared/resolve-selected-ids'
+	renderSpecColumns,
+	type SpecListProps,
+	useSpecFilters,
+} from '../_shared/spec-list-helpers'
 import { StatusBadge } from '../_shared/status-badge'
 import { SalesOrderCard } from './components/sales-order-card'
 
@@ -27,7 +31,13 @@ interface SalesOrder {
 	totalAmount: number
 }
 
-export default function SalesOrdersList() {
+interface SalesOrdersListProps {
+	specProps?: SpecListProps
+}
+
+export default function SalesOrdersList({
+	specProps,
+}: SalesOrdersListProps = {}) {
 	const router = useRouter()
 	const pathname = usePathname() || '/market/sales-orders'
 	const searchParams = useSearchParams()
@@ -38,10 +48,14 @@ export default function SalesOrdersList() {
 
 	const queryClient = useQueryClient()
 
+	const specFilters = useSpecFilters(specProps)
+	const specCardProps = extractSpecCardProps(specProps)
+
 	const { DataGrid, windowSize } = useModuleData<'market', SalesOrder>(
 		'market',
 		'salesOrders',
 		'all',
+		{ filters: specFilters },
 	)
 
 	const invalidate = React.useCallback(() => {
@@ -68,31 +82,22 @@ export default function SalesOrdersList() {
 		}),
 	})
 
-	const handleBulkSubmit = React.useCallback(
-		async (ids: string[]) => {
+	const handleBulkTransition = React.useCallback(
+		async (ids: string[], toStatus: string) => {
 			for (const id of ids) {
-				await submitForApproval.mutateAsync({ id })
+				switch (toStatus) {
+					case 'PENDING_APPROVAL':
+						await submitForApproval.mutateAsync({ id })
+						break
+					case 'CANCELED':
+						await cancelWithRelease.mutateAsync({ id })
+						break
+					default:
+						await transitionStatus.mutateAsync({ id, toStatus })
+				}
 			}
 		},
-		[submitForApproval],
-	)
-
-	const handleBulkRelease = React.useCallback(
-		async (ids: string[]) => {
-			for (const id of ids) {
-				await transitionStatus.mutateAsync({ id, toStatus: 'RELEASED' })
-			}
-		},
-		[transitionStatus],
-	)
-
-	const handleBulkCancel = React.useCallback(
-		async (ids: string[]) => {
-			for (const id of ids) {
-				await cancelWithRelease.mutateAsync({ id })
-			}
-		},
-		[cancelWithRelease],
+		[submitForApproval, transitionStatus, cancelWithRelease],
 	)
 
 	const pushWithSearch = React.useCallback(
@@ -195,6 +200,7 @@ export default function SalesOrdersList() {
 					selectedId={selectedId}
 					onClose={handleClose}
 					onCreated={handleCreated}
+					specCardProps={specCardProps}
 					presentation='page'
 				/>
 			</div>
@@ -204,18 +210,23 @@ export default function SalesOrdersList() {
 	return (
 		<div className='space-y-8 pb-8'>
 			<PageHeader
-				title='Sales Orders'
-				description='Manage customer orders, quotes, and returns'
+				title={specProps?.title ?? 'Sales Orders'}
+				description={
+					specProps?.description ??
+					'Manage customer orders, quotes, and returns'
+				}
 				actions={
-					<Button
-						size='sm'
-						onClick={handleNew}
-						data-testid='sales-order-new-button'
-						className='shadow-sm transition-all hover:shadow-md'
-					>
-						<Plus className='mr-1.5 size-4' aria-hidden='true' />
-						New Order
-					</Button>
+					specProps?.enableNew !== false ? (
+						<Button
+							size='sm'
+							onClick={handleNew}
+							data-testid='sales-order-new-button'
+							className='shadow-sm transition-all hover:shadow-md'
+						>
+							<Plus className='mr-1.5 size-4' aria-hidden='true' />
+							{specProps?.newLabel ?? 'New Order'}
+						</Button>
+					) : undefined
 				}
 			/>
 
@@ -229,40 +240,52 @@ export default function SalesOrdersList() {
 						<DataGrid.Toolbar filter sort search export />
 					</DataGrid.Header>
 					<DataGrid.Columns>
-						<DataGrid.Column
-							accessorKey='documentNo'
-							title='Document No.'
-							handleEdit={handleEdit}
-						/>
-						<DataGrid.Column
-							accessorKey='documentType'
-							title='Type'
-							cellVariant='select'
-						/>
-						<DataGrid.Column
-							accessorKey='status'
-							title='Status'
-							cell={({ row }) => <StatusBadge status={row.original.status} />}
-						/>
-						<DataGrid.Column accessorKey='customerName' title='Customer' />
-						<DataGrid.Column
-							accessorKey='orderDate'
-							title='Order Date'
-							cellVariant='date'
-							formatter={(v, f) => f.date(v.orderDate, { format: 'P' })}
-						/>
-						<DataGrid.Column accessorKey='currency' title='Currency' />
-						<DataGrid.Column
-							accessorKey='lineCount'
-							title='Lines'
-							cellVariant='number'
-						/>
-						<DataGrid.Column
-							accessorKey='totalAmount'
-							title='Total Amount'
-							cellVariant='number'
-							formatter={(v, f) => f.currency(v.totalAmount)}
-						/>
+						{specProps?.columns ? (
+							renderSpecColumns<SalesOrder>(
+								DataGrid.Column,
+								specProps.columns,
+								handleEdit,
+							)
+						) : (
+							<>
+								<DataGrid.Column
+									accessorKey='documentNo'
+									title='Document No.'
+									handleEdit={handleEdit}
+								/>
+								<DataGrid.Column
+									accessorKey='documentType'
+									title='Type'
+									cellVariant='select'
+								/>
+								<DataGrid.Column
+									accessorKey='status'
+									title='Status'
+									cell={({ row }) => (
+										<StatusBadge status={row.original.status} />
+									)}
+								/>
+								<DataGrid.Column accessorKey='customerName' title='Customer' />
+								<DataGrid.Column
+									accessorKey='orderDate'
+									title='Order Date'
+									cellVariant='date'
+									formatter={(v, f) => f.date(v.orderDate, { format: 'P' })}
+								/>
+								<DataGrid.Column accessorKey='currency' title='Currency' />
+								<DataGrid.Column
+									accessorKey='lineCount'
+									title='Lines'
+									cellVariant='number'
+								/>
+								<DataGrid.Column
+									accessorKey='totalAmount'
+									title='Total Amount'
+									cellVariant='number'
+									formatter={(v, f) => f.currency(v.totalAmount)}
+								/>
+							</>
+						)}
 					</DataGrid.Columns>
 					<DataGrid.ActionBar>
 						<DataGrid.ActionBar.Selection>
@@ -276,54 +299,19 @@ export default function SalesOrdersList() {
 						<DataGrid.ActionBar.Separator />
 						<DataGrid.ActionBar.Group>
 							{(table, state) => {
-								const records = resolveSelectedRecords(
-									table,
-									state.selectionState,
-								)
-								const ids = records.map((r) => r._id)
-								const hasSelection = ids.length > 0
 								const isBusy =
 									submitForApproval.isPending ||
 									transitionStatus.isPending ||
 									cancelWithRelease.isPending
-								const allDraft = records.every((r) => r.status === 'DRAFT')
-								const allApproved = records.every(
-									(r) => r.status === 'APPROVED',
-								)
-								const allCancellable = records.every(
-									(r) =>
-										r.status === 'DRAFT' || r.status === 'PENDING_APPROVAL',
-								)
 
 								return (
-									<>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allDraft}
-											onClick={() => {
-												void handleBulkSubmit(ids)
-											}}
-										>
-											<Send className='size-3.5' aria-hidden='true' />
-											Submit for Approval
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allApproved}
-											onClick={() => {
-												void handleBulkRelease(ids)
-											}}
-										>
-											<Unlock className='size-3.5' aria-hidden='true' />
-											Release
-										</DataGrid.ActionBar.Item>
-										<DataGrid.ActionBar.Item
-											disabled={!hasSelection || isBusy || !allCancellable}
-											onClick={() => {
-												void handleBulkCancel(ids)
-											}}
-										>
-											<Ban className='size-3.5' aria-hidden='true' />
-											Cancel
-										</DataGrid.ActionBar.Item>
+									<SpecBulkActionItems
+										specBulkActions={specProps?.bulkActions}
+										table={table}
+										selectionState={state.selectionState}
+										onTransition={handleBulkTransition}
+										isBusy={isBusy}
+									>
 										<ReportActionItems
 											table={table}
 											selectionState={state.selectionState}
@@ -331,7 +319,7 @@ export default function SalesOrdersList() {
 											entityId='salesOrders'
 											isBusy={isBusy}
 										/>
-									</>
+									</SpecBulkActionItems>
 								)
 							}}
 						</DataGrid.ActionBar.Group>
