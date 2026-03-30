@@ -2,7 +2,7 @@
 
 import { Download, Eye } from 'lucide-react'
 import * as React from 'react'
-import type { RecordDialogActionGroup } from '@/app/_shell/_views/_shared/record-dialog'
+import type { RecordDialogActionGroup } from '@/lib/json-render/components/record-dialog'
 import { useReportActions } from './use-report-actions'
 
 export function useRecordReportGroup(params: {

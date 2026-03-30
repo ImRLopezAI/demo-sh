@@ -21,10 +21,72 @@ export const ledgerRoutes: Routes = {
 			description: 'Invoiced amounts, receivables, and e-invoice funnel.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'LedgerDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'LedgerDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'heroCards',
+						'invoiceStatusCounts',
+						'eInvoiceFunnel',
+						'invoiceVolumeTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Ledger Dashboard',
+						description:
+							'Invoiced amounts, receivables, and e-invoice funnel.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'LedgerKpiStrip',
+					props: {},
+					children: [],
+				},
+				heroCards: {
+					type: 'LedgerHeroCards',
+					props: {},
+					children: [],
+				},
+				invoiceStatusCounts: {
+					type: 'LedgerInvoiceStatusCounts',
+					props: {},
+					children: [],
+				},
+				eInvoiceFunnel: {
+					type: 'LedgerEInvoiceFunnel',
+					props: {},
+					children: [],
+				},
+				invoiceVolumeTrend: {
+					type: 'LedgerInvoiceVolumeTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['stats', 'invoiceRegister'],
+				},
+				stats: {
+					type: 'LedgerStats',
+					props: {},
+					children: [],
+				},
+				invoiceRegister: {
+					type: 'LedgerInvoiceRegister',
 					props: {},
 					children: [],
 				},

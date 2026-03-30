@@ -115,6 +115,22 @@ export const catalog = defineCatalog(schema, {
 		},
 
 		// ━━━ Page Structure ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		PageHeader: {
+			props: z.object({
+				title: z.string(),
+				description: z.string().nullable().optional(),
+			}),
+			description: 'Page title banner with optional supporting description',
+		},
+		DashboardPageStack: {
+			props: z.object({}),
+			description:
+				'Vertical dashboard page stack with consistent route spacing',
+		},
+		DashboardThreeColumnGrid: {
+			props: z.object({}),
+			description: 'Three-column dashboard section grid for summary panels',
+		},
 		FormSection: {
 			props: z.object({
 				title: z.string(),
@@ -220,50 +236,303 @@ export const catalog = defineCatalog(schema, {
 				'Complete list page: page header, data grid with filtering/sorting/pagination, bulk actions, and record detail',
 		},
 
-		// ━━━ Module Dashboards (smart, self-contained) ━━━━━━━━━━
-		HubDashboard: {
+		// ━━━ Insight Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━
+		InsightDashboardData: {
 			props: z.object({}),
 			description:
-				'Hub command center with SLA scoreboard, task flow, roles, and scheduled jobs',
+				'Insight dashboard data provider that hydrates child sections with metrics and summaries',
 		},
-		MarketDashboard: {
+		InsightKpiStrip: {
+			props: z.object({}),
+			description: 'Insight dashboard KPI strip',
+		},
+		InsightEntryTypeDistribution: {
+			props: z.object({}),
+			description: 'Insight dashboard entry type distribution section',
+		},
+		InsightMovementTrend: {
+			props: z.object({}),
+			description: 'Insight dashboard movement trend section',
+		},
+		InsightInventoryStats: {
+			props: z.object({}),
+			description: 'Insight dashboard inventory stats section',
+		},
+		InsightRecentEntries: {
+			props: z.object({}),
+			description: 'Insight dashboard recent ledger entries section',
+		},
+		InsightLocationSummary: {
+			props: z.object({}),
+			description: 'Insight dashboard location summary section',
+		},
+
+		// ━━━ Hub Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		HubDashboardData: {
 			props: z.object({}),
 			description:
-				'Market dashboard with revenue, order status, and recent orders',
+				'Hub dashboard data provider that hydrates child sections with task metrics and operational summaries',
 		},
-		PosDashboard: {
+		HubKpiStrip: {
+			props: z.object({}),
+			description: 'Hub dashboard KPI strip showing SLA scores, active tasks, and throughput',
+		},
+		HubTaskStatusDistribution: {
+			props: z.object({}),
+			description: 'Hub dashboard pie chart of task status distribution across all workflows',
+		},
+		HubTaskStatusChart: {
+			props: z.object({}),
+			description: 'Hub dashboard stacked bar chart of task statuses by category',
+		},
+		HubTaskVolumeTrend: {
+			props: z.object({}),
+			description: 'Hub dashboard trend chart of task creation and completion volumes over time',
+		},
+		HubOperationsStats: {
+			props: z.object({}),
+			description: 'Hub dashboard operational statistics including roles, scheduled jobs, and integrations',
+		},
+		HubRecentTasks: {
+			props: z.object({}),
+			description: 'Hub dashboard recent tasks list showing latest task activity',
+		},
+		HubRecentNotifications: {
+			props: z.object({}),
+			description: 'Hub dashboard recent notifications feed for system-wide alerts',
+		},
+
+		// ━━━ Market Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━
+		MarketDashboardData: {
 			props: z.object({}),
 			description:
-				'POS dashboard with terminal status, payment mix, and transaction feed',
+				'Market dashboard data provider that hydrates child sections with revenue and order metrics',
 		},
-		ReplenishmentDashboard: {
+		MarketKpiStrip: {
+			props: z.object({}),
+			description: 'Market dashboard KPI strip showing revenue, order count, and average order value',
+		},
+		MarketOrderStatusDistribution: {
+			props: z.object({}),
+			description: 'Market dashboard pie chart of order status distribution',
+		},
+		MarketOrderVolumeTrend: {
+			props: z.object({}),
+			description: 'Market dashboard trend chart of order volume and revenue over time',
+		},
+		MarketCommercialStats: {
+			props: z.object({}),
+			description: 'Market dashboard commercial statistics including customer segments and product performance',
+		},
+		MarketRecentOrders: {
+			props: z.object({}),
+			description: 'Market dashboard recent orders list showing latest order activity',
+		},
+
+		// ━━━ Flow Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		FlowDashboardData: {
 			props: z.object({}),
 			description:
-				'Replenishment dashboard with supply pipeline and vendor health',
+				'Flow dashboard data provider that hydrates child sections with cash flow and banking metrics',
 		},
-		InsightDashboard: {
+		FlowKpiStrip: {
+			props: z.object({}),
+			description: 'Flow dashboard KPI strip showing cash position, projected balance, and liquidity ratio',
+		},
+		FlowCashForecastControls: {
+			props: z.object({}),
+			description: 'Flow dashboard controls for adjusting cash forecast horizon and parameters',
+		},
+		FlowCashBalanceTrend: {
+			props: z.object({}),
+			description: 'Flow dashboard trend chart of cash balance over time with projected vs actual',
+		},
+		FlowForecastStats: {
+			props: z.object({}),
+			description: 'Flow dashboard forecast statistics including inflows, outflows, and net position',
+		},
+		FlowVarianceChart: {
+			props: z.object({}),
+			description: 'Flow dashboard chart comparing forecast variance against actuals',
+		},
+		FlowJournalThroughputTrend: {
+			props: z.object({}),
+			description: 'Flow dashboard trend chart of journal entry throughput over time',
+		},
+		FlowJournalStatusDistribution: {
+			props: z.object({}),
+			description: 'Flow dashboard pie chart of journal entry status distribution',
+		},
+		FlowTreasuryStats: {
+			props: z.object({}),
+			description: 'Flow dashboard treasury statistics including bank account balances and reconciliation status',
+		},
+		FlowBankAccountsList: {
+			props: z.object({}),
+			description: 'Flow dashboard list of bank accounts with balances and last reconciliation dates',
+		},
+		FlowRecentJournalLines: {
+			props: z.object({}),
+			description: 'Flow dashboard recent journal lines list showing latest financial entries',
+		},
+
+		// ━━━ Ledger Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━
+		LedgerDashboardData: {
 			props: z.object({}),
 			description:
-				'Insight dashboard with inventory analytics and forecast signals',
+				'Ledger dashboard data provider that hydrates child sections with invoicing and receivable metrics',
 		},
-		LedgerDashboard: {
+		LedgerKpiStrip: {
+			props: z.object({}),
+			description: 'Ledger dashboard KPI strip showing invoiced amount, outstanding receivables, and DSO',
+		},
+		LedgerHeroCards: {
+			props: z.object({}),
+			description: 'Ledger dashboard hero cards highlighting total invoiced, total collected, and aging summary',
+		},
+		LedgerInvoiceStatusCounts: {
+			props: z.object({}),
+			description: 'Ledger dashboard status count cards for draft, sent, paid, and overdue invoices',
+		},
+		LedgerEInvoiceFunnel: {
+			props: z.object({}),
+			description: 'Ledger dashboard e-invoice compliance funnel showing submission to acceptance stages',
+		},
+		LedgerStats: {
+			props: z.object({}),
+			description: 'Ledger dashboard summary statistics including receivables aging and credit note totals',
+		},
+		LedgerInvoiceVolumeTrend: {
+			props: z.object({}),
+			description: 'Ledger dashboard trend chart of invoice volume and amounts over time',
+		},
+		LedgerInvoiceRegister: {
+			props: z.object({}),
+			description: 'Ledger dashboard recent invoice register showing latest posted invoices',
+		},
+
+		// ━━━ POS Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		PosDashboardData: {
 			props: z.object({}),
 			description:
-				'Ledger dashboard with invoiced amounts, receivables, and e-invoice funnel',
+				'POS dashboard data provider that hydrates child sections with transaction and terminal metrics',
 		},
-		FlowDashboard: {
+		PosKpiStrip: {
+			props: z.object({}),
+			description: 'POS dashboard KPI strip showing daily sales, transaction count, and average basket size',
+		},
+		PosPaymentMethodDistribution: {
+			props: z.object({}),
+			description: 'POS dashboard pie chart of payment method distribution across transactions',
+		},
+		PosTransactionStatusDistribution: {
+			props: z.object({}),
+			description: 'POS dashboard pie chart of transaction status distribution',
+		},
+		PosTransactionVolumeTrend: {
+			props: z.object({}),
+			description: 'POS dashboard trend chart of transaction volume and sales over time',
+		},
+		PosOperationalStats: {
+			props: z.object({}),
+			description: 'POS dashboard operational statistics including terminal uptime and void rates',
+		},
+		PosRecentTransactions: {
+			props: z.object({}),
+			description: 'POS dashboard recent transactions list showing latest checkout activity',
+		},
+		PosTerminalSummary: {
+			props: z.object({}),
+			description: 'POS dashboard terminal summary showing status and daily totals per terminal',
+		},
+
+		// ━━━ Payroll Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━
+		PayrollDashboardData: {
 			props: z.object({}),
 			description:
-				'Flow dashboard with cash forecast, projected balance, and bank accounts',
+				'Payroll dashboard data provider that hydrates child sections with compensation and headcount metrics',
 		},
-		PayrollDashboard: {
+		PayrollKpiStrip: {
+			props: z.object({}),
+			description: 'Payroll dashboard KPI strip showing total payroll, headcount, and average compensation',
+		},
+		PayrollEmploymentTypeDistribution: {
+			props: z.object({}),
+			description: 'Payroll dashboard pie chart of employment type distribution (full-time, part-time, contract)',
+		},
+		PayrollDepartmentBreakdown: {
+			props: z.object({}),
+			description: 'Payroll dashboard breakdown of headcount and compensation by department',
+		},
+		PayrollCompensationOverview: {
+			props: z.object({}),
+			description: 'Payroll dashboard compensation overview with salary ranges and deduction summaries',
+		},
+		PayrollHiringTrend: {
+			props: z.object({}),
+			description: 'Payroll dashboard trend chart of new hires and departures over time',
+		},
+		PayrollRecentHires: {
+			props: z.object({}),
+			description: 'Payroll dashboard recent hires list showing latest employee onboarding activity',
+		},
+
+		// ━━━ Trace Dashboard Sections ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		TraceDashboardData: {
 			props: z.object({}),
 			description:
-				'Payroll dashboard with compensation, headcount, and run history',
+				'Trace dashboard data provider that hydrates child sections with shipment and logistics metrics',
 		},
-		TraceDashboard: {
+		TraceKpiStrip: {
 			props: z.object({}),
-			description: 'Trace dashboard with shipment status and logistics metrics',
+			description: 'Trace dashboard KPI strip showing shipment count, on-time rate, and average delivery time',
+		},
+		TraceShipmentStatusDistribution: {
+			props: z.object({}),
+			description: 'Trace dashboard pie chart of shipment status distribution',
+		},
+		TraceShipmentVolumeTrend: {
+			props: z.object({}),
+			description: 'Trace dashboard trend chart of shipment volume over time',
+		},
+		TraceLogisticsStats: {
+			props: z.object({}),
+			description: 'Trace dashboard logistics statistics including carrier performance and delivery zones',
+		},
+		TraceRecentShipments: {
+			props: z.object({}),
+			description: 'Trace dashboard recent shipments list showing latest fulfillment activity',
+		},
+
+		// ━━━ Replenishment Dashboard Sections ━━━━━━━━━━━━━━━━━━━
+		ReplenishmentDashboardData: {
+			props: z.object({}),
+			description:
+				'Replenishment dashboard data provider that hydrates child sections with supply pipeline and vendor metrics',
+		},
+		ReplenishmentKpiStrip: {
+			props: z.object({}),
+			description: 'Replenishment dashboard KPI strip showing open POs, fill rate, and lead time',
+		},
+		ReplenishmentPurchaseOrderStatusDistribution: {
+			props: z.object({}),
+			description: 'Replenishment dashboard pie chart of purchase order status distribution',
+		},
+		ReplenishmentPurchaseOrderTrend: {
+			props: z.object({}),
+			description: 'Replenishment dashboard trend chart of purchase order volume and amounts over time',
+		},
+		ReplenishmentVendorStats: {
+			props: z.object({}),
+			description: 'Replenishment dashboard vendor statistics including performance scores and lead times',
+		},
+		ReplenishmentTransferStats: {
+			props: z.object({}),
+			description: 'Replenishment dashboard transfer statistics including pending transfers and allocation rates',
+		},
+		ReplenishmentRecentPurchaseOrders: {
+			props: z.object({}),
+			description: 'Replenishment dashboard recent purchase orders list showing latest procurement activity',
 		},
 
 		// ━━━ Workbench Views (smart, self-contained) ━━━━━━━━━━━

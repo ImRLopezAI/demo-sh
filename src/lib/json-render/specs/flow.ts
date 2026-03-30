@@ -22,10 +22,89 @@ export const flowRoutes: Routes = {
 				'Cash forecast, projected balance, and bank account overview.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'FlowDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'FlowDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'cashForecastControls',
+						'cashBalanceTrend',
+						'forecastStats',
+						'varianceChart',
+						'journalThroughputTrend',
+						'journalStatusDistribution',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Flow Dashboard',
+						description:
+							'Cash forecast, projected balance, and bank account overview.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'FlowKpiStrip',
+					props: {},
+					children: [],
+				},
+				cashForecastControls: {
+					type: 'FlowCashForecastControls',
+					props: {},
+					children: [],
+				},
+				cashBalanceTrend: {
+					type: 'FlowCashBalanceTrend',
+					props: {},
+					children: [],
+				},
+				forecastStats: {
+					type: 'FlowForecastStats',
+					props: {},
+					children: [],
+				},
+				varianceChart: {
+					type: 'FlowVarianceChart',
+					props: {},
+					children: [],
+				},
+				journalThroughputTrend: {
+					type: 'FlowJournalThroughputTrend',
+					props: {},
+					children: [],
+				},
+				journalStatusDistribution: {
+					type: 'FlowJournalStatusDistribution',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['treasuryStats', 'bankAccountsList', 'recentJournalLines'],
+				},
+				treasuryStats: {
+					type: 'FlowTreasuryStats',
+					props: {},
+					children: [],
+				},
+				bankAccountsList: {
+					type: 'FlowBankAccountsList',
+					props: {},
+					children: [],
+				},
+				recentJournalLines: {
+					type: 'FlowRecentJournalLines',
 					props: {},
 					children: [],
 				},

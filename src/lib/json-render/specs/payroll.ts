@@ -22,10 +22,66 @@ export const payrollRoutes: Routes = {
 			description: 'Compensation summary, headcount, and payroll run history.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'PayrollDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'PayrollDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'employmentTypeDistribution',
+						'departmentBreakdown',
+						'hiringTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Payroll Dashboard',
+						description:
+							'Compensation summary, headcount, and payroll run history.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'PayrollKpiStrip',
+					props: {},
+					children: [],
+				},
+				employmentTypeDistribution: {
+					type: 'PayrollEmploymentTypeDistribution',
+					props: {},
+					children: [],
+				},
+				departmentBreakdown: {
+					type: 'PayrollDepartmentBreakdown',
+					props: {},
+					children: [],
+				},
+				hiringTrend: {
+					type: 'PayrollHiringTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['compensationOverview', 'recentHires'],
+				},
+				compensationOverview: {
+					type: 'PayrollCompensationOverview',
+					props: {},
+					children: [],
+				},
+				recentHires: {
+					type: 'PayrollRecentHires',
 					props: {},
 					children: [],
 				},

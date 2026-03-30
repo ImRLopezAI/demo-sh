@@ -21,10 +21,65 @@ export const replenishmentRoutes: Routes = {
 			description: 'Supply pipeline, vendor health, and replenishment signals.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'ReplenishmentDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'ReplenishmentDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'purchaseOrderStatusDistribution',
+						'purchaseOrderTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Replenishment Dashboard',
+						description:
+							'Supply pipeline, vendor health, and replenishment signals.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'ReplenishmentKpiStrip',
+					props: {},
+					children: [],
+				},
+				purchaseOrderStatusDistribution: {
+					type: 'ReplenishmentPurchaseOrderStatusDistribution',
+					props: {},
+					children: [],
+				},
+				purchaseOrderTrend: {
+					type: 'ReplenishmentPurchaseOrderTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['vendorStats', 'transferStats', 'recentPurchaseOrders'],
+				},
+				vendorStats: {
+					type: 'ReplenishmentVendorStats',
+					props: {},
+					children: [],
+				},
+				transferStats: {
+					type: 'ReplenishmentTransferStats',
+					props: {},
+					children: [],
+				},
+				recentPurchaseOrders: {
+					type: 'ReplenishmentRecentPurchaseOrders',
 					props: {},
 					children: [],
 				},

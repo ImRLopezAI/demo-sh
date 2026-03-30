@@ -24,10 +24,71 @@ export const hubRoutes: Routes = {
 				'Central operations command view with task flow and notification health.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'HubDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'HubDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'taskStatusDistribution',
+						'taskStatusChart',
+						'taskVolumeTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Hub Dashboard',
+						description:
+							'Central operations command view with task flow and notification health.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'HubKpiStrip',
+					props: {},
+					children: [],
+				},
+				taskStatusDistribution: {
+					type: 'HubTaskStatusDistribution',
+					props: {},
+					children: [],
+				},
+				taskStatusChart: {
+					type: 'HubTaskStatusChart',
+					props: {},
+					children: [],
+				},
+				taskVolumeTrend: {
+					type: 'HubTaskVolumeTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['stats', 'recentTasks', 'recentNotifications'],
+				},
+				stats: {
+					type: 'HubStats',
+					props: {},
+					children: [],
+				},
+				recentTasks: {
+					type: 'HubRecentTasks',
+					props: {},
+					children: [],
+				},
+				recentNotifications: {
+					type: 'HubRecentNotifications',
 					props: {},
 					children: [],
 				},

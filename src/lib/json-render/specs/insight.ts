@@ -22,10 +22,59 @@ export const insightRoutes: Routes = {
 				'Inventory analytics, movement trends, and forecast signals.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'InsightDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'InsightDashboardData',
+					props: {},
+					children: ['header', 'kpis', 'distribution', 'trend', 'lowerGrid'],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Insight Dashboard',
+						description:
+							'Inventory movement, cost-to-sales visibility, and location health.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'InsightKpiStrip',
+					props: {},
+					children: [],
+				},
+				distribution: {
+					type: 'InsightEntryTypeDistribution',
+					props: {},
+					children: [],
+				},
+				trend: {
+					type: 'InsightMovementTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['stats', 'recentEntries', 'locations'],
+				},
+				stats: {
+					type: 'InsightInventoryStats',
+					props: {},
+					children: [],
+				},
+				recentEntries: {
+					type: 'InsightRecentEntries',
+					props: {},
+					children: [],
+				},
+				locations: {
+					type: 'InsightLocationSummary',
 					props: {},
 					children: [],
 				},
@@ -167,7 +216,7 @@ export const insightRoutes: Routes = {
 								title: 'Status',
 								fields: [{ name: 'active', label: 'Active', type: 'switch' }],
 							},
-						] as any,
+						],
 					},
 					children: [],
 				},

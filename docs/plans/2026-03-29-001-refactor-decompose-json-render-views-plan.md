@@ -1,7 +1,7 @@
 ---
 title: "refactor: Decompose json-render views into atomic components"
 type: refactor
-status: active
+status: completed
 date: 2026-03-29
 ---
 
