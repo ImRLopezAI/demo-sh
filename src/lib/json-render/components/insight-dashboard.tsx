@@ -59,6 +59,7 @@ interface Location {
 }
 
 type InsightDashboardContextValue = {
+	isLoading: boolean
 	metricItems: Array<{ label: string; value: string; icon: string }>
 	entryTypeMix: Array<{ name: string; value: number }>
 	monthlyMovement: Array<{ month: string; count: number; amount: number }>
@@ -114,21 +115,20 @@ const LOCATION_TYPE_STYLES: Record<
 }
 
 function useInsightDashboardData() {
-	const { items: ledgerEntries } = useModuleData<'insight', ItemLedgerEntry>(
+	const { items: ledgerEntries, isLoading: ledgerLoading } = useModuleData<
 		'insight',
-		'itemLedgerEntries',
-		'all',
-	)
-	const { items: valueEntries } = useModuleData<'insight', ValueEntry>(
+		ItemLedgerEntry
+	>('insight', 'itemLedgerEntries', 'all')
+	const { items: valueEntries, isLoading: valueLoading } = useModuleData<
 		'insight',
-		'valueEntries',
-		'all',
-	)
-	const { items: locations } = useModuleData<'insight', Location>(
+		ValueEntry
+	>('insight', 'valueEntries', 'all')
+	const { items: locations, isLoading: locationsLoading } = useModuleData<
 		'insight',
-		'locations',
-		'all',
-	)
+		Location
+	>('insight', 'locations', 'all')
+
+	const isLoading = ledgerLoading || valueLoading || locationsLoading
 
 	return React.useMemo<InsightDashboardContextValue>(() => {
 		const totalLocations = locations.length
@@ -164,6 +164,7 @@ function useInsightDashboardData() {
 		const openEntries = ledgerEntries.filter((entry) => entry.open).length
 
 		return {
+			isLoading,
 			metricItems: [
 				{
 					label: 'Ledger Entries',
@@ -259,7 +260,7 @@ function useInsightDashboardData() {
 				{ label: 'DC', count: distCenters.toString() },
 			],
 		}
-	}, [ledgerEntries, locations, valueEntries])
+	}, [isLoading, ledgerEntries, locations, valueEntries])
 }
 
 function useInsightDashboardContext() {
@@ -321,11 +322,12 @@ export function InsightInventoryStats() {
 }
 
 export function InsightRecentEntries() {
-	const { recentEntries } = useInsightDashboardContext()
+	const { isLoading, recentEntries } = useInsightDashboardContext()
 	return (
 		<RecordListPanel
 			title='Recent Ledger Entries'
 			items={recentEntries}
+			isLoading={isLoading}
 			emptyMessage='No ledger entries found.'
 			emptyIcon={<Package className='mb-3 h-8 w-8 text-muted-foreground/50' />}
 		/>
@@ -333,11 +335,13 @@ export function InsightRecentEntries() {
 }
 
 export function InsightLocationSummary() {
-	const { locationBadges, locationItems } = useInsightDashboardContext()
+	const { isLoading, locationBadges, locationItems } =
+		useInsightDashboardContext()
 	return (
 		<RecordListPanel
 			title='Location Summary'
 			items={locationItems}
+			isLoading={isLoading}
 			metaBadges={locationBadges}
 			emptyMessage='No locations found.'
 			emptyIcon={<MapPin className='mb-3 h-8 w-8 text-muted-foreground/50' />}

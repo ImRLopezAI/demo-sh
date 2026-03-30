@@ -236,6 +236,7 @@ export function StackedDistributionPanel({
 export function RecordListPanel({
 	title,
 	items,
+	isLoading,
 	emptyMessage,
 	emptyIcon,
 	metaBadges,
@@ -249,6 +250,7 @@ export function RecordListPanel({
 		leadingBadge?: string | null
 		leadingBadgeClassName?: string | null
 	}>
+	isLoading?: boolean
 	emptyMessage: string
 	emptyIcon?: React.ReactNode
 	metaBadges?: Array<{ label: string; count: string }>
@@ -273,7 +275,16 @@ export function RecordListPanel({
 				</div>
 			</CardHeader>
 			<CardContent className='p-0'>
-				{items.length === 0 ? (
+				{isLoading ? (
+					<div className='space-y-0 p-4' role='status' aria-label='Loading'>
+						{Array.from({ length: 5 }).map((_, i) => (
+							<div
+								key={`skeleton-${i}`}
+								className='h-10 border-border/20 border-b bg-muted/30 motion-safe:animate-pulse'
+							/>
+						))}
+					</div>
+				) : items.length === 0 ? (
 					<div className='flex flex-col items-center justify-center py-8 text-center'>
 						{emptyIcon}
 						<p className='text-muted-foreground text-sm'>{emptyMessage}</p>
