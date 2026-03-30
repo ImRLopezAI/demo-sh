@@ -115,6 +115,22 @@ export const catalog = defineCatalog(schema, {
 		},
 
 		// ━━━ Page Structure ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+		PageHeader: {
+			props: z.object({
+				title: z.string(),
+				description: z.string().nullable().optional(),
+			}),
+			description: 'Page title banner with optional supporting description',
+		},
+		DashboardPageStack: {
+			props: z.object({}),
+			description:
+				'Vertical dashboard page stack with consistent route spacing',
+		},
+		DashboardThreeColumnGrid: {
+			props: z.object({}),
+			description: 'Three-column dashboard section grid for summary panels',
+		},
 		FormSection: {
 			props: z.object({
 				title: z.string(),
@@ -219,6 +235,35 @@ export const catalog = defineCatalog(schema, {
 			description:
 				'Complete list page: page header, data grid with filtering/sorting/pagination, bulk actions, and record detail',
 		},
+		InsightDashboardData: {
+			props: z.object({}),
+			description:
+				'Insight dashboard data provider that hydrates child sections with metrics and summaries',
+		},
+		InsightKpiStrip: {
+			props: z.object({}),
+			description: 'Insight dashboard KPI strip',
+		},
+		InsightEntryTypeDistribution: {
+			props: z.object({}),
+			description: 'Insight dashboard entry type distribution section',
+		},
+		InsightMovementTrend: {
+			props: z.object({}),
+			description: 'Insight dashboard movement trend section',
+		},
+		InsightInventoryStats: {
+			props: z.object({}),
+			description: 'Insight dashboard inventory stats section',
+		},
+		InsightRecentEntries: {
+			props: z.object({}),
+			description: 'Insight dashboard recent ledger entries section',
+		},
+		InsightLocationSummary: {
+			props: z.object({}),
+			description: 'Insight dashboard location summary section',
+		},
 
 		// ━━━ Module Dashboards (smart, self-contained) ━━━━━━━━━━
 		HubDashboard: {
@@ -240,11 +285,6 @@ export const catalog = defineCatalog(schema, {
 			props: z.object({}),
 			description:
 				'Replenishment dashboard with supply pipeline and vendor health',
-		},
-		InsightDashboard: {
-			props: z.object({}),
-			description:
-				'Insight dashboard with inventory analytics and forecast signals',
 		},
 		LedgerDashboard: {
 			props: z.object({}),

@@ -10,12 +10,6 @@ import { defineRegistry } from '@json-render/react'
 import { shadcnComponents } from '@json-render/shadcn'
 /* ── Existing view imports (smart components) ── */
 import LandingPage from '@/app/_shell/_views'
-import {
-	DashboardDistributionChart,
-	DashboardTrendChart,
-} from '@/app/_shell/_views/_shared/dashboard-widgets'
-import { FormSection as FormSectionImpl } from '@/app/_shell/_views/_shared/form-section'
-import { StatusBadge as StatusBadgeImpl } from '@/app/_shell/_views/_shared/status-badge'
 import FlowBankAccountsList from '@/app/_shell/_views/flow/bank-accounts-list'
 import FlowBankLedgerList from '@/app/_shell/_views/flow/bank-ledger-list'
 import FlowDashboard from '@/app/_shell/_views/flow/dashboard'
@@ -28,9 +22,7 @@ import OrderFulfillment from '@/app/_shell/_views/hub/order-fulfillment'
 import ReportingCenter from '@/app/_shell/_views/hub/reporting-center'
 /* ── Existing list view imports ── */
 import HubTasksList from '@/app/_shell/_views/hub/tasks-list'
-import InsightDashboard from '@/app/_shell/_views/insight/dashboard'
 import ForecastWorkbench from '@/app/_shell/_views/insight/forecast-workbench'
-import InsightItemLedgerList from '@/app/_shell/_views/insight/item-ledger-list'
 import InsightLocationsList from '@/app/_shell/_views/insight/locations-list'
 import InsightValueEntriesList from '@/app/_shell/_views/insight/value-entries-list'
 import CollectionsCompliance from '@/app/_shell/_views/ledger/collections-compliance'
@@ -69,11 +61,36 @@ import TraceShipmentMethodsList from '@/app/_shell/_views/trace/shipment-methods
 import TraceShipmentsList from '@/app/_shell/_views/trace/shipments-list'
 /* ── Custom primitive component imports ── */
 import { ShellLayout } from '@/app/_shell/shell-layout'
+import {
+	DashboardPageStack,
+	DashboardThreeColumnGrid,
+	PageHeader as PageHeaderImpl,
+} from '@/components/ui/json-render/dashboard-sections'
+import {
+	DashboardDistributionChart,
+	DashboardTrendChart,
+} from '@/components/ui/json-render/dashboard-widgets'
+import { FormSection as FormSectionImpl } from '@/components/ui/json-render/form-section'
+import { StatusBadge as StatusBadgeImpl } from '@/components/ui/json-render/status-badge'
 import { catalog } from './catalog'
+import {
+	InsightDashboardData,
+	InsightEntryTypeDistribution,
+	InsightInventoryStats,
+	InsightKpiStrip,
+	InsightLocationSummary,
+	InsightMovementTrend,
+	InsightRecentEntries,
+} from './components/insight-dashboard'
+import { GenericModuleListView } from './components/module-list-view'
+import type { SpecListProps } from './components/spec-list-helpers'
 import { handlers as actionHandlerImpls } from './handlers'
 
 /* ── Module list view lookup ── */
-const LIST_VIEW_MAP: Record<string, React.ComponentType<any>> = {
+const LIST_VIEW_MAP: Record<
+	string,
+	React.ComponentType<{ specProps?: SpecListProps }>
+> = {
 	'hub/operationTasks': HubTasksList,
 	'hub/notifications': HubNotificationsList,
 	'market/salesOrders': MarketSalesOrdersList,
@@ -86,7 +103,6 @@ const LIST_VIEW_MAP: Record<string, React.ComponentType<any>> = {
 	'replenishment/purchaseOrders': ReplenishmentPurchaseOrdersList,
 	'replenishment/vendors': ReplenishmentVendorsList,
 	'replenishment/transfers': ReplenishmentTransfersList,
-	'insight/itemLedger': InsightItemLedgerList,
 	'insight/locations': InsightLocationsList,
 	'insight/valueEntries': InsightValueEntriesList,
 	'ledger/invoices': LedgerInvoicesList,
@@ -150,6 +166,18 @@ export const { registry } = defineRegistry(catalog, {
 		ShellLayout: ({ children }) => <ShellLayout>{children}</ShellLayout>,
 
 		// ── Page Structure ──
+		PageHeader: ({ props }) => (
+			<PageHeaderImpl
+				title={props.title}
+				description={props.description ?? undefined}
+			/>
+		),
+		DashboardPageStack: ({ children }) => (
+			<DashboardPageStack>{children}</DashboardPageStack>
+		),
+		DashboardThreeColumnGrid: ({ children }) => (
+			<DashboardThreeColumnGrid>{children}</DashboardThreeColumnGrid>
+		),
 		FormSection: ({ props, children }) => (
 			<FormSectionImpl
 				title={props.title}
@@ -227,25 +255,30 @@ export const { registry } = defineRegistry(catalog, {
 		ModuleListView: ({ props }) => {
 			const key = `${props.moduleId}/${props.entityId}`
 			const ListComponent = LIST_VIEW_MAP[key]
-			if (!ListComponent) {
-				return (
-					<div className='rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center'>
-						<p className='font-medium text-destructive text-sm'>
-							List view not found: {key}
-						</p>
-					</div>
-				)
+			const normalizedProps: SpecListProps = {
+				...props,
+				bulkActions: props.bulkActions ?? undefined,
+				_filters: props._filters ?? undefined,
+				_cardSections: props._cardSections ?? undefined,
 			}
-			// Pass spec props through for components that can consume them
-			return <ListComponent specProps={props} />
+			if (ListComponent) return <ListComponent specProps={normalizedProps} />
+			return <GenericModuleListView specProps={normalizedProps} />
 		},
+		InsightDashboardData: ({ children }) => (
+			<InsightDashboardData>{children}</InsightDashboardData>
+		),
+		InsightKpiStrip: () => <InsightKpiStrip />,
+		InsightEntryTypeDistribution: () => <InsightEntryTypeDistribution />,
+		InsightMovementTrend: () => <InsightMovementTrend />,
+		InsightInventoryStats: () => <InsightInventoryStats />,
+		InsightRecentEntries: () => <InsightRecentEntries />,
+		InsightLocationSummary: () => <InsightLocationSummary />,
 
 		// ── Module Dashboards ──
 		HubDashboard: () => <HubDashboard />,
 		MarketDashboard: () => <MarketDashboard />,
 		PosDashboard: () => <PosDashboard />,
 		ReplenishmentDashboard: () => <ReplenishmentDashboard />,
-		InsightDashboard: () => <InsightDashboard />,
 		LedgerDashboard: () => <LedgerDashboard />,
 		FlowDashboard: () => <FlowDashboard />,
 		PayrollDashboard: () => <PayrollDashboard />,
