@@ -14,7 +14,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { useModuleData } from '../../hooks/use-data'
 import {
 	average,
@@ -158,53 +157,6 @@ export default function Dashboard() {
 		}
 		return counts
 	}, [transfers])
-
-	const openPOs = purchaseOrders.filter(
-		(o) =>
-			o.status !== 'COMPLETED' &&
-			o.status !== 'CANCELED' &&
-			o.status !== 'REJECTED',
-	)
-	const openPOValue = openPOs.reduce((sum, o) => sum + (o.totalAmount ?? 0), 0)
-	const inTransitTransfers = transfers.filter(
-		(t) => t.status === 'IN_TRANSIT',
-	).length
-	const avgLeadDays = average(
-		purchaseOrders
-			.filter((o) => o.status === 'COMPLETED')
-			.map((o) => {
-				const ordered = new Date(o.orderDate).getTime()
-				const received = new Date(o.expectedReceiptDate).getTime()
-				if (Number.isNaN(ordered) || Number.isNaN(received)) return null
-				return Math.max(0, (received - ordered) / (1000 * 60 * 60 * 24))
-			})
-			.filter((v): v is number => typeof v === 'number'),
-	)
-
-	const hydrateValues = React.useMemo(
-		() => ({
-			pendingPOs: pendingApproval,
-			openPOs: openPOs.length,
-			openPOValue: `$${openPOValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-			inTransit: inTransitTransfers,
-			avgLeadDays: Number(avgLeadDays.toFixed(1)),
-			// TODO: requires item inventory data (quantityOnHand, reorderPoint) not available in this dashboard scope.
-			// The replenishment dashboard only fetches purchaseOrders, vendors, transfers, and purchaseLines.
-			// To compute belowReorder, we would need an items query with quantityOnHand < reorderPoint.
-			belowReorder: 0,
-			// TODO: requires item inventory data (quantityOnHand) not available in this dashboard scope.
-			// To compute criticalStock, we would need an items query filtering quantityOnHand <= 0.
-			criticalStock: 0,
-		}),
-		[
-			pendingApproval,
-			openPOs.length,
-			openPOValue,
-			inTransitTransfers,
-			avgLeadDays,
-		],
-	)
-	useHydrateState('/replenishment/dashboard', hydrateValues)
 
 	const isLoading =
 		purchaseOrdersLoading ||

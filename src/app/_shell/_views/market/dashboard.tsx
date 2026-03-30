@@ -14,7 +14,6 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from '@/components/ui/chart'
-import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -114,27 +113,6 @@ export default function MarketDashboard() {
 			count: { label: 'Orders', color: 'var(--color-chart-1)' },
 		}),
 		[],
-	)
-
-	/* ── Hydrate json-render state for spec-driven header ── */
-	useHydrateState(
-		'/market/dashboard',
-		React.useMemo(
-			() => ({
-				periodLabel: 'Last 30 days',
-				totalRevenue: grossSales,
-				currency: orders[0]?.currency ?? 'USD',
-				revenueGrowth: false,
-				revenueGrowthPct: 0,
-				ordersToday: orders.filter(
-					(o) =>
-						new Date(o.orderDate).toDateString() === new Date().toDateString(),
-				).length,
-				activeCustomers,
-				avgOrderValue,
-			}),
-			[grossSales, orders, activeCustomers, avgOrderValue],
-		),
 	)
 
 	const isLoading = ordersLoading || customersLoading || itemsLoading

@@ -7,7 +7,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { useHydrateState } from '@/lib/json-render/use-hydrate-state'
 import { cn } from '@/lib/utils'
 import { useModuleData } from '../../hooks/use-data'
 import {
@@ -119,50 +118,6 @@ export default function Dashboard() {
 			})
 			.filter((value): value is number => typeof value === 'number'),
 	)
-
-	const now = new Date()
-	const overdueEntries = openEntries.filter((entry) => {
-		const inv = invoices.find((i) => i.invoiceNo === entry.documentNo)
-		if (!inv) return false
-		return new Date(inv.dueDate).getTime() < now.getTime()
-	})
-	const overdueCount = overdueEntries.length
-	const overdueAmount = overdueEntries.reduce(
-		(sum, e) => sum + (e.remainingAmount ?? 0),
-		0,
-	)
-	const invoicesMTD = invoices.filter((inv) => {
-		const d = new Date(inv.postingDate)
-		return (
-			d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-		)
-	})
-	const collectedAmount = customerEntries
-		.filter((e) => e.documentType === 'PAYMENT')
-		.reduce((sum, e) => sum + Math.abs(e.amount ?? 0), 0)
-
-	const hydrateValues = React.useMemo(
-		() => ({
-			openInvoiceCount: openEntries.length,
-			overdueCount,
-			overdueAmountFormatted: `$${overdueAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-			totalReceivables: `$${openReceivables.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-			invoicedMTD: `$${invoicesMTD.reduce((s, i) => s + (i.totalAmount ?? 0), 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-			invoiceCountMTD: invoicesMTD.length,
-			collectedAmount: `$${collectedAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-			daysOutstanding: Number(averageDueDays.toFixed(0)),
-		}),
-		[
-			openEntries.length,
-			overdueCount,
-			overdueAmount,
-			openReceivables,
-			invoicesMTD,
-			collectedAmount,
-			averageDueDays,
-		],
-	)
-	useHydrateState('/ledger/dashboard', hydrateValues)
 
 	const monthlyInvoiceVolume = React.useMemo(
 		() => buildMonthlySeries(invoices, (invoice) => invoice.postingDate),

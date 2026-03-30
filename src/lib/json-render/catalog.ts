@@ -27,12 +27,6 @@ const bulkActionDef = z.object({
 	variant: z.enum(['default', 'destructive']).nullable().optional(),
 })
 
-const statItemDef = z.object({
-	label: z.string(),
-	value: z.string(),
-	description: z.string().nullable().optional(),
-})
-
 /* ─── Card field/section definitions for detail views ─── */
 const cardFieldDef = z.object({
 	name: z.string(),
@@ -121,23 +115,6 @@ export const catalog = defineCatalog(schema, {
 		},
 
 		// ━━━ Page Structure ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-		PageHeader: {
-			props: z.object({
-				title: z.string(),
-				description: z.string().nullable().optional(),
-				actionLabel: z.string().nullable().optional(),
-				actionIcon: z.string().nullable().optional(),
-			}),
-			description:
-				'Page title banner with optional description and action button',
-		},
-		SectionGrid: {
-			props: z.object({
-				columns: z.number().nullable().optional(),
-			}),
-			description:
-				'Responsive grid for dashboard sections (3-col on xl by default)',
-		},
 		FormSection: {
 			props: z.object({
 				title: z.string(),
@@ -153,28 +130,6 @@ export const catalog = defineCatalog(schema, {
 			}),
 			description:
 				'Semantic status badge mapping status codes to variant colors',
-		},
-		KpiCards: {
-			props: z.object({
-				items: z.array(
-					z.object({
-						title: z.string(),
-						value: z.string(),
-						icon: z.string().nullable().optional(),
-						description: z.string().nullable().optional(),
-					}),
-				),
-			}),
-			description: 'Grid of KPI metric cards',
-		},
-		StatsPanel: {
-			props: z.object({
-				title: z.string(),
-				description: z.string().nullable().optional(),
-				items: z.array(statItemDef),
-				className: z.string().nullable().optional(),
-			}),
-			description: 'Stats items in a bordered card',
 		},
 		TrendChart: {
 			props: z.object({

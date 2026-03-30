@@ -12,13 +12,9 @@ import { shadcnComponents } from '@json-render/shadcn'
 import LandingPage from '@/app/_shell/_views'
 import {
 	DashboardDistributionChart,
-	DashboardSectionGrid,
-	DashboardStatsPanel,
 	DashboardTrendChart,
 } from '@/app/_shell/_views/_shared/dashboard-widgets'
 import { FormSection as FormSectionImpl } from '@/app/_shell/_views/_shared/form-section'
-import { KpiCards as KpiCardsImpl } from '@/app/_shell/_views/_shared/kpi-cards'
-import { PageHeader as PageHeaderImpl } from '@/app/_shell/_views/_shared/page-header'
 import { StatusBadge as StatusBadgeImpl } from '@/app/_shell/_views/_shared/status-badge'
 import FlowBankAccountsList from '@/app/_shell/_views/flow/bank-accounts-list'
 import FlowBankLedgerList from '@/app/_shell/_views/flow/bank-ledger-list'
@@ -154,29 +150,6 @@ export const { registry } = defineRegistry(catalog, {
 		ShellLayout: ({ children }) => <ShellLayout>{children}</ShellLayout>,
 
 		// ── Page Structure ──
-		PageHeader: ({ props }) => (
-			<PageHeaderImpl
-				title={props.title}
-				description={props.description ?? undefined}
-				actions={
-					props.actionLabel ? (
-						<button
-							type='button'
-							className='inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground text-sm shadow-sm transition-all hover:shadow-md'
-						>
-							{props.actionLabel}
-						</button>
-					) : undefined
-				}
-			/>
-		),
-		SectionGrid: ({ props, children }) => (
-			<DashboardSectionGrid
-				className={props.columns === 2 ? 'xl:grid-cols-2' : undefined}
-			>
-				{children}
-			</DashboardSectionGrid>
-		),
 		FormSection: ({ props, children }) => (
 			<FormSectionImpl
 				title={props.title}
@@ -188,27 +161,6 @@ export const { registry } = defineRegistry(catalog, {
 
 		// ── Data Display ──
 		StatusBadge: ({ props }) => <StatusBadgeImpl status={props.status} />,
-		KpiCards: ({ props }) => (
-			<KpiCardsImpl
-				cards={props.items.map((item) => ({
-					title: item.title,
-					value: item.value,
-					description: item.description ?? undefined,
-				}))}
-			/>
-		),
-		StatsPanel: ({ props }) => (
-			<DashboardStatsPanel
-				title={props.title}
-				description={props.description ?? undefined}
-				items={props.items.map((i) => ({
-					label: i.label,
-					value: i.value,
-					description: i.description ?? undefined,
-				}))}
-				className={props.className ?? undefined}
-			/>
-		),
 		TrendChart: ({ props }) => (
 			<DashboardTrendChart
 				title={props.title}
