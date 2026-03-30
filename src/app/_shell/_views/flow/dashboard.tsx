@@ -528,9 +528,9 @@ export default function Dashboard() {
 							</p>
 						) : (
 							<ul className='space-y-2'>
-								{recentAccounts.map((account) => (
+								{recentAccounts.map((account, idx) => (
 									<li
-										key={account.id}
+										key={account.id ?? `account-${idx}`}
 										className='flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>
@@ -578,9 +578,9 @@ export default function Dashboard() {
 							</p>
 						) : (
 							<ul className='space-y-2'>
-								{journalLines.slice(0, 8).map((line) => (
+								{journalLines.slice(0, 8).map((line, idx) => (
 									<li
-										key={line.id}
+										key={line.id ?? `line-${idx}`}
 										className='flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>

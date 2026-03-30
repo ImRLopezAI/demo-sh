@@ -22,82 +22,9 @@ export const flowRoutes: Routes = {
 				'Cash forecast, projected balance, and bank account overview.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'kpis', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Cash Flow',
-						description: {
-							$template:
-								'Treasury overview — ${/flow/dashboard/accountCount} connected accounts',
-						} as any,
-					},
-					children: [],
-				},
-				kpis: {
-					type: 'KpiCards',
-					props: {
-						items: [
-							{
-								title: 'Total Balance',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/flow/dashboard/totalBalance' },
-									},
-								} as any,
-								description: 'Across all accounts',
-							},
-							{
-								title: 'Projected (30d)',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/flow/dashboard/projected30d' },
-									},
-								} as any,
-								description: {
-									$cond: {
-										$state: '/flow/dashboard/projectedNegative',
-									},
-									$then: 'Cash shortfall projected',
-									$else: 'Positive outlook',
-								} as any,
-							},
-							{
-								title: 'Pending Payments',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/flow/dashboard/pendingPayments' },
-									},
-								} as any,
-								description: {
-									$template:
-										'${/flow/dashboard/pendingPaymentCount} payments queued',
-								} as any,
-							},
-							{
-								title: 'Unreconciled',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/flow/dashboard/unreconciledCount' },
-									},
-								} as any,
-								description: 'Entries awaiting reconciliation',
-							},
-						],
-					},
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'FlowDashboard',
 					props: {},
 					children: [],
@@ -113,59 +40,15 @@ export const flowRoutes: Routes = {
 			description: 'Connected bank accounts and current balances.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['accountFilter', 'resetBtn'],
-				},
-				accountFilter: {
-					type: 'Select',
-					props: {
-						label: 'Account Status',
-						name: 'accountStatus',
-						options: ['ALL', 'ACTIVE', 'INACTIVE', 'BLOCKED'],
-						value: { $bindState: '/filters/flow/accountFilter' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/flow/accountFilter',
-								value: 'ALL',
-							},
-						},
-					},
-					visible: {
-						$state: '/filters/flow/accountFilter',
-						neq: 'ALL',
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'flow',
 						entityId: 'bankAccounts',
 						title: 'Bank Accounts',
 						description: 'Connected bank accounts and current balances.',
-						_filters: {
-							status: '/filters/flow/accountFilter',
-						},
 						columns: [
 							{ accessorKey: 'accountNo', title: 'Account No.' },
 							{ accessorKey: 'name', title: 'Name' },
@@ -258,59 +141,15 @@ export const flowRoutes: Routes = {
 			description: 'Bank account ledger entries and transaction history.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['docTypeFilter', 'resetBtn'],
-				},
-				docTypeFilter: {
-					type: 'Select',
-					props: {
-						label: 'Document Type',
-						name: 'docType',
-						options: ['ALL', 'PAYMENT', 'REFUND', 'TRANSFER', 'FEE'],
-						value: { $bindState: '/filters/flow/docTypeFilter' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/flow/docTypeFilter',
-								value: 'ALL',
-							},
-						},
-					},
-					visible: {
-						$state: '/filters/flow/docTypeFilter',
-						neq: 'ALL',
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'flow',
 						entityId: 'bankLedger',
 						title: 'Bank Ledger',
 						description: 'Bank account ledger entries and transaction history.',
-						_filters: {
-							documentType: '/filters/flow/docTypeFilter',
-						},
 						columns: [
 							{ accessorKey: 'entryNo', title: 'Entry No.' },
 							{ accessorKey: 'bankAccountNo', title: 'Account' },

@@ -22,89 +22,9 @@ export const traceRoutes: Routes = {
 				'Shipment status, delivery metrics, and logistics performance.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'delayAlert', 'kpis', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Trace',
-						description: {
-							$template:
-								'Logistics overview — ${/trace/dashboard/activeShipments} active shipments',
-						} as any,
-					},
-					children: [],
-				},
-				delayAlert: {
-					type: 'Alert',
-					props: {
-						title: {
-							$template: '${/trace/dashboard/delayedCount} shipments delayed',
-						} as any,
-						message:
-							'Review delayed shipments and contact carriers for updated ETAs.',
-						type: 'warning' as any,
-					},
-					visible: { $state: '/trace/dashboard/delayedCount' } as any,
-					children: [],
-				},
-				kpis: {
-					type: 'KpiCards',
-					props: {
-						items: [
-							{
-								title: 'In Transit',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/trace/dashboard/inTransitCount' },
-									},
-								} as any,
-								description: 'Currently in transit',
-							},
-							{
-								title: 'Delivered Today',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/trace/dashboard/deliveredToday' },
-									},
-								} as any,
-							},
-							{
-								title: 'On-Time Rate',
-								value: {
-									$computed: 'formatPercent',
-									args: {
-										part: { $state: '/trace/dashboard/onTimeDeliveries' },
-										total: { $state: '/trace/dashboard/totalDeliveries' },
-									},
-								} as any,
-								description: {
-									$cond: {
-										$state: '/trace/dashboard/onTimeImproving',
-									},
-									$then: 'Improving vs last week',
-									$else: 'Below target',
-								} as any,
-							},
-							{
-								title: 'Avg Transit Time',
-								value: {
-									$template: '${/trace/dashboard/avgTransitDays}d',
-								} as any,
-								description: 'Mean delivery time',
-							},
-						],
-					},
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'TraceDashboard',
 					props: {},
 					children: [],
@@ -120,82 +40,15 @@ export const traceRoutes: Routes = {
 			description: 'Outbound shipments and delivery tracking.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['statusFilter', 'carrierFilter', 'resetBtn'],
-				},
-				statusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'shipmentStatus',
-						options: [
-							'ALL',
-							'PLANNED',
-							'DISPATCHED',
-							'IN_TRANSIT',
-							'DELIVERED',
-							'EXCEPTION',
-						],
-						value: { $bindState: '/filters/trace/shipmentStatusFilter' } as any,
-					},
-					children: [],
-				},
-				carrierFilter: {
-					type: 'Select',
-					props: {
-						label: 'Carrier',
-						name: 'carrier',
-						options: ['ALL', 'FedEx', 'UPS', 'DHL', 'USPS', 'Other'],
-						value: { $bindState: '/filters/trace/carrierFilter' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset Filters',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/trace',
-								value: {
-									shipmentStatusFilter: 'ALL',
-									carrierFilter: 'ALL',
-								},
-							},
-						},
-					},
-					visible: {
-						$or: [
-							{ $state: '/filters/trace/shipmentStatusFilter', neq: 'ALL' },
-							{ $state: '/filters/trace/carrierFilter', neq: 'ALL' },
-						],
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'trace',
 						entityId: 'shipments',
 						title: 'Shipments',
 						description: 'Outbound shipments and delivery tracking.',
-						_filters: {
-							status: '/filters/trace/shipmentStatusFilter',
-							courierName: '/filters/trace/carrierFilter',
-						},
 						columns: [
 							{ accessorKey: 'shipmentNo', title: 'Shipment No.' },
 							{ accessorKey: 'orderNo', title: 'Order No.' },

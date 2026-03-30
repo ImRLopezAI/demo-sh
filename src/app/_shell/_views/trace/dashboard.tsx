@@ -288,8 +288,8 @@ export default function TraceDashboard() {
 								No carrier data available.
 							</p>
 						) : (
-							carrierKpis.map((kpi) => (
-								<div key={kpi.carrierAccountId} className='space-y-2'>
+							carrierKpis.map((kpi, idx) => (
+								<div key={kpi.carrierAccountId ?? `carrier-${idx}`} className='space-y-2'>
 									<div className='flex items-center justify-between'>
 										<span className='truncate font-medium text-sm'>
 											{kpi.carrierName}
@@ -376,9 +376,9 @@ export default function TraceDashboard() {
 						</div>
 					) : (
 						<div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-							{recentShipments.map((shipment) => (
+							{recentShipments.map((shipment, idx) => (
 								<div
-									key={shipment.id}
+									key={shipment.id ?? `shipment-${idx}`}
 									className='rounded-xl border border-border/40 bg-background/40 p-4 transition-colors hover:bg-muted/20'
 								>
 									<div className='flex items-start justify-between gap-3'>

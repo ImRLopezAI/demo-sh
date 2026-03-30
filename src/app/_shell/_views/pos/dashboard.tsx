@@ -216,9 +216,9 @@ export default function PosDashboard() {
 					</p>
 				) : (
 					<div className='flex flex-wrap gap-2'>
-						{terminals.map((terminal) => (
+						{terminals.map((terminal, idx) => (
 							<div
-								key={terminal.id}
+								key={terminal.id ?? `terminal-${idx}`}
 								className='flex items-center gap-2 rounded-lg border border-border/30 bg-background/40 px-3 py-1.5'
 							>
 								<div
@@ -434,9 +434,9 @@ export default function PosDashboard() {
 								<span>Payment</span>
 								<span className='text-right'>Status</span>
 							</div>
-							{recentTransactions.map((txn) => (
+							{recentTransactions.map((txn, idx) => (
 								<div
-									key={txn.id}
+									key={txn.id ?? `txn-${idx}`}
 									className='grid grid-cols-[1fr_100px_80px_80px_90px] items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-muted/20'
 								>
 									<div className='min-w-0'>

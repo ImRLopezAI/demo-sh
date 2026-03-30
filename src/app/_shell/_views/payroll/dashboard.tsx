@@ -444,9 +444,9 @@ export default function PayrollDashboard() {
 						</div>
 					) : (
 						<div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-							{recentEmployees.map((employee) => (
+							{recentEmployees.map((employee, idx) => (
 								<div
-									key={employee.id}
+									key={employee.id ?? `emp-${idx}`}
 									className='rounded-xl border border-border/40 bg-background/40 p-4 transition-colors hover:bg-muted/20'
 								>
 									<div className='flex items-start gap-3'>

@@ -14,7 +14,7 @@ export const layouts: Layouts = {
 		elements: {
 			page: {
 				type: 'Stack',
-				props: { direction: 'vertical', gap: '0' },
+				props: { direction: 'vertical', gap: '0', align: 'stretch' },
 				children: ['slot'],
 			},
 			slot: { type: 'Slot', props: {}, children: [] },

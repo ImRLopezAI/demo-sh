@@ -632,9 +632,9 @@ export default function Dashboard() {
 							</div>
 						) : (
 							<ul className='space-y-3'>
-								{recentTasks.map((task) => (
+								{recentTasks.map((task, idx) => (
 									<li
-										key={task._id}
+										key={task._id ?? `task-${idx}`}
 										className='flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>
@@ -680,9 +680,9 @@ export default function Dashboard() {
 							</div>
 						) : (
 							<ul className='space-y-3'>
-								{recentNotifications.map((notification) => (
+								{recentNotifications.map((notification, idx) => (
 									<li
-										key={notification._id}
+										key={notification._id ?? `notif-${idx}`}
 										className='flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/30 p-3 transition-colors hover:bg-muted/50'
 									>
 										<div className='min-w-0 flex-1'>
@@ -927,9 +927,9 @@ export default function Dashboard() {
 							</p>
 						) : (
 							<ul className='space-y-2'>
-								{scheduledJobs.map((job) => (
+								{scheduledJobs.map((job, idx) => (
 									<li
-										key={job._id}
+										key={job._id ?? `job-${idx}`}
 										className='flex flex-col gap-3 rounded-lg border border-border/40 bg-background/30 p-3 lg:flex-row lg:items-center lg:justify-between'
 									>
 										<div className='min-w-0 flex-1'>
@@ -1010,9 +1010,9 @@ export default function Dashboard() {
 							</p>
 						) : (
 							<ul className='space-y-2'>
-								{scheduledJobRuns.map((run) => (
+								{scheduledJobRuns.map((run, idx) => (
 									<li
-										key={run._id}
+										key={run._id ?? `run-${idx}`}
 										className='rounded-lg border border-border/40 bg-background/30 p-3'
 									>
 										<div className='flex flex-wrap items-center gap-2'>

@@ -21,32 +21,9 @@ export const marketRoutes: Routes = {
 			description: 'Revenue, order status, and customer activity overview.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Market Overview',
-						description: {
-							$template:
-								'Revenue performance — ${/market/dashboard/periodLabel}',
-						} as any,
-						actionLabel: 'New Order',
-					},
-					on: {
-						press: {
-							action: 'navigate',
-							params: { href: '/market/sales-orders' },
-						},
-					} as any,
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'MarketDashboard',
 					props: {},
 					children: [],
@@ -62,78 +39,15 @@ export const marketRoutes: Routes = {
 			description: 'Manage customer orders, quotes, and returns.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['statusFilter', 'dateFilter', 'resetBtn'],
-				},
-				statusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'orderStatus',
-						options: [
-							'ALL',
-							'DRAFT',
-							'PENDING_APPROVAL',
-							'APPROVED',
-							'RELEASED',
-							'CANCELED',
-						],
-						value: { $bindState: '/filters/market/orderStatusFilter' } as any,
-					},
-					children: [],
-				},
-				dateFilter: {
-					type: 'Select',
-					props: {
-						label: 'Date Range',
-						name: 'dateRange',
-						options: ['last7', 'last30', 'last90', 'thisYear', 'all'],
-						value: { $bindState: '/filters/market/dateRange' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Clear Filters',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/market',
-								value: { orderStatusFilter: 'ALL', dateRange: 'last30' },
-							},
-						},
-					},
-					visible: {
-						$or: [
-							{ $state: '/filters/market/orderStatusFilter', neq: 'ALL' },
-							{ $state: '/filters/market/dateRange', neq: 'last30' },
-						],
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'market',
 						entityId: 'salesOrders',
 						title: 'Sales Orders',
 						description: 'Manage customer orders, quotes, and returns.',
-						_filters: {
-							status: '/filters/market/orderStatusFilter',
-						},
 						columns: [
 							{ accessorKey: 'documentNo', title: 'Document No.' },
 							{
@@ -454,7 +368,7 @@ export const marketRoutes: Routes = {
 			elements: {
 				page: {
 					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
+					props: { direction: 'vertical', gap: '4', align: 'stretch' },
 					children: ['cartSummary', 'list'],
 				},
 				cartSummary: {

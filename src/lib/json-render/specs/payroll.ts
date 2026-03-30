@@ -22,81 +22,9 @@ export const payrollRoutes: Routes = {
 			description: 'Compensation summary, headcount, and payroll run history.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'kpis', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Payroll',
-						description: {
-							$template:
-								'Compensation overview — ${/payroll/dashboard/activeEmployees} active employees',
-						} as any,
-					},
-					children: [],
-				},
-				kpis: {
-					type: 'KpiCards',
-					props: {
-						items: [
-							{
-								title: 'Monthly Payroll',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/payroll/dashboard/monthlyPayroll' },
-									},
-								} as any,
-								description: {
-									$template:
-										'${/payroll/dashboard/payrollDelta}% vs last month',
-								} as any,
-							},
-							{
-								title: 'Headcount',
-								value: {
-									$computed: 'formatNumber',
-									args: { value: { $state: '/payroll/dashboard/headcount' } },
-								} as any,
-								description: {
-									$cond: {
-										$state: '/payroll/dashboard/newHires',
-									},
-									$then: {
-										$template: '${/payroll/dashboard/newHires} new this month',
-									},
-									$else: 'No new hires this month',
-								} as any,
-							},
-							{
-								title: 'Avg Salary',
-								value: {
-									$computed: 'formatCurrency',
-									args: { value: { $state: '/payroll/dashboard/avgSalary' } },
-								} as any,
-								description: 'Mean base compensation',
-							},
-							{
-								title: 'Next Run',
-								value: {
-									$computed: 'formatDate',
-									args: { value: { $state: '/payroll/dashboard/nextRunDate' } },
-								} as any,
-								description: {
-									$template:
-										'${/payroll/dashboard/pendingAdjustments} pending adjustments',
-								} as any,
-							},
-						],
-					},
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'PayrollDashboard',
 					props: {},
 					children: [],
@@ -112,75 +40,9 @@ export const payrollRoutes: Routes = {
 			description: 'Employee profiles, contracts, and compensation setup.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['statusFilter', 'deptFilter', 'resetBtn'],
-				},
-				statusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'employmentStatus',
-						options: ['ALL', 'ACTIVE', 'ON_LEAVE', 'TERMINATED'],
-						value: {
-							$bindState: '/filters/payroll/employmentStatusFilter',
-						} as any,
-					},
-					children: [],
-				},
-				deptFilter: {
-					type: 'Select',
-					props: {
-						label: 'Department',
-						name: 'department',
-						options: [
-							'ALL',
-							'Engineering',
-							'Sales',
-							'Marketing',
-							'Operations',
-							'Finance',
-							'HR',
-						],
-						value: { $bindState: '/filters/payroll/departmentFilter' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset Filters',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/payroll',
-								value: {
-									employmentStatusFilter: 'ALL',
-									departmentFilter: 'ALL',
-								},
-							},
-						},
-					},
-					visible: {
-						$or: [
-							{ $state: '/filters/payroll/employmentStatusFilter', neq: 'ALL' },
-							{ $state: '/filters/payroll/departmentFilter', neq: 'ALL' },
-						],
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'payroll',
@@ -188,10 +50,6 @@ export const payrollRoutes: Routes = {
 						title: 'Employees',
 						description:
 							'Employee profiles, contracts, and compensation setup.',
-						_filters: {
-							status: '/filters/payroll/employmentStatusFilter',
-							department: '/filters/payroll/departmentFilter',
-						},
 						columns: [
 							{ accessorKey: 'employeeNo', title: 'Employee No.' },
 							{ accessorKey: 'firstName', title: 'First Name' },

@@ -21,91 +21,9 @@ export const replenishmentRoutes: Routes = {
 			description: 'Supply pipeline, vendor health, and replenishment signals.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'kpis', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Replenishment',
-						description: {
-							$template:
-								'Supply pipeline status — ${/replenishment/dashboard/pendingPOs} pending POs',
-						} as any,
-						actionLabel: 'New Purchase Order',
-					},
-					on: {
-						press: {
-							action: 'navigate',
-							params: { href: '/replenishment/purchase-orders' },
-						},
-					} as any,
-					children: [],
-				},
-				kpis: {
-					type: 'KpiCards',
-					props: {
-						items: [
-							{
-								title: 'Open POs',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/replenishment/dashboard/openPOs' },
-									},
-								} as any,
-								description: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/replenishment/dashboard/openPOValue' },
-									},
-								} as any,
-							},
-							{
-								title: 'In Transit',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/replenishment/dashboard/inTransit' },
-									},
-								} as any,
-								description: 'Transfers in transit',
-							},
-							{
-								title: 'Vendor Lead Time',
-								value: {
-									$template: '${/replenishment/dashboard/avgLeadDays}d avg',
-								} as any,
-								description: 'Weighted average across vendors',
-							},
-							{
-								title: 'Below Reorder Point',
-								value: {
-									$computed: 'formatNumber',
-									args: {
-										value: { $state: '/replenishment/dashboard/belowReorder' },
-									},
-								} as any,
-								description: {
-									$cond: {
-										$state: '/replenishment/dashboard/criticalStock',
-									},
-									$then: {
-										$template:
-											'${/replenishment/dashboard/criticalStock} critical',
-									},
-									$else: 'Stock levels healthy',
-								} as any,
-							},
-						],
-					},
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'ReplenishmentDashboard',
 					props: {},
 					children: [],
@@ -121,68 +39,15 @@ export const replenishmentRoutes: Routes = {
 			description: 'Vendor purchase orders from draft to receipt.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['poStatusFilter', 'resetBtn'],
-				},
-				poStatusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'poStatus',
-						options: [
-							'ALL',
-							'DRAFT',
-							'PENDING_APPROVAL',
-							'APPROVED',
-							'COMPLETED',
-							'CANCELED',
-						],
-						value: {
-							$bindState: '/filters/replenishment/poStatusFilter',
-						} as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/replenishment/poStatusFilter',
-								value: 'ALL',
-							},
-						},
-					},
-					visible: {
-						$state: '/filters/replenishment/poStatusFilter',
-						neq: 'ALL',
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'replenishment',
 						entityId: 'purchaseOrders',
 						title: 'Purchase Orders',
 						description: 'Vendor purchase orders from draft to receipt.',
-						_filters: {
-							status: '/filters/replenishment/poStatusFilter',
-						},
 						columns: [
 							{ accessorKey: 'documentNo', title: 'Document No.' },
 							{ accessorKey: 'vendorName', title: 'Vendor' },
@@ -413,61 +278,15 @@ export const replenishmentRoutes: Routes = {
 			description: 'Internal stock transfers between locations.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['transferStatusFilter', 'resetBtn'],
-				},
-				transferStatusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'transferStatus',
-						options: ['ALL', 'DRAFT', 'RELEASED', 'IN_TRANSIT', 'RECEIVED'],
-						value: {
-							$bindState: '/filters/replenishment/transferStatusFilter',
-						} as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Reset',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/replenishment/transferStatusFilter',
-								value: 'ALL',
-							},
-						},
-					},
-					visible: {
-						$state: '/filters/replenishment/transferStatusFilter',
-						neq: 'ALL',
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'replenishment',
 						entityId: 'transfers',
 						title: 'Transfers',
 						description: 'Internal stock transfers between locations.',
-						_filters: {
-							status: '/filters/replenishment/transferStatusFilter',
-						},
 						columns: [
 							{ accessorKey: 'transferNo', title: 'Transfer No.' },
 							{ accessorKey: 'fromLocationId', title: 'From Location' },

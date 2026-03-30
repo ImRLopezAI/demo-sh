@@ -1,35 +1,28 @@
+## Implementation Strategy
 
-This repo is a Bun + Vite + vinext app (Vite-based, Next.js-compatible) with Convex/Redis.
-Follow the commands and style rules below when working here.
+When implementing a new feature, follow this strategy:
 
-# UI/UX Guidelines
+1. Review the code base using the `ce:review` skill.
+2. If the feature is complex, break it down with the `ce:plan` + `deepenPlan` skills.
+3. Execute the plan using the `ce:work` skill.
+4. Review the implementation using the `ce:review` skill.
+5. Iterate until the feature is complete.
+6. When finished use the `ce:compound` skill to compound the feature into the code base.
 
-WHEN USING PENCIL MCP TO CREATES VIEWS, COMPONENTS, OR ANYTHING RELATED TO THE UI, CREATE UNIQUE DESIGNS AND DISTINCTIVE LAYOUTS. DO NOT COPY THE SAME DESIGN PATTERNS AND LAYOUTS ACROSS MODULES. EACH MODULE SHOULD HAVE A UNIQUE LOOK AND FEEL REFLECTING ITS FUNCTIONALITY AND PURPOSE. 
+Deploy multiple agents to research the code base do some side implementation and then compound the feature into the code base.
 
-AFTER CREATE A VIEW ANALYZE AND COMPARE IT WITH THE OTHER VIEWS IN THE SAME MODULE AND MAKE SURE THEY HAVE A CONSISTENT DESIGN LANGUAGE AND LAYOUT STRUCTURE. HOWEVER, WHEN COMPARING VIEWS ACROSS DIFFERENT MODULES, ENSURE THAT EACH VIEW HAS A DISTINCTIVE DESIGN AND LAYOUT THAT SETS IT APART FROM THE OTHERS, REFLECTING THE UNIQUE FUNCTIONALITY AND PURPOSE OF ITS MODULE.
+## Skills
+Use this wisely and only when needed.
 
-AVOID AI-Generated Generic Layouts and Designs that Look Similar Across Modules. INSTEAD, STRIVE FOR CREATIVITY AND UNIQUENESS IN EACH MODULE'S UI TO ENHANCE USER EXPERIENCE AND MAKE IT EASIER FOR USERS TO NAVIGATE AND IDENTIFY DIFFERENT SECTIONS OF THE APPLICATION.
-
-For ui use the skill `frontend-design` `vercel-react-best-practices`, `web-design-guidelines` and `vercel-composition-patterns`.
-
-# Reference Docs
-
-All of these page types are available references for design and layout inspiration, but remember to create unique designs for each module and avoid copying layouts across modules. Use these references as a starting point, but ensure that each view has its own distinctive look and feel that reflects the functionality and purpose of its module.
-
-[Design Details](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-designing-card-pages?tabs=structure)
-[Design List](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-designing-list-pages?tabs=structure)
-
-
-| Page Type | Purpose |
-|-----------|---------|
-| Card | Master, reference, and set up data management |
-| List | Entity overviews and navigation, and inline editing of simple entities |
-| RoleCenter | Overview of business performance and the start page for a specific user profile |
-| CardPart | A page embedded in another page, such as in a FactBox |
-| ListPart | A page embedded in another page, such as in a FactBox |
-| Document | Transaction and other document management |
-| Worksheet | Line-based data entry tasks (such as journals) and inquiries |
-
+- `ce:review`: Review the code base and identify the feature.
+- `ce:plan`: Break down the feature into smaller steps.
+- `ce:work`: Execute the plan.
+- `ce:review`: Review the implementation.
+- `ce:compound`: Compound the feature into the code base.
+- `next-best-practice`: Follow the best practices for the next.js app router.
+- `vercel-react-best-practice`: Follow the best practices for the vercel react app.
+- `web-design-guidelines`: Follow the web design guidelines.
+- `frontend-skill`: Follow the frontend skills.
 
 
 ## Quick Commands

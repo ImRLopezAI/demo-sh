@@ -415,9 +415,9 @@ export default function MarketDashboard() {
 						</div>
 					) : (
 						<ul className='mt-2 space-y-2'>
-							{recentOrders.map((order) => (
+							{recentOrders.map((order, idx) => (
 								<li
-									key={order.id}
+									key={order.id ?? `order-${idx}`}
 									className='group flex items-center justify-between rounded-xl border border-border/40 bg-background/40 px-5 py-3.5 text-sm transition-all hover:border-border/80 hover:bg-accent/50'
 								>
 									<div className='flex min-w-0 items-center gap-4'>

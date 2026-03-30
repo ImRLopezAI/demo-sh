@@ -55,18 +55,8 @@ export const spec: NextAppSpec = {
 				variant: 'default' | 'success' | 'warning' | 'error'
 			}>,
 		},
-		/** Per-module filter/view state */
-		filters: {
-			hub: { taskStatusFilter: 'ALL', taskPriorityFilter: 'ALL' },
-			market: { orderStatusFilter: 'ALL', dateRange: 'last30' },
-			pos: { terminalFilter: 'ALL', sessionFilter: 'ALL' },
-			replenishment: { poStatusFilter: 'ALL', transferStatusFilter: 'ALL' },
-			insight: { locationFilter: 'ALL', entryTypeFilter: 'ALL' },
-			ledger: { invoiceStatusFilter: 'ALL', docTypeFilter: 'ALL' },
-			flow: { accountFilter: 'ALL', docTypeFilter: 'ALL' },
-			payroll: { employmentStatusFilter: 'ALL', departmentFilter: 'ALL' },
-			trace: { shipmentStatusFilter: 'ALL', carrierFilter: 'ALL' },
-		},
+		/** Per-module filter state (reserved for future use) */
+		filters: {} as Record<string, Record<string, string>>,
 		/** Cross-module search */
 		search: {
 			query: '',

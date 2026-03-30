@@ -393,9 +393,9 @@ export default function Dashboard() {
 							</div>
 						) : (
 							<div className='divide-y divide-border/30'>
-								{recentEntries.map((entry) => (
+								{recentEntries.map((entry, idx) => (
 									<div
-										key={entry.id}
+										key={entry.id ?? `entry-${idx}`}
 										className='flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-muted/20'
 									>
 										<div className='min-w-0'>
@@ -454,9 +454,9 @@ export default function Dashboard() {
 							</div>
 						) : (
 							<div className='divide-y divide-border/30'>
-								{locations.slice(0, 8).map((location) => (
+								{locations.slice(0, 8).map((location, idx) => (
 									<div
-										key={location.id}
+										key={location.id ?? `loc-${idx}`}
 										className='flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-muted/20'
 									>
 										<div className='flex items-center gap-2.5 overflow-hidden'>

@@ -432,9 +432,9 @@ export default function Dashboard() {
 								<span className='text-right'>Status</span>
 							</div>
 							<div className='divide-y divide-border/20'>
-								{recentInvoices.map((invoice) => (
+								{recentInvoices.map((invoice, idx) => (
 									<div
-										key={invoice.id}
+										key={invoice.id ?? `invoice-${idx}`}
 										className='grid grid-cols-[1fr_100px_100px_80px_100px] items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-muted/20'
 									>
 										<div className='min-w-0'>

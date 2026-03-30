@@ -504,9 +504,9 @@ export default function Dashboard() {
 						</p>
 					) : (
 						<div className='divide-y divide-border/30'>
-							{recentPurchaseOrders.map((order) => (
+							{recentPurchaseOrders.map((order, idx) => (
 								<div
-									key={order._id}
+									key={order._id ?? `po-${idx}`}
 									className='flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-muted/20'
 								>
 									<div className='flex min-w-0 items-center gap-4'>

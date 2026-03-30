@@ -21,86 +21,9 @@ export const ledgerRoutes: Routes = {
 			description: 'Invoiced amounts, receivables, and e-invoice funnel.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '6' },
-					children: ['header', 'overdueAlert', 'kpis', 'dashboard'],
-				},
-				header: {
-					type: 'PageHeader',
-					props: {
-						title: 'Ledger',
-						description: {
-							$template:
-								'Finance overview — ${/ledger/dashboard/openInvoiceCount} open invoices',
-						} as any,
-					},
-					children: [],
-				},
-				overdueAlert: {
-					type: 'Alert',
-					props: {
-						title: {
-							$template:
-								'${/ledger/dashboard/overdueCount} overdue invoices totaling ${/ledger/dashboard/overdueAmountFormatted}',
-						} as any,
-						message:
-							'Overdue invoices require immediate follow-up. Check Collections & Compliance.',
-						type: 'error' as any,
-					},
-					visible: { $state: '/ledger/dashboard/overdueCount' } as any,
-					children: [],
-				},
-				kpis: {
-					type: 'KpiCards',
-					props: {
-						items: [
-							{
-								title: 'Total Receivables',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: {
-										value: { $state: '/ledger/dashboard/totalReceivables' },
-									},
-								} as any,
-								description: 'Outstanding customer balances',
-							},
-							{
-								title: 'Invoiced (MTD)',
-								value: {
-									$computed: 'formatCompactCurrency',
-									args: { value: { $state: '/ledger/dashboard/invoicedMTD' } },
-								} as any,
-								description: {
-									$template:
-										'${/ledger/dashboard/invoiceCountMTD} invoices this month',
-								} as any,
-							},
-							{
-								title: 'Collections Rate',
-								value: {
-									$computed: 'formatPercent',
-									args: {
-										part: { $state: '/ledger/dashboard/collectedAmount' },
-										total: { $state: '/ledger/dashboard/totalReceivables' },
-									},
-								} as any,
-								description: 'Collected vs outstanding',
-							},
-							{
-								title: 'DSO',
-								value: {
-									$template: '${/ledger/dashboard/daysOutstanding}d',
-								} as any,
-								description: 'Days Sales Outstanding',
-							},
-						],
-					},
-					children: [],
-				},
-				dashboard: {
+				view: {
 					type: 'LedgerDashboard',
 					props: {},
 					children: [],
@@ -116,72 +39,15 @@ export const ledgerRoutes: Routes = {
 			description: 'Sales invoices, credit memos, and tax documents.',
 		},
 		page: {
-			root: 'page',
+			root: 'view',
 			elements: {
-				page: {
-					type: 'Stack',
-					props: { direction: 'vertical', gap: '4' },
-					children: ['filterBar', 'list'],
-				},
-				filterBar: {
-					type: 'Stack',
-					props: { direction: 'horizontal', gap: '3', align: 'center' },
-					children: ['statusFilter', 'docTypeFilter', 'resetBtn'],
-				},
-				statusFilter: {
-					type: 'Select',
-					props: {
-						label: 'Status',
-						name: 'invoiceStatus',
-						options: ['ALL', 'DRAFT', 'POSTED', 'PAID', 'OVERDUE', 'CANCELLED'],
-						value: { $bindState: '/filters/ledger/invoiceStatusFilter' } as any,
-					},
-					children: [],
-				},
-				docTypeFilter: {
-					type: 'Select',
-					props: {
-						label: 'Document Type',
-						name: 'docType',
-						options: ['ALL', 'INVOICE', 'CREDIT_MEMO', 'DEBIT_MEMO'],
-						value: { $bindState: '/filters/ledger/docTypeFilter' } as any,
-					},
-					children: [],
-				},
-				resetBtn: {
-					type: 'Button',
-					props: {
-						label: 'Clear Filters',
-						variant: 'secondary' as any,
-					},
-					on: {
-						press: {
-							action: 'setState',
-							params: {
-								statePath: '/filters/ledger',
-								value: { invoiceStatusFilter: 'ALL', docTypeFilter: 'ALL' },
-							},
-						},
-					},
-					visible: {
-						$or: [
-							{ $state: '/filters/ledger/invoiceStatusFilter', neq: 'ALL' },
-							{ $state: '/filters/ledger/docTypeFilter', neq: 'ALL' },
-						],
-					} as any,
-					children: [],
-				},
-				list: {
+				view: {
 					type: 'ModuleListView',
 					props: {
 						moduleId: 'ledger',
 						entityId: 'invoices',
 						title: 'Invoices',
 						description: 'Sales invoices, credit memos, and tax documents.',
-						_filters: {
-							status: '/filters/ledger/invoiceStatusFilter',
-							documentType: '/filters/ledger/docTypeFilter',
-						},
 						columns: [
 							{ accessorKey: 'invoiceNo', title: 'Invoice No.' },
 							{ accessorKey: 'customerName', title: 'Customer' },
