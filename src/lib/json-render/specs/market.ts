@@ -21,10 +21,60 @@ export const marketRoutes: Routes = {
 			description: 'Revenue, order status, and customer activity overview.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'MarketDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'MarketDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'orderStatusDistribution',
+						'orderVolumeTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Market Dashboard',
+						description:
+							'Revenue, order status, and customer activity overview.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'MarketKpiStrip',
+					props: {},
+					children: [],
+				},
+				orderStatusDistribution: {
+					type: 'MarketOrderStatusDistribution',
+					props: {},
+					children: [],
+				},
+				orderVolumeTrend: {
+					type: 'MarketOrderVolumeTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['commercialStats', 'recentOrders'],
+				},
+				commercialStats: {
+					type: 'MarketCommercialStats',
+					props: {},
+					children: [],
+				},
+				recentOrders: {
+					type: 'MarketRecentOrders',
 					props: {},
 					children: [],
 				},

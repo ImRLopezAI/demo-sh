@@ -22,10 +22,60 @@ export const traceRoutes: Routes = {
 				'Shipment status, delivery metrics, and logistics performance.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'TraceDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'TraceDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'shipmentStatusDistribution',
+						'shipmentVolumeTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'Trace Dashboard',
+						description:
+							'Shipment status, delivery metrics, and logistics performance.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'TraceKpiStrip',
+					props: {},
+					children: [],
+				},
+				shipmentStatusDistribution: {
+					type: 'TraceShipmentStatusDistribution',
+					props: {},
+					children: [],
+				},
+				shipmentVolumeTrend: {
+					type: 'TraceShipmentVolumeTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['logisticsStats', 'recentShipments'],
+				},
+				logisticsStats: {
+					type: 'TraceLogisticsStats',
+					props: {},
+					children: [],
+				},
+				recentShipments: {
+					type: 'TraceRecentShipments',
 					props: {},
 					children: [],
 				},

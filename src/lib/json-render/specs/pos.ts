@@ -21,10 +21,71 @@ export const posRoutes: Routes = {
 			description: 'Terminal status, payment methods, and transaction metrics.',
 		},
 		page: {
-			root: 'view',
+			root: 'dashboard',
 			elements: {
-				view: {
-					type: 'PosDashboard',
+				dashboard: {
+					type: 'DashboardPageStack',
+					props: {},
+					children: ['provider'],
+				},
+				provider: {
+					type: 'PosDashboardData',
+					props: {},
+					children: [
+						'header',
+						'kpis',
+						'paymentMethodDistribution',
+						'transactionStatusDistribution',
+						'transactionVolumeTrend',
+						'lowerGrid',
+					],
+				},
+				header: {
+					type: 'PageHeader',
+					props: {
+						title: 'POS Dashboard',
+						description:
+							'Terminal status, payment methods, and transaction metrics.',
+					},
+					children: [],
+				},
+				kpis: {
+					type: 'PosKpiStrip',
+					props: {},
+					children: [],
+				},
+				paymentMethodDistribution: {
+					type: 'PosPaymentMethodDistribution',
+					props: {},
+					children: [],
+				},
+				transactionStatusDistribution: {
+					type: 'PosTransactionStatusDistribution',
+					props: {},
+					children: [],
+				},
+				transactionVolumeTrend: {
+					type: 'PosTransactionVolumeTrend',
+					props: {},
+					children: [],
+				},
+				lowerGrid: {
+					type: 'DashboardThreeColumnGrid',
+					props: {},
+					children: ['operationalStats', 'recentTransactions', 'terminalSummary'],
+				},
+				operationalStats: {
+					type: 'PosOperationalStats',
+					props: {},
+					children: [],
+				},
+				recentTransactions: {
+					type: 'PosRecentTransactions',
+					props: {},
+					children: [],
+				},
+				terminalSummary: {
+					type: 'PosTerminalSummary',
 					props: {},
 					children: [],
 				},

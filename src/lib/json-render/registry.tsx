@@ -8,59 +8,9 @@
  */
 import { defineRegistry } from '@json-render/react'
 import { shadcnComponents } from '@json-render/shadcn'
-/* ── Existing view imports (smart components) ── */
-import LandingPage from '@/app/_shell/_views'
-import FlowBankAccountsList from '@/app/_shell/_views/flow/bank-accounts-list'
-import FlowBankLedgerList from '@/app/_shell/_views/flow/bank-ledger-list'
-import FlowDashboard from '@/app/_shell/_views/flow/dashboard'
-import FlowGlEntriesList from '@/app/_shell/_views/flow/gl-entries-list'
-import PaymentJournal from '@/app/_shell/_views/flow/payment-journal'
-import ReconciliationApprovals from '@/app/_shell/_views/flow/reconciliation-approvals'
-import HubDashboard from '@/app/_shell/_views/hub/dashboard'
-import HubNotificationsList from '@/app/_shell/_views/hub/notifications-list'
-import OrderFulfillment from '@/app/_shell/_views/hub/order-fulfillment'
-import ReportingCenter from '@/app/_shell/_views/hub/reporting-center'
-/* ── Existing list view imports ── */
-import HubTasksList from '@/app/_shell/_views/hub/tasks-list'
-import ForecastWorkbench from '@/app/_shell/_views/insight/forecast-workbench'
-import InsightLocationsList from '@/app/_shell/_views/insight/locations-list'
-import InsightValueEntriesList from '@/app/_shell/_views/insight/value-entries-list'
-import CollectionsCompliance from '@/app/_shell/_views/ledger/collections-compliance'
-import LedgerCustomerLedgerList from '@/app/_shell/_views/ledger/customer-ledger-list'
-import LedgerDashboard from '@/app/_shell/_views/ledger/dashboard'
-import LedgerGlEntriesList from '@/app/_shell/_views/ledger/gl-entries-list'
-import LedgerInvoicesList from '@/app/_shell/_views/ledger/invoices-list'
-import MarketCartsList from '@/app/_shell/_views/market/carts-list'
-import MarketCustomersList from '@/app/_shell/_views/market/customers-list'
-import MarketDashboard from '@/app/_shell/_views/market/dashboard'
-import MarketItemsList from '@/app/_shell/_views/market/items-list'
-import PricingReturns from '@/app/_shell/_views/market/pricing-returns'
-import MarketSalesOrdersList from '@/app/_shell/_views/market/sales-orders-list'
-import AdjustmentsOffcycle from '@/app/_shell/_views/payroll/adjustments-offcycle'
-import PayrollBankLedgerList from '@/app/_shell/_views/payroll/bank-ledger-list'
-import PayrollDashboard from '@/app/_shell/_views/payroll/dashboard'
-import PayrollEmployeeLedgerList from '@/app/_shell/_views/payroll/employee-ledger-list'
-import PayrollEmployeesList from '@/app/_shell/_views/payroll/employees-list'
-import PayrollGlEntriesList from '@/app/_shell/_views/payroll/gl-entries-list'
-import PayrollJournal from '@/app/_shell/_views/payroll/payroll-journal'
-import PosDashboard from '@/app/_shell/_views/pos/dashboard'
-import PosSessionsList from '@/app/_shell/_views/pos/sessions-list'
-import ShiftControls from '@/app/_shell/_views/pos/shift-controls'
-/* ── Existing workbench imports ── */
-import PosTerminalView from '@/app/_shell/_views/pos/terminal-view'
-import PosTerminalsList from '@/app/_shell/_views/pos/terminals-list'
-import PosTransactionsList from '@/app/_shell/_views/pos/transactions-list'
-import ReplenishmentDashboard from '@/app/_shell/_views/replenishment/dashboard'
-import PlanningWorkbench from '@/app/_shell/_views/replenishment/planning-workbench'
-import ReplenishmentPurchaseOrdersList from '@/app/_shell/_views/replenishment/purchase-orders-list'
-import ReplenishmentTransfersList from '@/app/_shell/_views/replenishment/transfers-list'
-import ReplenishmentVendorsList from '@/app/_shell/_views/replenishment/vendors-list'
-import CarrierOps from '@/app/_shell/_views/trace/carrier-ops'
-import TraceDashboard from '@/app/_shell/_views/trace/dashboard'
-import TraceShipmentMethodsList from '@/app/_shell/_views/trace/shipment-methods-list'
-import TraceShipmentsList from '@/app/_shell/_views/trace/shipments-list'
-/* ── Custom primitive component imports ── */
+/* ── App Shell ── */
 import { ShellLayout } from '@/app/_shell/shell-layout'
+/* ── Custom primitive component imports ── */
 import {
 	DashboardPageStack,
 	DashboardThreeColumnGrid,
@@ -73,6 +23,32 @@ import {
 import { FormSection as FormSectionImpl } from '@/components/ui/json-render/form-section'
 import { StatusBadge as StatusBadgeImpl } from '@/components/ui/json-render/status-badge'
 import { catalog } from './catalog'
+/* ── Landing page ── */
+import LandingPage from './components/landing-page'
+/* ── Dashboard sections (atomic, named exports) ── */
+import {
+	FlowBankAccountsList as FlowBankAccountsDashboard,
+	FlowCashBalanceTrend,
+	FlowCashForecastControls,
+	FlowDashboardData,
+	FlowForecastStats,
+	FlowJournalStatusDistribution,
+	FlowJournalThroughputTrend,
+	FlowKpiStrip,
+	FlowRecentJournalLines,
+	FlowTreasuryStats,
+	FlowVarianceChart,
+} from './components/flow-dashboard'
+import {
+	HubDashboardData,
+	HubKpiStrip,
+	HubOperationsStats,
+	HubRecentNotifications,
+	HubRecentTasks,
+	HubTaskStatusChart,
+	HubTaskStatusDistribution,
+	HubTaskVolumeTrend,
+} from './components/hub-dashboard'
 import {
 	InsightDashboardData,
 	InsightEntryTypeDistribution,
@@ -82,6 +58,110 @@ import {
 	InsightMovementTrend,
 	InsightRecentEntries,
 } from './components/insight-dashboard'
+import {
+	LedgerDashboardData,
+	LedgerEInvoiceFunnel,
+	LedgerHeroCards,
+	LedgerInvoiceRegister,
+	LedgerInvoiceStatusCounts,
+	LedgerInvoiceVolumeTrend,
+	LedgerKpiStrip,
+	LedgerStats,
+} from './components/ledger-dashboard'
+import {
+	MarketCommercialStats,
+	MarketDashboardData,
+	MarketKpiStrip,
+	MarketOrderStatusDistribution,
+	MarketOrderVolumeTrend,
+	MarketRecentOrders,
+} from './components/market-dashboard'
+import {
+	PayrollCompensationOverview,
+	PayrollDashboardData,
+	PayrollDepartmentBreakdown,
+	PayrollEmploymentTypeDistribution,
+	PayrollHiringTrend,
+	PayrollKpiStrip,
+	PayrollRecentHires,
+} from './components/payroll-dashboard'
+import {
+	PosDashboardData,
+	PosKpiStrip,
+	PosOperationalStats,
+	PosPaymentMethodDistribution,
+	PosRecentTransactions,
+	PosTerminalSummary,
+	PosTransactionStatusDistribution,
+	PosTransactionVolumeTrend,
+} from './components/pos-dashboard'
+import {
+	ReplenishmentDashboardData,
+	ReplenishmentKpiStrip,
+	ReplenishmentPurchaseOrderStatusDistribution,
+	ReplenishmentPurchaseOrderTrend,
+	ReplenishmentRecentPurchaseOrders,
+	ReplenishmentTransferStats,
+	ReplenishmentVendorStats,
+} from './components/replenishment-dashboard'
+import {
+	TraceDashboardData,
+	TraceKpiStrip,
+	TraceLogisticsStats,
+	TraceRecentShipments,
+	TraceShipmentStatusDistribution,
+	TraceShipmentVolumeTrend,
+} from './components/trace-dashboard'
+/* ── Workbench / list views (default exports from module subdirectories) ── */
+// Flow
+import FlowBankAccountsListView from './components/flow/bank-accounts-list'
+import FlowBankLedgerList from './components/flow/bank-ledger-list'
+import FlowGlEntriesList from './components/flow/gl-entries-list'
+import PaymentJournal from './components/flow/payment-journal'
+import ReconciliationApprovals from './components/flow/reconciliation-approvals'
+// Hub
+import HubNotificationsList from './components/hub/notifications-list'
+import OrderFulfillment from './components/hub/order-fulfillment'
+import ReportingCenter from './components/hub/reporting-center'
+import HubTasksList from './components/hub/tasks-list'
+// Insight
+import ForecastWorkbench from './components/insight/forecast-workbench'
+import InsightLocationsList from './components/insight/locations-list'
+import InsightValueEntriesList from './components/insight/value-entries-list'
+// Ledger
+import CollectionsCompliance from './components/ledger/collections-compliance'
+import LedgerCustomerLedgerList from './components/ledger/customer-ledger-list'
+import LedgerGlEntriesList from './components/ledger/gl-entries-list'
+import LedgerInvoicesList from './components/ledger/invoices-list'
+// Market
+import MarketCartsList from './components/market/carts-list'
+import MarketCustomersList from './components/market/customers-list'
+import MarketItemsList from './components/market/items-list'
+import PricingReturns from './components/market/pricing-returns'
+import MarketSalesOrdersList from './components/market/sales-orders-list'
+// Payroll
+import AdjustmentsOffcycle from './components/payroll/adjustments-offcycle'
+import PayrollBankLedgerList from './components/payroll/bank-ledger-list'
+import PayrollEmployeeLedgerList from './components/payroll/employee-ledger-list'
+import PayrollEmployeesList from './components/payroll/employees-list'
+import PayrollGlEntriesList from './components/payroll/gl-entries-list'
+import PayrollJournal from './components/payroll/payroll-journal'
+// POS
+import PosSessionsList from './components/pos/sessions-list'
+import ShiftControls from './components/pos/shift-controls'
+import PosTerminalView from './components/pos/terminal-view'
+import PosTerminalsList from './components/pos/terminals-list'
+import PosTransactionsList from './components/pos/transactions-list'
+// Replenishment
+import PlanningWorkbench from './components/replenishment/planning-workbench'
+import ReplenishmentPurchaseOrdersList from './components/replenishment/purchase-orders-list'
+import ReplenishmentTransfersList from './components/replenishment/transfers-list'
+import ReplenishmentVendorsList from './components/replenishment/vendors-list'
+// Trace
+import CarrierOps from './components/trace/carrier-ops'
+import TraceShipmentMethodsList from './components/trace/shipment-methods-list'
+import TraceShipmentsList from './components/trace/shipments-list'
+/* ── Shared helpers ── */
 import { GenericModuleListView } from './components/module-list-view'
 import type { SpecListProps } from './components/spec-list-helpers'
 import { handlers as actionHandlerImpls } from './handlers'
@@ -108,7 +188,7 @@ const LIST_VIEW_MAP: Record<
 	'ledger/invoices': LedgerInvoicesList,
 	'ledger/customerLedger': LedgerCustomerLedgerList,
 	'ledger/glEntries': LedgerGlEntriesList,
-	'flow/bankAccounts': FlowBankAccountsList,
+	'flow/bankAccounts': FlowBankAccountsListView,
 	'flow/bankLedger': FlowBankLedgerList,
 	'flow/glEntries': FlowGlEntriesList,
 	'payroll/employees': PayrollEmployeesList,
@@ -264,6 +344,8 @@ export const { registry } = defineRegistry(catalog, {
 			if (ListComponent) return <ListComponent specProps={normalizedProps} />
 			return <GenericModuleListView specProps={normalizedProps} />
 		},
+
+		// ── Insight Dashboard Sections ──
 		InsightDashboardData: ({ children }) => (
 			<InsightDashboardData>{children}</InsightDashboardData>
 		),
@@ -274,15 +356,108 @@ export const { registry } = defineRegistry(catalog, {
 		InsightRecentEntries: () => <InsightRecentEntries />,
 		InsightLocationSummary: () => <InsightLocationSummary />,
 
-		// ── Module Dashboards ──
-		HubDashboard: () => <HubDashboard />,
-		MarketDashboard: () => <MarketDashboard />,
-		PosDashboard: () => <PosDashboard />,
-		ReplenishmentDashboard: () => <ReplenishmentDashboard />,
-		LedgerDashboard: () => <LedgerDashboard />,
-		FlowDashboard: () => <FlowDashboard />,
-		PayrollDashboard: () => <PayrollDashboard />,
-		TraceDashboard: () => <TraceDashboard />,
+		// ── Hub Dashboard Sections ──
+		HubDashboardData: ({ children }) => (
+			<HubDashboardData>{children}</HubDashboardData>
+		),
+		HubKpiStrip: () => <HubKpiStrip />,
+		HubTaskStatusDistribution: () => <HubTaskStatusDistribution />,
+		HubTaskStatusChart: () => <HubTaskStatusChart />,
+		HubTaskVolumeTrend: () => <HubTaskVolumeTrend />,
+		HubOperationsStats: () => <HubOperationsStats />,
+		HubRecentTasks: () => <HubRecentTasks />,
+		HubRecentNotifications: () => <HubRecentNotifications />,
+
+		// ── Market Dashboard Sections ──
+		MarketDashboardData: ({ children }) => (
+			<MarketDashboardData>{children}</MarketDashboardData>
+		),
+		MarketKpiStrip: () => <MarketKpiStrip />,
+		MarketOrderStatusDistribution: () => <MarketOrderStatusDistribution />,
+		MarketOrderVolumeTrend: () => <MarketOrderVolumeTrend />,
+		MarketCommercialStats: () => <MarketCommercialStats />,
+		MarketRecentOrders: () => <MarketRecentOrders />,
+
+		// ── Flow Dashboard Sections ──
+		FlowDashboardData: ({ children }) => (
+			<FlowDashboardData>{children}</FlowDashboardData>
+		),
+		FlowKpiStrip: () => <FlowKpiStrip />,
+		FlowCashForecastControls: () => <FlowCashForecastControls />,
+		FlowCashBalanceTrend: () => <FlowCashBalanceTrend />,
+		FlowForecastStats: () => <FlowForecastStats />,
+		FlowVarianceChart: () => <FlowVarianceChart />,
+		FlowJournalThroughputTrend: () => <FlowJournalThroughputTrend />,
+		FlowJournalStatusDistribution: () => <FlowJournalStatusDistribution />,
+		FlowTreasuryStats: () => <FlowTreasuryStats />,
+		FlowBankAccountsList: () => <FlowBankAccountsDashboard />,
+		FlowRecentJournalLines: () => <FlowRecentJournalLines />,
+
+		// ── Ledger Dashboard Sections ──
+		LedgerDashboardData: ({ children }) => (
+			<LedgerDashboardData>{children}</LedgerDashboardData>
+		),
+		LedgerKpiStrip: () => <LedgerKpiStrip />,
+		LedgerHeroCards: () => <LedgerHeroCards />,
+		LedgerInvoiceStatusCounts: () => <LedgerInvoiceStatusCounts />,
+		LedgerEInvoiceFunnel: () => <LedgerEInvoiceFunnel />,
+		LedgerStats: () => <LedgerStats />,
+		LedgerInvoiceVolumeTrend: () => <LedgerInvoiceVolumeTrend />,
+		LedgerInvoiceRegister: () => <LedgerInvoiceRegister />,
+
+		// ── POS Dashboard Sections ──
+		PosDashboardData: ({ children }) => (
+			<PosDashboardData>{children}</PosDashboardData>
+		),
+		PosKpiStrip: () => <PosKpiStrip />,
+		PosPaymentMethodDistribution: () => <PosPaymentMethodDistribution />,
+		PosTransactionStatusDistribution: () => (
+			<PosTransactionStatusDistribution />
+		),
+		PosTransactionVolumeTrend: () => <PosTransactionVolumeTrend />,
+		PosOperationalStats: () => <PosOperationalStats />,
+		PosRecentTransactions: () => <PosRecentTransactions />,
+		PosTerminalSummary: () => <PosTerminalSummary />,
+
+		// ── Payroll Dashboard Sections ──
+		PayrollDashboardData: ({ children }) => (
+			<PayrollDashboardData>{children}</PayrollDashboardData>
+		),
+		PayrollKpiStrip: () => <PayrollKpiStrip />,
+		PayrollEmploymentTypeDistribution: () => (
+			<PayrollEmploymentTypeDistribution />
+		),
+		PayrollDepartmentBreakdown: () => <PayrollDepartmentBreakdown />,
+		PayrollCompensationOverview: () => <PayrollCompensationOverview />,
+		PayrollHiringTrend: () => <PayrollHiringTrend />,
+		PayrollRecentHires: () => <PayrollRecentHires />,
+
+		// ── Trace Dashboard Sections ──
+		TraceDashboardData: ({ children }) => (
+			<TraceDashboardData>{children}</TraceDashboardData>
+		),
+		TraceKpiStrip: () => <TraceKpiStrip />,
+		TraceShipmentStatusDistribution: () => <TraceShipmentStatusDistribution />,
+		TraceShipmentVolumeTrend: () => <TraceShipmentVolumeTrend />,
+		TraceLogisticsStats: () => <TraceLogisticsStats />,
+		TraceRecentShipments: () => <TraceRecentShipments />,
+
+		// ── Replenishment Dashboard Sections ──
+		ReplenishmentDashboardData: ({ children }) => (
+			<ReplenishmentDashboardData>{children}</ReplenishmentDashboardData>
+		),
+		ReplenishmentKpiStrip: () => <ReplenishmentKpiStrip />,
+		ReplenishmentPurchaseOrderStatusDistribution: () => (
+			<ReplenishmentPurchaseOrderStatusDistribution />
+		),
+		ReplenishmentPurchaseOrderTrend: () => (
+			<ReplenishmentPurchaseOrderTrend />
+		),
+		ReplenishmentVendorStats: () => <ReplenishmentVendorStats />,
+		ReplenishmentTransferStats: () => <ReplenishmentTransferStats />,
+		ReplenishmentRecentPurchaseOrders: () => (
+			<ReplenishmentRecentPurchaseOrders />
+		),
 
 		// ── Workbench Views ──
 		PosTerminalView: ({ props }) => <PosTerminalView specProps={props} />,
