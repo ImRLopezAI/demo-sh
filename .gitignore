@@ -11,7 +11,7 @@ count.txt
 .output
 .vercel
 .vinxi
-todos.json
+tsconfig.tsbuildinfo
 
 # Ignore all log files
 *.log

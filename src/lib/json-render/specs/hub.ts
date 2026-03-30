@@ -78,7 +78,7 @@ export const hubRoutes: Routes = {
 					children: ['stats', 'recentTasks', 'recentNotifications'],
 				},
 				stats: {
-					type: 'HubStats',
+					type: 'HubOperationsStats',
 					props: {},
 					children: [],
 				},
